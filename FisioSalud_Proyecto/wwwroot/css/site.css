@@ -1,0 +1,305 @@
+﻿:root {
+    --primary: #1e6bb8;
+    --primary-dark: #155a9e;
+    --primary-light: #e8f2fb;
+    --secondary: #5a9fd4;
+    --success: #28a745;
+    --danger: #dc3545;
+    --warning: #ffc107;
+    --gray-100: #f8f9fa;
+    --gray-200: #e9ecef;
+    --gray-600: #6c757d;
+    --gray-800: #343a40;
+    --radius: 12px;
+    --shadow: 0 4px 20px rgba(30, 107, 184, 0.08);
+}
+
+* { box-sizing: border-box; }
+
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    color: var(--gray-800);
+    background-color: #f5f8fc;
+    margin: 0;
+    min-height: 100vh;
+}
+
+a { color: var(--primary); text-decoration: none; }
+a:hover { color: var(--primary-dark); }
+
+/* Navbar público */
+.navbar-fisio {
+    background: #fff;
+    box-shadow: var(--shadow);
+    padding: 0.75rem 0;
+}
+
+.navbar-brand-fisio {
+    font-weight: 700;
+    font-size: 1.4rem;
+    color: var(--primary) !important;
+}
+
+.navbar-brand-fisio span { color: var(--secondary); }
+
+/* Botones */
+.btn-fisio {
+    background: var(--primary);
+    border: none;
+    color: #fff;
+    padding: 0.6rem 1.5rem;
+    border-radius: var(--radius);
+    font-weight: 600;
+    transition: all 0.2s;
+}
+
+.btn-fisio:hover {
+    background: var(--primary-dark);
+    color: #fff;
+    transform: translateY(-1px);
+}
+
+.btn-fisio-outline {
+    background: transparent;
+    border: 2px solid var(--primary);
+    color: var(--primary);
+    padding: 0.6rem 1.5rem;
+    border-radius: var(--radius);
+    font-weight: 600;
+}
+
+.btn-fisio-outline:hover {
+    background: var(--primary);
+    color: #fff;
+}
+
+.btn-success-fisio { background: var(--success); color: #fff; border-radius: var(--radius); }
+.btn-danger-fisio { background: var(--danger); color: #fff; border-radius: var(--radius); }
+
+/* Hero */
+.hero-section {
+    background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
+    color: #fff;
+    padding: 5rem 0;
+    border-radius: 0 0 40px 40px;
+}
+
+.hero-section h1 { font-size: 2.8rem; font-weight: 700; }
+.hero-section p { font-size: 1.15rem; opacity: 0.95; }
+
+/* Cards */
+.card-fisio {
+    background: #fff;
+    border: none;
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+    padding: 1.5rem;
+    height: 100%;
+    transition: transform 0.2s;
+}
+
+.card-fisio:hover { transform: translateY(-4px); }
+
+.card-fisio .icon {
+    width: 56px;
+    height: 56px;
+    background: var(--primary-light);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.5rem;
+    color: var(--primary);
+    margin-bottom: 1rem;
+}
+
+.stat-card {
+    background: #fff;
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+    padding: 1.5rem;
+    text-align: center;
+}
+
+.stat-card .number {
+    font-size: 2.2rem;
+    font-weight: 700;
+    color: var(--primary);
+}
+
+.stat-card .label {
+    color: var(--gray-600);
+    font-size: 0.9rem;
+}
+
+/* Auth forms */
+.auth-container {
+    min-height: calc(100vh - 120px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 2rem 1rem;
+}
+
+.auth-card {
+    background: #fff;
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+    padding: 2.5rem;
+    width: 100%;
+    max-width: 480px;
+}
+
+.auth-card h2 {
+    color: var(--primary);
+    font-weight: 700;
+    margin-bottom: 0.5rem;
+}
+
+.form-control-fisio {
+    border: 2px solid var(--gray-200);
+    border-radius: var(--radius);
+    padding: 0.65rem 1rem;
+    transition: border-color 0.2s;
+}
+
+.form-control-fisio:focus {
+    border-color: var(--primary);
+    box-shadow: 0 0 0 3px rgba(30, 107, 184, 0.15);
+    outline: none;
+}
+
+/* Panel layout */
+.panel-wrapper {
+    display: flex;
+    min-height: 100vh;
+}
+
+.sidebar-fisio {
+    width: 260px;
+    background: linear-gradient(180deg, var(--primary-dark) 0%, var(--primary) 100%);
+    color: #fff;
+    padding: 0;
+    flex-shrink: 0;
+    position: fixed;
+    top: 0;
+    left: 0;
+    height: 100vh;
+    overflow-y: auto;
+    z-index: 1000;
+}
+
+.sidebar-brand {
+    padding: 1.5rem;
+    font-size: 1.3rem;
+    font-weight: 700;
+    border-bottom: 1px solid rgba(255,255,255,0.15);
+}
+
+.sidebar-nav { list-style: none; padding: 1rem 0; margin: 0; }
+
+.sidebar-nav li a {
+    display: block;
+    padding: 0.75rem 1.5rem;
+    color: rgba(255,255,255,0.85);
+    transition: all 0.2s;
+    border-left: 3px solid transparent;
+}
+
+.sidebar-nav li a:hover,
+.sidebar-nav li a.active {
+    background: rgba(255,255,255,0.12);
+    color: #fff;
+    border-left-color: #fff;
+}
+
+.sidebar-nav li a.disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.sidebar-nav .badge-prox {
+    font-size: 0.65rem;
+    background: rgba(255,255,255,0.2);
+    padding: 2px 6px;
+    border-radius: 4px;
+    margin-left: 6px;
+}
+
+.panel-content {
+    margin-left: 260px;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+}
+
+.panel-navbar {
+    background: #fff;
+    box-shadow: var(--shadow);
+    padding: 0.75rem 1.5rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.panel-main { padding: 1.5rem; flex: 1; }
+
+/* Tables */
+.table-fisio {
+    background: #fff;
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+    overflow: hidden;
+}
+
+.table-fisio table { margin-bottom: 0; }
+
+.table-fisio thead {
+    background: var(--primary-light);
+    color: var(--primary-dark);
+}
+
+.table-fisio th { font-weight: 600; border: none !important; }
+
+.badge-active { background: #d4edda; color: #155724; padding: 4px 10px; border-radius: 20px; font-size: 0.8rem; }
+.badge-inactive { background: #f8d7da; color: #721c24; padding: 4px 10px; border-radius: 20px; font-size: 0.8rem; }
+.badge-estado { background: var(--primary-light); color: var(--primary-dark); padding: 4px 10px; border-radius: 20px; font-size: 0.8rem; }
+
+/* Alerts */
+.alert-fisio {
+    border-radius: var(--radius);
+    padding: 1rem 1.25rem;
+    margin-bottom: 1rem;
+    border: none;
+}
+
+.alert-success-fisio { background: #d4edda; color: #155724; }
+.alert-error-fisio { background: #f8d7da; color: #721c24; }
+.alert-info-fisio { background: var(--primary-light); color: var(--primary-dark); }
+
+/* Footer */
+.footer-fisio {
+    background: #fff;
+    padding: 1.5rem 0;
+    text-align: center;
+    color: var(--gray-600);
+    border-top: 1px solid var(--gray-200);
+}
+
+.section-title {
+    color: var(--primary);
+    font-weight: 700;
+    margin-bottom: 2rem;
+}
+
+.benefit-icon { font-size: 2.5rem; color: var(--primary); margin-bottom: 1rem; }
+
+@media (max-width: 768px) {
+    .sidebar-fisio {
+        transform: translateX(-100%);
+        transition: transform 0.3s;
+    }
+    .sidebar-fisio.show { transform: translateX(0); }
+    .panel-content { margin-left: 0; }
+    .hero-section h1 { font-size: 2rem; }
+}

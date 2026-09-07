@@ -1,0 +1,26 @@
+@model FisioSalud_Proyecto.Models.Cliente.ClientePageViewModel
+<div class="panel-topbar">
+    <div>
+        <button class="d-md-none btn btn-sm" id="toggleSidebar" type="button" style="border:1px solid #E7D9CC;border-radius:10px;margin-bottom:.5rem;">☰</button>
+        <h1 class="panel-title">@ViewData["Title"]</h1>
+        <p class="panel-subtitle mb-0">
+            @(Model?.FechaHoyFormato)
+            @if (Model != null && Model.SemanaRehabilitacion > 0)
+            {
+                <span> · Semana @Model.SemanaRehabilitacion de rehabilitación</span>
+            }
+        </p>
+    </div>
+    <div class="d-flex align-items-center" style="gap:1rem;">
+        <span class="avatar-circle" style="background:#F3EBE3;position:relative;">
+            <i class="bi bi-bell" style="color:#3C2A21;"></i>
+        </span>
+        <div class="d-flex align-items-center" style="gap:.7rem;">
+            <span class="avatar-circle">@(Model?.Iniciales ?? "FS")</span>
+            <div>
+                <div style="font-weight:600;font-size:.9rem;">@(Model?.NombreCompleto ?? User.Identity.Name)</div>
+                <div style="font-size:.75rem;color:#8C6A4A;">@(Model?.Activo == false ? "Paciente inactivo" : "Paciente activo")</div>
+            </div>
+        </div>
+    </div>
+</div>

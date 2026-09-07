@@ -1,0 +1,157 @@
+@model PacienteFilterViewModel
+@{
+    Layout = "_LayoutFisioterapeuta";
+    ViewData["Title"] = "Gestión de Pacientes";
+}
+
+<div class="row g-3">
+    <!-- Left Column: Patient List & Table -->
+    <div class="col-12 col-xl-9">
+        <div class="fisio-card mb-0">
+            <div class="fisio-card-header flex-wrap gap-2">
+                <h2 class="fisio-card-title">Pacientes (@Model.Pacientes.Count)</h2>
+                <a asp-action="CrearPaciente" class="btn-fisio-primary">
+                    <i class="bi bi-plus-lg"></i> Nuevo paciente
+                </a>
+            </div>
+
+            <!-- Search and Filter Bar -->
+            <form method="get" asp-action="Pacientes" class="row g-2 align-items-center mb-4">
+                <div class="col-12 col-md-5">
+                    <div class="fisio-search-box max-w-100">
+                        <i class="bi bi-search fisio-search-icon"></i>
+                        <input type="text" name="busqueda" value="@Model.Busqueda" placeholder="Buscar por nombre o identificación..." />
+                    </div>
+                </div>
+                <div class="col-12 col-md-7">
+                    <div class="filter-pills-row">
+                        <a asp-action="Pacientes" asp-route-filtro="Todos" class="filter-pill @(Model.Filtro == "Todos" ? "active" : "")">Todos</a>
+                        <a asp-action="Pacientes" asp-route-filtro="Activos" class="filter-pill @(Model.Filtro == "Activos" ? "active" : "")">Activos</a>
+                        <a asp-action="Pacientes" asp-route-filtro="Inactivos" class="filter-pill @(Model.Filtro == "Inactivos" ? "active" : "")">Inactivos</a>
+                    </div>
+                </div>
+            </form>
+
+            <div class="fisio-table-container">
+                <table class="fisio-table">
+                    <thead>
+                        <tr>
+                            <th>Paciente</th>
+                            <th>Edad</th>
+                            <th>Diagnóstico</th>
+                            <th>Progreso</th>
+                            <th>Sesiones</th>
+                            <th>Próx. Cita</th>
+                            <th>Dolor</th>
+                            <th>Estado</th>
+                            <th>Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @if (Model.Pacientes != null && Model.Pacientes.Any())
+                        {
+                            @foreach (var p in Model.Pacientes)
+                            {
+                                <tr>
+                                    <td>
+                                        <div class="d-flex align-items-center gap-2">
+                                            <div class="agenda-avatar" style="background-color: #0096e6;">@p.Iniciales</div>
+                                            <div>
+                                                <div class="fw-bold">@p.NombreCompleto</div>
+                                                <div class="text-muted" style="font-size: 0.7rem;">Reg: @p.UltimaSesionTexto</div>
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td>@p.Edad</td>
+                                    <td>@p.Diagnostico</td>
+                                    <td>
+                                        <div class="progress-bar-container">
+                                            <div class="progress-track">
+                                                <div class="progress-fill cyan" style="width: @(p.ProgresoPorcentaje)%"></div>
+                                            </div>
+                                            <span class="progress-text">@(p.ProgresoPorcentaje)%</span>
+                                        </div>
+                                    </td>
+                                    <td>@p.SesionesTexto</td>
+                                    <td><span class="text-primary fw-semibold">@p.ProximaCitaTexto</span></td>
+                                    <td>
+                                        <div class="pain-score-indicator">
+                                            <span class="pain-bar @(p.NivelDolor <= 4 ? "low" : p.NivelDolor <= 6 ? "mid" : "high")"></span>
+                                            <span>@p.NivelDolor</span>
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <span class="status-badge @p.EstadoBadgeClass">@p.EstadoTexto</span>
+                                    </td>
+                                    <td>
+                                        <div class="d-flex gap-1">
+                                            <a asp-action="VerPaciente" asp-route-id="@p.PacienteId" class="btn btn-sm btn-light py-1 px-2" title="Ver Expediente">
+                                                <i class="bi bi-eye"></i>
+                                            </a>
+                                            <a asp-action="EditarPaciente" asp-route-id="@p.PacienteId" class="btn btn-sm btn-light py-1 px-2 text-primary" title="Editar">
+                                                <i class="bi bi-pencil"></i>
+                                            </a>
+                                        </div>
+                                    </td>
+                                </tr>
+                            }
+                        }
+                        else
+                        {
+                            <tr>
+                                <td colspan="9" class="text-center py-5 text-muted">
+                                    <i class="bi bi-people d-block fs-2 mb-2 opacity-50"></i>
+                                    <p class="mb-2 fw-semibold">No se encontraron pacientes registrados.</p>
+                                    <a asp-action="CrearPaciente" class="btn btn-sm btn-outline-primary rounded-pill px-3">
+                                        <i class="bi bi-plus-lg"></i> Registrar nuevo paciente
+                                    </a>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Right Drawer Column: Patient Quick Preview -->
+    <div class="col-12 col-xl-3">
+        <div class="fisio-card h-100 mb-0 d-flex flex-column align-items-center justify-content-center text-center p-4">
+            @if (Model.PacienteSeleccionado != null)
+            {
+                <div class="user-avatar-circle mb-3" style="width: 72px; height: 72px; font-size: 1.8rem; background-color: #0096e6;">
+                    @Model.PacienteSeleccionado.Iniciales
+                </div>
+                <h3 class="fw-bold fs-5 mb-1">@Model.PacienteSeleccionado.NombreCompleto</h3>
+                <p class="text-muted mb-3" style="font-size: 0.8rem;">@Model.PacienteSeleccionado.Edad años &middot; Identificación: @Model.PacienteSeleccionado.Identificacion</p>
+
+                <div class="w-100 border-top border-bottom py-3 mb-3 text-start">
+                    <div class="d-flex justify-content-between mb-2" style="font-size: 0.8rem;">
+                        <span class="text-muted">Diagnóstico:</span>
+                        <span class="fw-bold">@Model.PacienteSeleccionado.Diagnostico</span>
+                    </div>
+                    <div class="d-flex justify-content-between mb-2" style="font-size: 0.8rem;">
+                        <span class="text-muted">Estado:</span>
+                        <span class="fw-bold">@Model.PacienteSeleccionado.EstadoTexto</span>
+                    </div>
+                    <div class="d-flex justify-content-between" style="font-size: 0.8rem;">
+                        <span class="text-muted">Próxima cita:</span>
+                        <span class="fw-bold text-primary">@Model.PacienteSeleccionado.ProximaCitaTexto</span>
+                    </div>
+                </div>
+
+                <a asp-action="VerPaciente" asp-route-id="@Model.PacienteSeleccionado.PacienteId" class="btn-fisio-primary w-100 justify-content-center">
+                    Ver expediente completo
+                </a>
+            }
+            else
+            {
+                <div class="rounded-circle bg-light d-flex align-items-center justify-content-center mb-3" style="width: 80px; height: 80px;">
+                    <i class="bi bi-person fs-1 text-muted"></i>
+                </div>
+                <h4 class="fw-bold fs-6 text-dark mb-1">Selecciona un paciente</h4>
+                <p class="text-muted mb-0" style="font-size: 0.78rem;">Haz clic en un paciente de la tabla para ver su ficha detallada.</p>
+            }
+        </div>
+    </div>
+</div>

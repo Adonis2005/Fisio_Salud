@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"] - FisioSalud</title>
+    <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+    <link rel="stylesheet" href="~/css/fisioterapeuta-panel.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/admin-panel.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
+</head>
+<body class="fisio-theme admin-theme">
+    <div class="fisio-wrapper">
+        @await Html.PartialAsync("_SidebarAdmin", (FisioSalud_Proyecto.Models.Administrador.AdminChromeViewModel)ViewBag.Chrome)
+
+        <div class="fisio-content">
+            <header class="fisio-navbar">
+                <div class="d-flex align-items-center gap-3">
+                    <button class="btn-icon-round d-lg-none" id="toggleSidebar" type="button">
+                        <i class="bi bi-list fs-5"></i>
+                    </button>
+                    <div class="fisio-page-header">
+                        <h1 class="fisio-page-title">@(ViewData["Title"] ?? "Panel de Administración")</h1>
+                        <p class="fisio-page-subtitle">Admin @ViewBag.AdminNombre · @ViewBag.AdminFecha</p>
+                    </div>
+                </div>
+
+                <div class="fisio-navbar-actions">
+                    <form asp-controller="Administrador" asp-action="Buscar" method="get" class="admin-search-form">
+                        <i class="bi bi-search"></i>
+                        <input type="search" name="q" placeholder="Buscar en el sistema..." value="@Context.Request.Query["q"]" />
+                    </form>
+                    <a class="btn-icon-round" asp-action="Dashboard" title="Alertas">
+                        <i class="bi bi-bell"></i>
+                        @if ((ViewBag.AlertasCount as int? ?? 0) > 0)
+                        {
+                            <span class="notification-badge"></span>
+                        }
+                    </a>
+                    <div class="citas-today-pill">
+                        <span class="citas-today-dot"></span>
+                        <span>@ViewBag.PacientesActivos pacientes · @ViewBag.TerapeutasActivos terapeutas activos</span>
+                    </div>
+                    <div class="nav-user-avatar" title="@ViewBag.AdminNombre">@ViewBag.AdminIniciales</div>
+                </div>
+            </header>
+
+            <main class="fisio-main-body">
+                @await Html.PartialAsync("_Alerts")
+                @RenderBody()
+            </main>
+        </div>
+    </div>
+
+    <script src="~/lib/jquery/dist/jquery.min.js"></script>
+    <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="~/js/site.js" asp-append-version="true"></script>
+    <script>
+        document.getElementById('toggleSidebar')?.addEventListener('click', function () {
+            document.getElementById('fisioSidebar')?.classList.toggle('show');
+        });
+    </script>
+    @await RenderSectionAsync("Scripts", required: false)
+</body>
+</html>

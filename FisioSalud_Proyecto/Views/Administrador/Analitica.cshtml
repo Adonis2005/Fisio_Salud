@@ -1,0 +1,180 @@
+@model FisioSalud_Proyecto.Models.Administrador.AdminAnaliticaPageViewModel
+@{
+    Layout = "_LayoutAdmin";
+    ViewData["Title"] = "Analítica y Facturación";
+    var mesNombre = DateTime.Now.ToString("MMMM", new System.Globalization.CultureInfo("es-ES"));
+}
+
+<!-- Top 4 KPI Cards -->
+<div class="admin-kpi-grid mb-4">
+    <div class="kpi-card">
+        <div class="kpi-icon-box green"><i class="bi bi-currency-dollar"></i></div>
+        <div>
+            <div class="kpi-number" style="font-size:1.6rem; color:#059669;">@Model.IngresosMes.ToString("C0")</div>
+            <div class="kpi-title">Ingresos @mesNombre</div>
+            <div class="kpi-sub green"><i class="bi bi-arrow-up-right me-1"></i>Facturado en BD</div>
+        </div>
+    </div>
+    <div class="kpi-card">
+        <div class="kpi-icon-box cyan"><i class="bi bi-credit-card"></i></div>
+        <div>
+            <div class="kpi-number" style="font-size:1.6rem; color:#0284c7;">@Model.GastosMes.ToString("C0")</div>
+            <div class="kpi-title">Gastos @mesNombre</div>
+            <div class="kpi-sub cyan"><i class="bi bi-arrow-down-right me-1"></i>Gastos registrados</div>
+        </div>
+    </div>
+    <div class="kpi-card">
+        <div class="kpi-icon-box blue"><i class="bi bi-graph-up-arrow"></i></div>
+        <div>
+            <div class="kpi-number" style="font-size:1.6rem; color:#2563eb;">@Model.GananciaNeta.ToString("C0")</div>
+            <div class="kpi-title">Ganancia neta</div>
+            <div class="kpi-sub blue">Margen operativo</div>
+        </div>
+    </div>
+    <div class="kpi-card">
+        <div class="kpi-icon-box red"><i class="bi bi-exclamation-circle"></i></div>
+        <div>
+            <div class="kpi-number" style="font-size:1.6rem; color:#dc2626;">@Model.FacturasPendientesMonto.ToString("C0")</div>
+            <div class="kpi-title">Fact. pendientes</div>
+            <div class="kpi-sub red">@Model.FacturasAbiertasCount facturas abiertas</div>
+        </div>
+    </div>
+</div>
+
+<div class="row g-3">
+    <!-- Columna Izquierda: Gráfico de Ingresos y Satisfacción -->
+    <div class="col-12 col-xl-8">
+        <!-- Chart Card: Ingresos vs Gastos vs Meta -->
+        <div class="fisio-card mb-3">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <h5 class="fw-bold m-0" style="font-size:0.95rem; color:#1e293b;">Ingresos vs Gastos vs Meta</h5>
+                <div class="format-btn-group">
+                    <button class="btn-fmt" type="button">Semana</button>
+                    <button class="btn-fmt" type="button">Mes</button>
+                    <button class="btn-fmt active" type="button">Trimestre</button>
+                </div>
+            </div>
+
+            <!-- Graphic Trend Area -->
+            <div class="position-relative" style="height: 200px; background:#fafafa; border-radius:12px; padding: 1rem;">
+                <div class="d-flex justify-content-between text-muted" style="font-size:0.7rem;">
+                    <span>$80k</span>
+                    <span>$60k</span>
+                    <span>$40k</span>
+                    <span>$0k</span>
+                </div>
+
+                <div class="d-flex align-items-end justify-content-between h-75 mt-2 px-3 border-bottom pb-2">
+                    <div class="text-center" style="font-size:0.75rem; color:#64748b;">Ene</div>
+                    <div class="text-center" style="font-size:0.75rem; color:#64748b;">Feb</div>
+                    <div class="text-center" style="font-size:0.75rem; color:#64748b;">Mar</div>
+                    <div class="text-center" style="font-size:0.75rem; color:#64748b;">Abr</div>
+                    <div class="text-center" style="font-size:0.75rem; color:#64748b;">May</div>
+                    <div class="text-center" style="font-size:0.75rem; color:#64748b;">Jun</div>
+                    <div class="text-center" style="font-size:0.75rem; color:#64748b;">Jul</div>
+                </div>
+
+                <!-- Legend -->
+                <div class="d-flex justify-content-center gap-4 mt-3" style="font-size:0.75rem; font-weight:600;">
+                    <span style="color:#2563eb;"><i class="bi bi-circle-fill me-1" style="font-size:0.6rem;"></i>Ingresos</span>
+                    <span style="color:#ef4444;"><i class="bi bi-circle-fill me-1" style="font-size:0.6rem;"></i>Gastos</span>
+                    <span style="color:#0ea5e9;"><i class="bi bi-circle-fill me-1" style="font-size:0.6rem;"></i>Meta</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Índice de Satisfacción por Terapeuta Card -->
+        <div class="fisio-card mb-0">
+            <h5 class="fw-bold mb-3" style="font-size:0.95rem; color:#1e293b;">Índice de Satisfacción por Terapeuta</h5>
+
+            @if (Model.Terapeutas != null && Model.Terapeutas.Any())
+            {
+                <div class="therapist-sat-grid">
+                    @foreach (var t in Model.Terapeutas)
+                    {
+                        <div class="therapist-sat-card">
+                            <div class="ring" style="--p:@t.Asistencia; margin:0; flex-shrink:0;">
+                                <span style="color:@(t.Asistencia >= 90 ? "#10b981" : t.Asistencia >= 80 ? "#2563eb" : "#f59e0b"); font-weight:800;">@t.Asistencia%</span>
+                            </div>
+                            <div>
+                                <div class="fw-bold" style="font-size:0.85rem; color:#1e293b;">@t.Nombre</div>
+                                <div class="text-warning" style="font-size:0.75rem;">
+                                    <i class="bi bi-star-fill"></i> <span class="fw-bold text-dark">4.9</span> <span class="text-muted">· @t.Citas citas</span>
+                                </div>
+                                <div class="text-muted" style="font-size:0.72rem;">NPS: @t.Asistencia</div>
+                            </div>
+                        </div>
+                    }
+                </div>
+            }
+            else
+            {
+                <div class="empty-state py-4">
+                    <i class="bi bi-heart-pulse d-block fs-2 mb-2 opacity-40"></i>
+                    <p class="mb-0" style="font-size:0.8rem;">No hay fisioterapeutas registrados en la base de datos.</p>
+                </div>
+            }
+        </div>
+    </div>
+
+    <!-- Columna Derecha: Gestión de Facturas -->
+    <div class="col-12 col-xl-4">
+        <div class="fisio-card mb-0 h-100">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <h5 class="fw-bold m-0" style="font-size:0.95rem; color:#1e293b;">Gestión de Facturas</h5>
+                <button type="button" class="btn btn-sm text-white rounded-pill px-3 fw-bold" style="background:#3553c7; font-size:0.78rem;">
+                    <i class="bi bi-plus-lg me-1"></i>Nueva
+                </button>
+            </div>
+
+            <!-- Facturas Stat Pills -->
+            <div class="invoice-stat-pills">
+                <div class="invoice-pill-stat pagada">
+                    <div class="fw-bold fs-5">@Model.FacturasPagadasCount</div>
+                    <div style="font-size:0.7rem;">Pagadas</div>
+                </div>
+                <div class="invoice-pill-stat pendiente">
+                    <div class="fw-bold fs-5">@Model.FacturasPendientesCount</div>
+                    <div style="font-size:0.7rem;">Pendientes</div>
+                </div>
+                <div class="invoice-pill-stat vencida">
+                    <div class="fw-bold fs-5">@Model.FacturasVencidasCount</div>
+                    <div style="font-size:0.7rem;">Vencidas</div>
+                </div>
+            </div>
+
+            <!-- List of Invoices from DB -->
+            <div class="d-flex flex-column">
+                @if (Model.FacturasRecientes != null && Model.FacturasRecientes.Any())
+                {
+                    @foreach (var f in Model.FacturasRecientes)
+                    {
+                        <div class="invoice-item-row">
+                            <div>
+                                <div class="fw-bold" style="font-size:0.82rem; color:#1e293b;">@f.Paciente</div>
+                                <div class="text-muted" style="font-size:0.7rem;">@f.NumeroFactura · @f.Fecha</div>
+                                <div class="text-muted" style="font-size:0.7rem;">@f.Terapeuta</div>
+                            </div>
+                            <div class="text-end">
+                                <div class="fw-bold" style="font-size:0.85rem; color:@(f.EstadoClass == "pagada" ? "#166534" : f.EstadoClass == "vencida" ? "#dc2626" : "#d97706");">
+                                    @f.Monto.ToString("C0")
+                                </div>
+                                <span class="badge @(f.EstadoClass == "pagada" ? "bg-success" : f.EstadoClass == "vencida" ? "bg-danger" : "bg-warning text-dark") mt-1" style="font-size:0.65rem; border-radius:50px;">
+                                    @f.Estado
+                                </span>
+                            </div>
+                        </div>
+                    }
+                }
+                else
+                {
+                    <div class="empty-state py-4">
+                        <i class="bi bi-receipt-cutoff d-block fs-2 mb-2 opacity-40"></i>
+                        <p class="mb-0 fw-semibold" style="font-size:0.82rem;">No hay facturas registradas en la base de datos.</p>
+                        <small class="text-muted">Las facturas aparecerán aquí al registrar pagos de pacientes.</small>
+                    </div>
+                }
+            </div>
+        </div>
+    </div>
+</div>

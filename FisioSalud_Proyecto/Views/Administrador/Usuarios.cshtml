@@ -1,0 +1,98 @@
+@model UsuarioFilterViewModel
+@{
+    Layout = "_LayoutAdmin";
+    ViewData["Title"] = "Gestión de Usuarios";
+}
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h4 class="mb-0">Usuarios</h4>
+    <a asp-action="CrearUsuario" class="btn btn-fisio">+ Nuevo usuario</a>
+</div>
+
+<div class="card-fisio mb-4">
+    <form method="get" class="form-row align-items-end">
+        <div class="form-group col-md-4">
+            <label>Buscar</label>
+            <input type="text" name="busqueda" value="@Model.Busqueda" class="form-control form-control-fisio" placeholder="Nombre, correo o identificación" />
+        </div>
+        <div class="form-group col-md-3">
+            <label>Rol</label>
+            <select name="rolId" class="form-control form-control-fisio">
+                <option value="">Todos</option>
+                @foreach (var rol in Model.RolesDisponibles)
+                {
+                    <option value="@rol.RolId" selected="@(Model.RolId == rol.RolId)">@rol.Nombre</option>
+                }
+            </select>
+        </div>
+        <div class="form-group col-md-3">
+            <label>Estado</label>
+            <select name="estado" class="form-control form-control-fisio">
+                <option value="">Todos</option>
+                <option value="true" selected="@(Model.Estado == true)">Activo</option>
+                <option value="false" selected="@(Model.Estado == false)">Bloqueado</option>
+            </select>
+        </div>
+        <div class="form-group col-md-2">
+            <button type="submit" class="btn btn-fisio btn-block">Filtrar</button>
+        </div>
+    </form>
+</div>
+
+<div class="table-responsive table-fisio">
+    <table class="table table-hover">
+        <thead>
+            <tr>
+                <th>Nombre</th>
+                <th>Correo</th>
+                <th>Teléfono</th>
+                <th>Rol</th>
+                <th>Estado</th>
+                <th>Acciones</th>
+            </tr>
+        </thead>
+        <tbody>
+            @if (Model.Usuarios.Any())
+            {
+                @foreach (var u in Model.Usuarios)
+                {
+                    <tr>
+                        <td>@u.Nombres @u.Apellidos</td>
+                        <td>@u.Correo</td>
+                        <td>@(u.Telefono ?? "-")</td>
+                        <td><span class="badge-estado">@u.Rol</span></td>
+                        <td>
+                            @if (u.Estado)
+                            {
+                                <span class="badge-active">Activo</span>
+                            }
+                            else
+                            {
+                                <span class="badge-inactive">Bloqueado</span>
+                            }
+                        </td>
+                        <td>
+                            <a asp-action="EditarUsuario" asp-route-id="@u.UsuarioId" class="btn btn-sm btn-outline-primary">Editar</a>
+                            <form asp-action="ToggleEstado" method="post" class="d-inline">
+                                @Html.AntiForgeryToken()
+                                <input type="hidden" name="id" value="@u.UsuarioId" />
+                                <button type="submit" class="btn btn-sm @(u.Estado ? "btn-outline-warning" : "btn-outline-success")">
+                                    @(u.Estado ? "Bloquear" : "Desbloquear")
+                                </button>
+                            </form>
+                            <form asp-action="EliminarUsuario" method="post" class="d-inline" onsubmit="return confirm('¿Está seguro de eliminar este usuario?');">
+                                @Html.AntiForgeryToken()
+                                <input type="hidden" name="id" value="@u.UsuarioId" />
+                                <button type="submit" class="btn btn-sm btn-outline-danger">Eliminar</button>
+                            </form>
+                        </td>
+                    </tr>
+                }
+            }
+            else
+            {
+                <tr><td colspan="6" class="text-center text-muted py-4">No se encontraron usuarios.</td></tr>
+            }
+        </tbody>
+    </table>
+</div>

@@ -1,0 +1,12 @@
+@if (TempData["Success"] != null)
+{
+    <div class="alert-fisio alert-success-fisio">@TempData["Success"]</div>
+}
+@if (TempData["Error"] != null)
+{
+    <div class="alert-fisio alert-error-fisio">@TempData["Error"]</div>
+}
+@if (TempData["Info"] != null)
+{
+    <div class="alert-fisio alert-info-fisio">@TempData["Info"]</div>
+}

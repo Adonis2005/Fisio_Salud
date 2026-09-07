@@ -1,0 +1,54 @@
+@model FisioSalud_Proyecto.Models.Auth.LoginViewModel
+@{
+    Layout = "_AuthLayout";
+    ViewData["Title"] = "Iniciar sesión";
+}
+
+<div class="w-full max-w-md">
+    <h2 class="text-3xl font-bold text-espresso mb-2">Bienvenido de vuelta</h2>
+    <p class="text-sm text-espresso/70 mb-8">Ingresa tus credenciales para acceder a tu cuenta.</p>
+
+    @await Html.PartialAsync("_Alerts")
+
+    <form asp-action="Login" method="post" class="space-y-5">
+        @Html.AntiForgeryToken()
+        <input type="hidden" name="returnUrl" value="@ViewData["ReturnUrl"]" />
+        
+        <div asp-validation-summary="ModelOnly" class="text-red-500 text-sm bg-red-50 p-3 rounded-lg"></div>
+
+        <div>
+            <label asp-for="Correo" class="block text-xs font-semibold tracking-wider text-espresso/70 uppercase mb-2">Email</label>
+            <input asp-for="Correo" class="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-terracotta focus:ring focus:ring-terracotta/20 outline-none transition-all bg-white" placeholder="correo@ejemplo.com" />
+            <span asp-validation-for="Correo" class="text-red-500 text-xs mt-1 block"></span>
+        </div>
+
+        <div>
+            <div class="flex justify-between items-center mb-2">
+                <label asp-for="Password" class="block text-xs font-semibold tracking-wider text-espresso/70 uppercase">Contraseña</label>
+                <a asp-action="ForgotPassword" class="text-xs text-espresso/60 hover:text-terracotta transition-colors">¿Olvidaste tu contraseña?</a>
+            </div>
+            <input asp-for="Password" type="password" class="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-terracotta focus:ring focus:ring-terracotta/20 outline-none transition-all bg-white" placeholder="••••••••" />
+            <span asp-validation-for="Password" class="text-red-500 text-xs mt-1 block"></span>
+        </div>
+
+        <!-- Oculto según el diseño, pero mantenemos el campo para que el modelo no falle -->
+        <div class="hidden">
+            <input asp-for="RememberMe" />
+        </div>
+
+        <button type="submit" class="w-full bg-terracotta text-white font-medium py-3.5 rounded-full hover:bg-terracotta/90 transition-all shadow-lg shadow-terracotta/30 mt-8">
+            Iniciar Sesión
+        </button>
+    </form>
+
+    <div class="mt-8 text-center text-sm text-espresso/70 border-b border-gray-200 pb-8">
+        ¿No tienes cuenta? 
+        <a asp-action="Register" class="font-semibold text-espresso hover:text-terracotta transition-colors ml-1">Regístrate aquí</a>
+    </div>
+    
+    <div class="mt-8 text-center">
+        <a asp-controller="Home" asp-action="Index" class="text-xs text-espresso/60 hover:text-terracotta transition-colors inline-flex items-center gap-2">
+            &larr; Volver al inicio
+        </a>
+    </div>
+</div>

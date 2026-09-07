@@ -1,0 +1,72 @@
+@model ConfiguracionPageViewModel
+@{
+    Layout = "_LayoutCliente";
+    ViewData["Title"] = "Configuración";
+}
+
+<div class="grid grid-cols-1 xl:grid-cols-3 gap-4">
+    <div class="space-y-4">
+        <section class="fs-card text-center">
+            <span class="avatar-circle avatar-lg mx-auto mb-3">@Model.Iniciales</span>
+            <h3 class="mb-1">@Model.NombreCompleto</h3>
+            <span class="badge-soft @(Model.Activo ? "ok" : "warn")">● @(Model.Activo ? "Paciente activo" : "Cuenta inactiva")</span>
+            @if (!string.IsNullOrEmpty(Model.FechaRegistroFormato))
+            {
+                <p class="text-xs text-terracotta mt-3 mb-0">Registro: @Model.FechaRegistroFormato</p>
+            }
+        </section>
+        <section class="fs-card">
+            <h3>Accesos rápidos</h3>
+            <a href="#password" class="block rounded-xl px-4 py-3 mb-2 no-underline text-espresso" style="background:#F3EBE3;">Cambiar contraseña</a>
+            <p class="text-sm text-terracotta mb-0">Descarga de datos y centro de ayuda se conectarán cuando existan esas funciones. Política de privacidad está en el sitio público.</p>
+            <a asp-controller="Home" asp-action="Privacy" class="text-sm font-semibold mt-2 inline-block">Política de privacidad →</a>
+        </section>
+    </div>
+
+    <div class="xl:col-span-2 space-y-4">
+        <section class="fs-card" id="password">
+            <h3><i class="bi bi-shield-lock mr-1"></i> Seguridad</h3>
+            <p class="text-sm text-terracotta">Actualiza Usuarios.PasswordHash de tu cuenta.</p>
+            <form asp-action="CambiarPassword" method="post" class="grid grid-cols-1 md:grid-cols-3 gap-3">
+                @Html.AntiForgeryToken()
+                <input name="PasswordActual" type="password" placeholder="Contraseña actual" class="rounded-xl px-3 py-2" style="background:#F7F4EF;border:none;" />
+                <input name="PasswordNueva" type="password" placeholder="Nueva contraseña" class="rounded-xl px-3 py-2" style="background:#F7F4EF;border:none;" />
+                <input name="PasswordConfirmar" type="password" placeholder="Confirmar" class="rounded-xl px-3 py-2" style="background:#F7F4EF;border:none;" />
+                <div class="md:col-span-3">
+                    <button type="submit" class="px-6 py-2.5 rounded-full text-white font-semibold" style="background:#3C2A21;">Guardar contraseña</button>
+                </div>
+            </form>
+        </section>
+
+        <section class="fs-card">
+            <h3><i class="bi bi-bell mr-1"></i> Notificaciones</h3>
+            <p class="text-sm text-terracotta mb-3">Vista del diseño. No se guardan porque no hay tabla de preferencias.</p>
+            @{
+                var items = new[] {
+                    "Recordatorios por correo",
+                    "Notificaciones push",
+                    "Actualizaciones de progreso",
+                    "Mensajes del terapeuta",
+                    "Recordatorios de ejercicio"
+                };
+            }
+            @foreach (var item in items)
+            {
+                <div class="flex justify-between items-center py-3 border-b border-espresso/5">
+                    <span>@item</span>
+                    <span class="toggle-on" title="Solo visual"></span>
+                </div>
+            }
+        </section>
+
+        <section class="fs-card">
+            <h3><i class="bi bi-sun mr-1"></i> Apariencia</h3>
+            <p class="text-sm text-terracotta mb-3">El tema claro es el de FisioSalud (crema + espresso). Oscuro no está implementado para no romper la identidad visual.</p>
+            <div class="grid grid-cols-3 gap-3">
+                <div class="rounded-xl p-3 border-2 border-espresso text-center">Claro</div>
+                <div class="rounded-xl p-3 border border-espresso/20 text-center text-terracotta">Oscuro</div>
+                <div class="rounded-xl p-3 border border-espresso/20 text-center text-terracotta">Automático</div>
+            </div>
+        </section>
+    </div>
+</div>

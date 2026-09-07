@@ -1,0 +1,143 @@
+@model FisioMensajesViewModel
+@{
+    Layout = "_LayoutFisioterapeuta";
+    ViewData["Title"] = "Centro de Comunicaciones";
+}
+
+<div class="chat-container-layout">
+    <!-- Left Column: Patient Conversation List -->
+    <div class="chat-list-panel">
+        <div class="chat-list-header">
+            <div class="fw-bold mb-2" style="font-size: 0.9rem; color: var(--text-dark);">Mensajes</div>
+            <div class="fisio-search-box max-w-100">
+                <i class="bi bi-search fisio-search-icon"></i>
+                <input type="text" placeholder="Buscar paciente..." />
+            </div>
+        </div>
+
+        <div class="overflow-y-auto flex-grow-1">
+            @if (Model.Conversaciones != null && Model.Conversaciones.Any())
+            {
+                @foreach (var c in Model.Conversaciones)
+                {
+                    <a asp-action="Mensajes" asp-route-pacienteId="@c.PacienteId" class="chat-patient-item @(Model.ConversacionActiva?.PacienteId == c.PacienteId ? "active" : "")">
+                        <div class="agenda-avatar" style="background-color: #0096e6;">@c.Iniciales</div>
+                        <div class="flex-grow-1 overflow-hidden">
+                            <div class="d-flex align-items-center justify-content-between">
+                                <span class="chat-patient-name">@c.PacienteNombre</span>
+                                <span class="text-muted" style="font-size: 0.68rem;">@c.UltimaHora</span>
+                            </div>
+                            <div class="d-flex align-items-center justify-content-between">
+                                <span class="chat-patient-preview">@c.UltimoMensaje</span>
+                                @if (c.MensajesNoLeidos > 0)
+                                {
+                                    <span class="badge bg-danger rounded-pill" style="font-size: 0.65rem;">@c.MensajesNoLeidos</span>
+                                }
+                            </div>
+                        </div>
+                    </a>
+                }
+            }
+            else
+            {
+                <div class="p-4 text-center text-muted">
+                    <i class="bi bi-chat-left-text d-block fs-3 mb-2 opacity-50"></i>
+                    <span style="font-size: 0.8rem;">No hay conversaciones registradas.</span>
+                </div>
+            }
+        </div>
+    </div>
+
+    <!-- Middle Column: Active Chat Panel -->
+    <div class="chat-active-panel">
+        @if (Model.ConversacionActiva != null)
+        {
+            <div class="chat-active-header">
+                <div class="d-flex align-items-center gap-3">
+                    <div class="agenda-avatar" style="background-color: #0096e6; width: 36px; height: 36px;">@Model.ConversacionActiva.Iniciales</div>
+                    <div>
+                        <div class="fw-bold" style="font-size: 0.92rem; color: var(--text-dark);">@Model.ConversacionActiva.PacienteNombre</div>
+                        <div class="text-muted" style="font-size: 0.73rem;">@Model.ConversacionActiva.Diagnostico</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="chat-messages-scroll">
+                @foreach (var m in Model.MensajesChat)
+                {
+                    <div class="chat-bubble @(m.EsSaliente ? "outgoing" : "incoming")">
+                        <div>@m.Contenido</div>
+                        <div class="chat-time">@m.Hora</div>
+                    </div>
+                }
+            </div>
+
+            <form method="post" asp-action="GuardarMensaje" class="chat-input-bar">
+                @Html.AntiForgeryToken()
+                <input type="hidden" name="pacienteId" value="@Model.ConversacionActiva.PacienteId" />
+                <input type="text" name="nuevoMensajeTexto" class="chat-input-field" placeholder="Escribe a @Model.ConversacionActiva.PacienteNombre..." required />
+                <button type="submit" class="btn-fisio-primary py-2 px-3 rounded-circle">
+                    <i class="bi bi-send-fill"></i>
+                </button>
+            </form>
+        }
+        else
+        {
+            <div class="d-flex flex-column align-items-center justify-content-center h-100 text-muted p-4">
+                <i class="bi bi-chat-dots fs-1 mb-2 opacity-50"></i>
+                <h5 class="fw-bold text-dark mb-1">No hay mensajes</h5>
+                <p style="font-size: 0.85rem;">Cuando tengas conversaciones con tus pacientes, aparecerán aquí.</p>
+            </div>
+        }
+    </div>
+
+    <!-- Right Column: Patient Detail Drawer -->
+    <div class="chat-detail-drawer">
+        @if (Model.ConversacionActiva != null)
+        {
+            <div class="text-center mb-3">
+                <div class="fw-bold mb-2 text-muted" style="font-size: 0.78rem;">Ficha del paciente</div>
+                <div class="user-avatar-circle mx-auto mb-2" style="width: 56px; height: 56px; font-size: 1.3rem; background-color: #0096e6;">
+                    @Model.ConversacionActiva.Iniciales
+                </div>
+                <div class="fw-bold" style="font-size: 0.95rem; color: var(--text-dark);">@Model.ConversacionActiva.PacienteNombre</div>
+                <div class="text-muted" style="font-size: 0.75rem;">@Model.ConversacionActiva.Edad años</div>
+            </div>
+
+            <div class="border-top py-3 mb-3">
+                <div class="d-flex justify-content-between mb-2" style="font-size: 0.78rem;">
+                    <span class="text-muted">Diagnóstico:</span>
+                    <span class="fw-bold text-dark">@Model.ConversacionActiva.Diagnostico</span>
+                </div>
+                <div class="d-flex justify-content-between mb-2" style="font-size: 0.78rem;">
+                    <span class="text-muted">Sesiones:</span>
+                    <span class="fw-bold text-dark">@Model.ConversacionActiva.SesionesTexto</span>
+                </div>
+                <div class="d-flex justify-content-between mb-2" style="font-size: 0.78rem;">
+                    <span class="text-muted">Progreso:</span>
+                    <span class="fw-bold text-dark">@Model.ConversacionActiva.ProgresoPorcentaje%</span>
+                </div>
+                <div class="d-flex justify-content-between mb-2" style="font-size: 0.78rem;">
+                    <span class="text-muted">Dolor actual:</span>
+                    <span class="fw-bold text-danger">@Model.ConversacionActiva.DolorActual/10</span>
+                </div>
+                <div class="d-flex justify-content-between" style="font-size: 0.78rem;">
+                    <span class="text-muted">Próx. cita:</span>
+                    <span class="fw-bold text-primary">@Model.ConversacionActiva.ProximaCitaTexto</span>
+                </div>
+            </div>
+
+            <div class="progress-track mb-4" style="height: 6px;">
+                <div class="progress-fill cyan" style="width: @(Model.ConversacionActiva.ProgresoPorcentaje)%"></div>
+            </div>
+
+            <div class="fw-bold mb-2 text-dark" style="font-size: 0.8rem;">Acciones rápidas</div>
+            <a asp-action="VerPaciente" asp-route-id="@Model.ConversacionActiva.PacienteId" class="btn-action-drawer blue">
+                <i class="bi bi-folder-symlink"></i> Ver expediente
+            </a>
+            <a asp-action="Agenda" class="btn-action-drawer light-blue">
+                <i class="bi bi-calendar-event"></i> Agendar cita
+            </a>
+        }
+    </div>
+</div>

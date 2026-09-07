@@ -1,0 +1,88 @@
+@model UsuarioFormViewModel
+@{
+    Layout = "_LayoutAdmin";
+    ViewData["Title"] = Model.UsuarioId.HasValue ? "Editar usuario" : "Crear usuario";
+    var isEdit = Model.UsuarioId.HasValue;
+}
+
+<div class="card-fisio" style="max-width: 700px;">
+    <h4 class="mb-4">@ViewData["Title"]</h4>
+
+    <form asp-action="@(isEdit ? "EditarUsuario" : "CrearUsuario")" method="post">
+        @Html.AntiForgeryToken()
+        @if (isEdit) { <input type="hidden" asp-for="UsuarioId" /> }
+        <div asp-validation-summary="ModelOnly" class="alert-fisio alert-error-fisio"></div>
+
+        <div class="form-row">
+            <div class="form-group col-md-6">
+                <label asp-for="Nombres"></label>
+                <input asp-for="Nombres" class="form-control form-control-fisio" />
+                <span asp-validation-for="Nombres" class="text-danger small"></span>
+            </div>
+            <div class="form-group col-md-6">
+                <label asp-for="Apellidos"></label>
+                <input asp-for="Apellidos" class="form-control form-control-fisio" />
+                <span asp-validation-for="Apellidos" class="text-danger small"></span>
+            </div>
+        </div>
+
+        <div class="form-group">
+            <label asp-for="Identificacion"></label>
+            <input asp-for="Identificacion" class="form-control form-control-fisio" />
+            <span asp-validation-for="Identificacion" class="text-danger small"></span>
+        </div>
+
+        <div class="form-group">
+            <label asp-for="Correo"></label>
+            <input asp-for="Correo" class="form-control form-control-fisio" />
+            <span asp-validation-for="Correo" class="text-danger small"></span>
+        </div>
+
+        <div class="form-group">
+            <label asp-for="Telefono"></label>
+            <input asp-for="Telefono" class="form-control form-control-fisio" />
+        </div>
+
+        <div class="form-row">
+            <div class="form-group col-md-6">
+                <label asp-for="RolId"></label>
+                <select asp-for="RolId" class="form-control form-control-fisio"
+                        asp-items="@(new SelectList(Model.RolesDisponibles, "RolId", "Nombre"))">
+                    <option value="">Seleccione...</option>
+                </select>
+                <span asp-validation-for="RolId" class="text-danger small"></span>
+            </div>
+            <div class="form-group col-md-6 d-flex align-items-end">
+                <div class="form-check">
+                    <input asp-for="Estado" class="form-check-input" />
+                    <label asp-for="Estado" class="form-check-label"></label>
+                </div>
+            </div>
+        </div>
+
+        <hr />
+        <p class="text-muted small">@(isEdit ? "Deje la contraseña vacía para mantener la actual." : "Contraseña obligatoria.")</p>
+
+        <div class="form-row">
+            <div class="form-group col-md-6">
+                <label asp-for="Password"></label>
+                <input asp-for="Password" class="form-control form-control-fisio" />
+                <span asp-validation-for="Password" class="text-danger small"></span>
+            </div>
+            <div class="form-group col-md-6">
+                <label asp-for="ConfirmPassword"></label>
+                <input asp-for="ConfirmPassword" class="form-control form-control-fisio" />
+                <span asp-validation-for="ConfirmPassword" class="text-danger small"></span>
+            </div>
+        </div>
+
+        <div class="mt-3">
+            <button type="submit" class="btn btn-fisio">Guardar</button>
+            <a asp-action="Usuarios" class="btn btn-outline-secondary ml-2">Cancelar</a>
+        </div>
+    </form>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

@@ -1,0 +1,98 @@
+@model HistorialPageViewModel
+@{
+    Layout = "_LayoutCliente";
+    ViewData["Title"] = "Mi Historial";
+}
+
+<div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4 mb-4">
+    <div class="fs-card">
+        <div class="text-sm text-terracotta">Sesiones completadas</div>
+        <div class="text-2xl font-bold">@Model.CitasAtendidas</div>
+        <div class="text-xs text-terracotta">de @Model.Citas.Count en este filtro · total atendidas</div>
+    </div>
+    <div class="fs-card">
+        <div class="text-sm text-terracotta">Semanas en tratamiento</div>
+        <div class="text-2xl font-bold">@Model.SemanaRehabilitacion</div>
+    </div>
+    <div class="fs-card">
+        <div class="text-sm text-terracotta">Horas de terapia</div>
+        <div class="text-2xl font-bold">@Model.HorasTerapia</div>
+        <div class="text-xs text-terracotta">según duración de citas atendidas</div>
+    </div>
+    <div class="fs-card">
+        <div class="text-sm text-terracotta">Índice de asistencia</div>
+        <div class="text-2xl font-bold">@Model.AsistenciaPorcentaje%</div>
+        <div class="text-xs text-terracotta">@Model.CitasCanceladas cancelada(s)</div>
+    </div>
+</div>
+
+<div class="grid grid-cols-1 xl:grid-cols-5 gap-4 mb-4">
+    <section class="fs-card xl:col-span-2">
+        <h3>Historial de sesiones</h3>
+        <div class="flex flex-wrap gap-2 mb-4">
+            <a class="pill-btn @(Model.Filtro == "TODAS" ? "active" : "")" asp-action="Historial" asp-route-filtro="TODAS">Todas</a>
+            <a class="pill-btn @(Model.Filtro == "COMPLETADA" ? "active" : "")" asp-action="Historial" asp-route-filtro="COMPLETADA">Completada</a>
+            <a class="pill-btn @(Model.Filtro == "PROGRAMADA" ? "active" : "")" asp-action="Historial" asp-route-filtro="PROGRAMADA">Programada</a>
+            <a class="pill-btn @(Model.Filtro == "CANCELADA" ? "active" : "")" asp-action="Historial" asp-route-filtro="CANCELADA">Cancelada</a>
+        </div>
+        @if (!Model.Citas.Any())
+        {
+            <p class="text-sm text-terracotta">No hay sesiones para este filtro.</p>
+        }
+        else
+        {
+            foreach (var c in Model.Citas)
+            {
+                var selected = c.CitaId == Model.CitaSeleccionadaId;
+                <a asp-action="Historial" asp-route-filtro="@Model.Filtro" asp-route-citaId="@c.CitaId"
+                   class="block rounded-2xl p-3 mb-2 no-underline @(selected ? "" : "")"
+                   style="@(selected ? "background:#F8EDE4;border:1px solid #3C2A21;" : "border:1px solid #E7D9CC;")">
+                    <div class="flex justify-between">
+                        <div>
+                            <div class="font-semibold text-espresso">@(c.MotivoConsulta ?? "Sesión")</div>
+                            <div class="text-xs text-terracotta">@c.Fisioterapeuta · @c.Fecha.ToString("d MMM", new System.Globalization.CultureInfo("es-ES"))</div>
+                        </div>
+                        <span class="badge-soft @CitaEstados.Css(c.Estado)">@CitaEstados.Etiqueta(c.Estado)</span>
+                    </div>
+                </a>
+            }
+        }
+    </section>
+
+    <section class="fs-card xl:col-span-3">
+        @if (Model.Detalle == null)
+        {
+            <p class="text-terracotta">Selecciona una sesión para ver el detalle guardado en Citas.</p>
+        }
+        else
+        {
+            var d = Model.Detalle;
+            <div class="flex justify-between items-start">
+                <div>
+                    <h3 class="mb-1">@(d.MotivoConsulta ?? "Sesión de fisioterapia")</h3>
+                    <p class="text-sm text-terracotta">@d.Fecha.ToString("dddd d 'de' MMMM, yyyy", new System.Globalization.CultureInfo("es-ES")) · @d.HoraInicio.ToString(@"hh\:mm") hrs</p>
+                </div>
+                <span class="badge-soft @CitaEstados.Css(d.Estado)">@CitaEstados.Etiqueta(d.Estado)</span>
+            </div>
+            <p class="text-sm mb-4">Duración: @d.DuracionMinutos min</p>
+            <div class="flex items-center gap-3 mb-4">
+                <span class="avatar-circle">@d.FisioterapeutaIniciales</span>
+                <div>
+                    <div class="text-xs text-terracotta">Fisioterapeuta</div>
+                    <div class="font-semibold">@d.Fisioterapeuta</div>
+                </div>
+            </div>
+            <div class="rounded-xl p-4" style="background:#F8EDE4;">
+                <div class="text-xs font-semibold uppercase tracking-wide text-terracotta mb-1">Observaciones clínicas</div>
+                <p class="text-sm mb-0">@(string.IsNullOrWhiteSpace(d.Observaciones) ? "Sin observaciones registradas en esta cita." : d.Observaciones)</p>
+            </div>
+        }
+    </section>
+</div>
+
+<section class="fs-card">
+    <div class="flex justify-between items-center mb-3">
+        <h3 class="mb-0">Mis documentos médicos</h3>
+    </div>
+    <p class="text-sm text-terracotta mb-0">No hay una tabla de documentos en la base actual. Cuando se agregue, aparecerán aquí planes, evaluaciones e imágenes vinculados a tu PacienteId.</p>
+</section>

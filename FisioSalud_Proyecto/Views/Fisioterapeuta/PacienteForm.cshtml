@@ -1,0 +1,96 @@
+@model PacienteFormViewModel
+@{
+    Layout = "_LayoutFisioterapeuta";
+    bool esEdicion = Model.PacienteId.HasValue;
+    ViewData["Title"] = esEdicion ? "Editar Paciente" : "Nuevo Paciente";
+}
+
+<div class="row justify-content-center">
+    <div class="col-12 col-lg-8">
+        <div class="fisio-card">
+            <div class="fisio-card-header mb-4">
+                <h2 class="fisio-card-title">@(esEdicion ? "Actualizar datos del paciente" : "Registro de nuevo paciente")</h2>
+                <a asp-action="Pacientes" class="btn-fisio-light">
+                    <i class="bi bi-arrow-left"></i> Volver a la lista
+                </a>
+            </div>
+
+            <form asp-action="@(esEdicion ? "EditarPaciente" : "CrearPaciente")" method="post">
+                @Html.AntiForgeryToken()
+                @if (esEdicion)
+                {
+                    <input type="hidden" asp-for="PacienteId" />
+                }
+
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <label asp-for="Nombres" class="form-label fw-bold" style="font-size: 0.8rem; color: var(--text-dark);"></label>
+                        <input asp-for="Nombres" class="form-control rounded-pill px-3" style="font-size: 0.85rem;" placeholder="Ej. Juan Carlos" />
+                        <span asp-validation-for="Nombres" class="text-danger small"></span>
+                    </div>
+
+                    <div class="col-md-6">
+                        <label asp-for="Apellidos" class="form-label fw-bold" style="font-size: 0.8rem; color: var(--text-dark);"></label>
+                        <input asp-for="Apellidos" class="form-control rounded-pill px-3" style="font-size: 0.85rem;" placeholder="Ej. Pérez Morales" />
+                        <span asp-validation-for="Apellidos" class="text-danger small"></span>
+                    </div>
+
+                    <div class="col-md-6">
+                        <label asp-for="Identificacion" class="form-label fw-bold" style="font-size: 0.8rem; color: var(--text-dark);"></label>
+                        <input asp-for="Identificacion" class="form-control rounded-pill px-3" style="font-size: 0.85rem;" placeholder="Cédula / DNI" />
+                        <span asp-validation-for="Identificacion" class="text-danger small"></span>
+                    </div>
+
+                    <div class="col-md-6">
+                        <label asp-for="FechaNacimiento" class="form-label fw-bold" style="font-size: 0.8rem; color: var(--text-dark);"></label>
+                        <input asp-for="FechaNacimiento" class="form-control rounded-pill px-3" style="font-size: 0.85rem;" />
+                        <span asp-validation-for="FechaNacimiento" class="text-danger small"></span>
+                    </div>
+
+                    <div class="col-md-6">
+                        <label asp-for="Sexo" class="form-label fw-bold" style="font-size: 0.8rem; color: var(--text-dark);"></label>
+                        <select asp-for="Sexo" class="form-select rounded-pill px-3" style="font-size: 0.85rem;">
+                            <option value="">-- Seleccionar --</option>
+                            <option value="M">Masculino</option>
+                            <option value="F">Femenino</option>
+                            <option value="O">Otro</option>
+                        </select>
+                        <span asp-validation-for="Sexo" class="text-danger small"></span>
+                    </div>
+
+                    <div class="col-md-6">
+                        <label asp-for="Telefono" class="form-label fw-bold" style="font-size: 0.8rem; color: var(--text-dark);"></label>
+                        <input asp-for="Telefono" class="form-control rounded-pill px-3" style="font-size: 0.85rem;" placeholder="Ej. 0991234567" />
+                        <span asp-validation-for="Telefono" class="text-danger small"></span>
+                    </div>
+
+                    <div class="col-md-12">
+                        <label asp-for="Correo" class="form-label fw-bold" style="font-size: 0.8rem; color: var(--text-dark);"></label>
+                        <input asp-for="Correo" class="form-control rounded-pill px-3" style="font-size: 0.85rem;" placeholder="correo@ejemplo.com" />
+                        <span asp-validation-for="Correo" class="text-danger small"></span>
+                    </div>
+
+                    <div class="col-md-12">
+                        <label asp-for="Direccion" class="form-label fw-bold" style="font-size: 0.8rem; color: var(--text-dark);"></label>
+                        <input asp-for="Direccion" class="form-control rounded-pill px-3" style="font-size: 0.85rem;" placeholder="Dirección domiciliaria" />
+                        <span asp-validation-for="Direccion" class="text-danger small"></span>
+                    </div>
+
+                    <div class="col-md-12 mt-3">
+                        <div class="form-check form-switch">
+                            <input class="form-check-input" type="checkbox" asp-for="Estado" id="estadoCheck" />
+                            <label class="form-check-input-label fw-bold" for="estadoCheck" style="font-size: 0.85rem;">Paciente activo</label>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="d-flex justify-content-end gap-2 mt-4 pt-3 border-top">
+                    <a asp-action="Pacientes" class="btn-fisio-light">Cancelar</a>
+                    <button type="submit" class="btn-fisio-primary">
+                        <i class="bi bi-check-lg"></i> Guardar Paciente
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>

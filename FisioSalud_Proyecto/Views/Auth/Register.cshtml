@@ -1,0 +1,77 @@
+@model FisioSalud_Proyecto.Models.Auth.RegisterViewModel
+@{
+    Layout = "_AuthLayout";
+    ViewData["Title"] = "Registro";
+}
+
+<div class="w-full max-w-md">
+    <h2 class="text-3xl font-bold text-espresso mb-2">Crea tu cuenta</h2>
+    <p class="text-sm text-espresso/70 mb-8">Únete a FisioSalud y empieza tu camino hacia el bienestar.</p>
+
+    @await Html.PartialAsync("_Alerts")
+
+    <form asp-action="Register" method="post" class="space-y-4">
+        @Html.AntiForgeryToken()
+        
+        <div asp-validation-summary="ModelOnly" class="text-red-500 text-sm bg-red-50 p-3 rounded-lg"></div>
+
+        <div class="grid grid-cols-2 gap-4">
+            <div>
+                <label asp-for="Nombres" class="block text-xs font-semibold tracking-wider text-espresso/70 uppercase mb-2">Nombre *</label>
+                <input asp-for="Nombres" class="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-terracotta focus:ring focus:ring-terracotta/20 outline-none transition-all bg-white" placeholder="Nombre" />
+                <span asp-validation-for="Nombres" class="text-red-500 text-xs mt-1 block"></span>
+            </div>
+            <div>
+                <label asp-for="Apellidos" class="block text-xs font-semibold tracking-wider text-espresso/70 uppercase mb-2">Apellido *</label>
+                <input asp-for="Apellidos" class="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-terracotta focus:ring focus:ring-terracotta/20 outline-none transition-all bg-white" placeholder="Apellido" />
+                <span asp-validation-for="Apellidos" class="text-red-500 text-xs mt-1 block"></span>
+            </div>
+        </div>
+
+        <div>
+            <label asp-for="Identificacion" class="block text-xs font-semibold tracking-wider text-espresso/70 uppercase mb-2">Identificación *</label>
+            <input asp-for="Identificacion" class="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-terracotta focus:ring focus:ring-terracotta/20 outline-none transition-all bg-white" placeholder="Número de identificación" />
+            <span asp-validation-for="Identificacion" class="text-red-500 text-xs mt-1 block"></span>
+        </div>
+
+        <div>
+            <label asp-for="Correo" class="block text-xs font-semibold tracking-wider text-espresso/70 uppercase mb-2">Email *</label>
+            <input asp-for="Correo" class="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-terracotta focus:ring focus:ring-terracotta/20 outline-none transition-all bg-white" placeholder="correo@ejemplo.com" />
+            <span asp-validation-for="Correo" class="text-red-500 text-xs mt-1 block"></span>
+        </div>
+
+        <div>
+            <label asp-for="Telefono" class="block text-xs font-semibold tracking-wider text-espresso/70 uppercase mb-2">Teléfono</label>
+            <input asp-for="Telefono" class="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-terracotta focus:ring focus:ring-terracotta/20 outline-none transition-all bg-white" placeholder="+52 55 1234 5678" />
+            <span asp-validation-for="Telefono" class="text-red-500 text-xs mt-1 block"></span>
+        </div>
+
+        <div class="grid grid-cols-2 gap-4">
+            <div>
+                <label asp-for="Password" class="block text-xs font-semibold tracking-wider text-espresso/70 uppercase mb-2">Contraseña *</label>
+                <input asp-for="Password" type="password" class="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-terracotta focus:ring focus:ring-terracotta/20 outline-none transition-all bg-white" placeholder="••••••••" />
+                <span asp-validation-for="Password" class="text-red-500 text-xs mt-1 block"></span>
+            </div>
+            <div>
+                <label asp-for="ConfirmPassword" class="block text-xs font-semibold tracking-wider text-espresso/70 uppercase mb-2">Confirmar *</label>
+                <input asp-for="ConfirmPassword" type="password" class="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-terracotta focus:ring focus:ring-terracotta/20 outline-none transition-all bg-white" placeholder="••••••••" />
+                <span asp-validation-for="ConfirmPassword" class="text-red-500 text-xs mt-1 block"></span>
+            </div>
+        </div>
+
+        <button type="submit" class="w-full bg-terracotta text-white font-medium py-3.5 rounded-full hover:bg-terracotta/90 transition-all shadow-lg shadow-terracotta/30 mt-6">
+            Crear Cuenta
+        </button>
+    </form>
+
+    <div class="mt-8 text-center text-sm text-espresso/70 border-b border-gray-200 pb-8">
+        ¿Ya tienes cuenta? 
+        <a asp-action="Login" class="font-semibold text-espresso hover:text-terracotta transition-colors ml-1">Inicia sesión</a>
+    </div>
+    
+    <div class="mt-8 text-center">
+        <a asp-controller="Home" asp-action="Index" class="text-xs text-espresso/60 hover:text-terracotta transition-colors inline-flex items-center gap-2">
+            &larr; Volver al inicio
+        </a>
+    </div>
+</div>

@@ -1,0 +1,271 @@
+@model FisioDashboardViewModel
+@{
+    Layout = "_LayoutFisioterapeuta";
+    ViewData["Title"] = "Mi Panel de Trabajo";
+    var fechaHoyTexto = DateTime.Now.ToString("dddd, d 'de' MMMM yyyy", new System.Globalization.CultureInfo("es-ES"));
+    var mesAnoTexto = DateTime.Now.ToString("MMMM yyyy", new System.Globalization.CultureInfo("es-ES"));
+}
+
+<!-- Row 1: KPI Cards -->
+<div class="row g-3 mb-4">
+    <div class="col-12 col-sm-6 col-xl-3">
+        <div class="kpi-card">
+            <div class="kpi-icon-box blue">
+                <i class="bi bi-people-fill"></i>
+            </div>
+            <div>
+                <div class="kpi-number">@Model.PacientesActivos</div>
+                <div class="kpi-title">Pacientes activos</div>
+                <div class="kpi-sub blue">@Model.TotalPacientes registrados</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-12 col-sm-6 col-xl-3">
+        <div class="kpi-card">
+            <div class="kpi-icon-box cyan">
+                <i class="bi bi-calendar-check-fill"></i>
+            </div>
+            <div>
+                <div class="kpi-number">@Model.CitasHoy</div>
+                <div class="kpi-title">Citas de hoy</div>
+                <div class="kpi-sub cyan">@Model.CitasCompletadasHoy completadas</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-12 col-sm-6 col-xl-3">
+        <div class="kpi-card">
+            <div class="kpi-icon-box green">
+                <i class="bi bi-activity"></i>
+            </div>
+            <div>
+                <div class="kpi-number">@Model.EjerciciosAsignados</div>
+                <div class="kpi-title">Ejercicios asignados</div>
+                <div class="kpi-sub green">@Model.EjerciciosPendientes pendientes</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-12 col-sm-6 col-xl-3">
+        <div class="kpi-card">
+            <div class="kpi-icon-box yellow">
+                <i class="bi bi-chat-text-fill"></i>
+            </div>
+            <div>
+                <div class="kpi-number">@Model.MensajesSinLeer</div>
+                <div class="kpi-title">Mensajes sin leer</div>
+                <div class="kpi-sub yellow">@Model.MensajesUrgentes urgentes</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Row 2: 3-Column Dashboard Layout -->
+<div class="row g-3">
+    <!-- Left Column: Agenda de Hoy Timeline & Clinical Tasks -->
+    <div class="col-12 col-lg-3">
+        <div class="fisio-card h-100 mb-0">
+            <div class="fisio-card-header">
+                <h2 class="fisio-card-title">Agenda de Hoy</h2>
+                <a asp-action="Agenda" class="text-decoration-none text-primary fw-bold" style="font-size: 0.78rem;">Ver todo</a>
+            </div>
+            <p class="text-muted mb-3 text-capitalize" style="font-size: 0.75rem;">@fechaHoyTexto</p>
+
+            <div class="agenda-timeline mb-4">
+                @if (Model.AgendaHoy != null && Model.AgendaHoy.Any())
+                {
+                    @foreach (var item in Model.AgendaHoy)
+                    {
+                        <div class="agenda-item">
+                            <div class="agenda-time">@item.Hora</div>
+                            <div class="agenda-card @(item.EstadoChip == "En curso" ? "en-curso" : "")">
+                                <div class="agenda-patient-info">
+                                    <div class="agenda-avatar" style="background-color: @item.AvatarBgColor">@item.Iniciales</div>
+                                    <div>
+                                        <div class="agenda-patient-name">@item.PacienteNombre</div>
+                                        <div class="agenda-patient-diag">@item.Diagnostico</div>
+                                    </div>
+                                </div>
+                                <span class="status-badge @item.ChipClass">@item.EstadoChip</span>
+                            </div>
+                        </div>
+                    }
+                }
+                else
+                {
+                    <div class="text-center py-4 text-muted">
+                        <i class="bi bi-calendar-x d-block fs-3 mb-2 opacity-50"></i>
+                        <span style="font-size: 0.8rem;">No hay citas programadas para hoy.</span>
+                    </div>
+                }
+            </div>
+
+            <div class="border-top pt-3">
+                <div class="fw-bold mb-2 text-dark" style="font-size: 0.8rem;">Tareas clínicas</div>
+                @if (Model.PacientesActivosLista != null && Model.PacientesActivosLista.Any())
+                {
+                    <div class="d-flex align-items-center gap-2 mb-2 text-muted" style="font-size: 0.75rem;">
+                        <input type="checkbox" class="form-check-input mt-0" id="t1" />
+                        <label for="t1">Revisar historial de @Model.PacientesActivosLista.First().NombreCompleto</label>
+                    </div>
+                }
+                else
+                {
+                    <p class="text-muted mb-0" style="font-size: 0.75rem;">Sin tareas pendientes.</p>
+                }
+            </div>
+        </div>
+    </div>
+
+    <!-- Center Column: Lista Detallada de Pacientes Activos Table -->
+    <div class="col-12 col-lg-6">
+        <div class="fisio-card h-100 mb-0">
+            <div class="fisio-card-header flex-wrap gap-2">
+                <h2 class="fisio-card-title">Lista Detallada de Pacientes Activos</h2>
+                <div class="d-flex align-items-center gap-2">
+                    <a asp-action="CrearPaciente" class="btn-fisio-primary">
+                        <i class="bi bi-plus-lg"></i> Nuevo
+                    </a>
+                </div>
+            </div>
+
+            <div class="fisio-table-container">
+                <table class="fisio-table">
+                    <thead>
+                        <tr>
+                            <th>Paciente</th>
+                            <th>Edad</th>
+                            <th>Diagnóstico</th>
+                            <th>Progreso</th>
+                            <th>Sesiones</th>
+                            <th>Próx. Cita</th>
+                            <th>Dolor</th>
+                            <th>Estado</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @if (Model.PacientesActivosLista != null && Model.PacientesActivosLista.Any())
+                        {
+                            @foreach (var p in Model.PacientesActivosLista)
+                            {
+                                <tr>
+                                    <td>
+                                        <div class="d-flex align-items-center gap-2">
+                                            <div class="agenda-avatar" style="background-color: #0096e6;">@p.Iniciales</div>
+                                            <span class="fw-bold">@p.NombreCompleto</span>
+                                        </div>
+                                    </td>
+                                    <td>@p.Edad</td>
+                                    <td>@p.Diagnostico</td>
+                                    <td>
+                                        <div class="progress-bar-container">
+                                            <div class="progress-track">
+                                                <div class="progress-fill cyan" style="width: @(p.ProgresoPorcentaje)%"></div>
+                                            </div>
+                                            <span class="progress-text">@(p.ProgresoPorcentaje)%</span>
+                                        </div>
+                                    </td>
+                                    <td>@p.SesionesTexto</td>
+                                    <td><span class="text-primary fw-semibold">@p.ProximaCitaTexto</span></td>
+                                    <td>
+                                        <div class="pain-score-indicator">
+                                            <span class="pain-bar @(p.NivelDolor <= 4 ? "low" : p.NivelDolor <= 6 ? "mid" : "high")"></span>
+                                            <span>@p.NivelDolor</span>
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <span class="status-badge @p.EstadoBadgeClass">@p.EstadoTexto</span>
+                                    </td>
+                                </tr>
+                            }
+                        }
+                        else
+                        {
+                            <tr>
+                                <td colspan="8" class="text-center py-5 text-muted">
+                                    <i class="bi bi-people d-block fs-2 mb-2 opacity-50"></i>
+                                    <p class="mb-2 fw-semibold">No hay pacientes registrados en el sistema.</p>
+                                    <a asp-action="CrearPaciente" class="btn btn-sm btn-outline-primary rounded-pill px-3">
+                                        <i class="bi bi-plus-lg"></i> Registrar primer paciente
+                                    </a>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Right Column: Mini Calendar, Exercises Preview & Quick Create -->
+    <div class="col-12 col-lg-3">
+        <!-- Calendar Card -->
+        <div class="fisio-card mb-3">
+            <div class="mini-calendar">
+                <div class="calendar-header">
+                    <span class="calendar-month-title text-capitalize">@mesAnoTexto</span>
+                </div>
+                <div class="calendar-days-grid">
+                    <div class="cal-day-name">D</div>
+                    <div class="cal-day-name">L</div>
+                    <div class="cal-day-name">M</div>
+                    <div class="cal-day-name">M</div>
+                    <div class="cal-day-name">J</div>
+                    <div class="cal-day-name">V</div>
+                    <div class="cal-day-name">S</div>
+
+                    @{
+                        var today = DateTime.Today;
+                        var firstDayOfMonth = new DateTime(today.Year, today.Month, 1);
+                        int startOffset = (int)firstDayOfMonth.DayOfWeek;
+                        int daysInMonth = DateTime.DaysInMonth(today.Year, today.Month);
+                    }
+
+                    @for (int i = 0; i < startOffset; i++)
+                    {
+                        <div class="cal-date-cell text-muted"></div>
+                    }
+
+                    @for (int day = 1; day <= daysInMonth; day++)
+                    {
+                        bool isToday = (day == today.Day);
+                        <div class="cal-date-cell @(isToday ? "today" : "")">@day</div>
+                    }
+                </div>
+            </div>
+        </div>
+
+        <!-- Exercises List Preview Card -->
+        <div class="fisio-card mb-3">
+            <div class="fisio-card-header">
+                <h2 class="fisio-card-title">Biblioteca de Ejercicios</h2>
+                <a asp-action="Ejercicios" class="text-decoration-none text-primary fw-bold" style="font-size: 0.78rem;">Ver todos</a>
+            </div>
+            <div class="d-flex flex-column gap-2">
+                <div class="text-center py-3 text-muted">
+                    <i class="bi bi-activity d-block fs-3 mb-1 opacity-50"></i>
+                    <span style="font-size: 0.78rem;">No hay ejercicios registrados.</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Quick Creation Card -->
+        <div class="fisio-card mb-0">
+            <div class="fisio-card-header mb-2">
+                <h2 class="fisio-card-title">Creación Rápida</h2>
+            </div>
+            <div class="row g-2">
+                <div class="col-6">
+                    <a asp-action="Agenda" class="btn btn-light w-100 py-3 d-flex flex-column align-items-center justify-content-center text-primary border-0 rounded-4">
+                        <i class="bi bi-calendar-plus fs-4 mb-1"></i>
+                        <span class="fw-bold" style="font-size: 0.75rem;">Ver Agenda</span>
+                    </a>
+                </div>
+                <div class="col-6">
+                    <a asp-action="CrearPaciente" class="btn btn-light w-100 py-3 d-flex flex-column align-items-center justify-content-center text-info border-0 rounded-4">
+                        <i class="bi bi-person-plus fs-4 mb-1"></i>
+                        <span class="fw-bold" style="font-size: 0.75rem;">Nuevo Paciente</span>
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

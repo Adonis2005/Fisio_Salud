@@ -1,0 +1,188 @@
+@model CitasPageViewModel
+@{
+    Layout = "_LayoutCliente";
+    ViewData["Title"] = "Mis Citas";
+    var form = Model.Formulario;
+    var mesAnt = Model.MesVisible.AddMonths(-1);
+    var mesSig = Model.MesVisible.AddMonths(1);
+}
+
+<div class="flex gap-2 mb-4">
+    <a asp-action="Citas" asp-route-vista="nueva" class="pill-btn @(Model.Vista != "lista" ? "active" : "")">+ Nueva cita</a>
+    <a asp-action="Citas" asp-route-vista="lista" class="pill-btn @(Model.Vista == "lista" ? "active" : "")">Mis citas</a>
+</div>
+
+@if (Model.Vista == "lista")
+{
+    <section class="fs-card">
+        <h3>Historial de citas</h3>
+        @if (!Model.Citas.Any())
+        {
+            <p class="text-terracotta text-sm mb-0">No hay citas en la base de datos para tu expediente.</p>
+        }
+        else
+        {
+            <div class="overflow-x-auto">
+                <table class="w-full text-sm">
+                    <thead>
+                        <tr class="text-left text-terracotta">
+                            <th class="pb-3">Fecha</th>
+                            <th class="pb-3">Hora</th>
+                            <th class="pb-3">Especialista</th>
+                            <th class="pb-3">Servicio</th>
+                            <th class="pb-3">Estado</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                    @foreach (var c in Model.Citas)
+                    {
+                        <tr class="border-t border-espresso/5">
+                            <td class="py-3">@c.Fecha.ToString("dd/MM/yyyy")</td>
+                            <td>@c.HoraInicio.ToString(@"hh\:mm")</td>
+                            <td>@c.Fisioterapeuta</td>
+                            <td>@(c.MotivoConsulta ?? "-")</td>
+                            <td><span class="badge-soft @CitaEstados.Css(c.Estado)">@CitaEstados.Etiqueta(c.Estado)</span></td>
+                        </tr>
+                    }
+                    </tbody>
+                </table>
+            </div>
+        }
+    </section>
+}
+else
+{
+    <div class="grid grid-cols-1 xl:grid-cols-3 gap-4">
+        <div class="xl:col-span-2 space-y-4">
+            <section class="fs-card">
+                <div class="flex justify-between items-center mb-3">
+                    <h3 class="mb-0">@Model.MesEtiqueta</h3>
+                    <div class="flex gap-2">
+                        <a class="pill-btn" asp-action="Citas"
+                           asp-route-vista="nueva"
+                           asp-route-mesAnio="@mesAnt.Year" asp-route-mesMes="@mesAnt.Month"
+                           asp-route-fechaAnio="@form.Fecha.Year" asp-route-fechaMes="@form.Fecha.Month" asp-route-fechaDia="@form.Fecha.Day"
+                           asp-route-fisioterapeutaId="@form.FisioterapeutaId" asp-route-hora="@form.Hora" asp-route-servicio="@form.Servicio">‹</a>
+                        <a class="pill-btn" asp-action="Citas"
+                           asp-route-vista="nueva"
+                           asp-route-mesAnio="@mesSig.Year" asp-route-mesMes="@mesSig.Month"
+                           asp-route-fechaAnio="@form.Fecha.Year" asp-route-fechaMes="@form.Fecha.Month" asp-route-fechaDia="@form.Fecha.Day"
+                           asp-route-fisioterapeutaId="@form.FisioterapeutaId" asp-route-hora="@form.Hora" asp-route-servicio="@form.Servicio">›</a>
+                    </div>
+                </div>
+                <div class="cal-grid text-xs text-terracotta mb-2">
+                    <span>L</span><span>M</span><span>M</span><span>J</span><span>V</span><span>S</span><span>D</span>
+                </div>
+                <div class="cal-grid">
+                    @foreach (var d in Model.Calendario)
+                    {
+                        var cls = "cal-day" + (d.FueraDeMes ? " muted" : "") + (d.Seleccionado ? " selected" : d.TieneDisponibilidad ? " available" : "") + (d.EsPasado ? " past" : "");
+                        <a class="@cls" asp-action="Citas"
+                           asp-route-vista="nueva"
+                           asp-route-fechaAnio="@d.Fecha.Year" asp-route-fechaMes="@d.Fecha.Month" asp-route-fechaDia="@d.Fecha.Day"
+                           asp-route-mesAnio="@Model.MesVisible.Year" asp-route-mesMes="@Model.MesVisible.Month"
+                           asp-route-fisioterapeutaId="@form.FisioterapeutaId" asp-route-hora="@form.Hora" asp-route-servicio="@form.Servicio">@d.Dia</a>
+                    }
+                </div>
+            </section>
+
+            <section class="fs-card">
+                <h3>Selecciona tu especialista</h3>
+                @if (!Model.Especialistas.Any())
+                {
+                    <p class="text-sm text-terracotta mb-0">No hay usuarios con rol Fisioterapeuta activos. Pide al administrador que cree uno.</p>
+                }
+                else
+                {
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+                        @foreach (var e in Model.Especialistas)
+                        {
+                            <a class="spec-card @(form.FisioterapeutaId == e.UsuarioId ? "active" : "")"
+                               asp-action="Citas"
+                               asp-route-vista="nueva"
+                               asp-route-fechaAnio="@form.Fecha.Year" asp-route-fechaMes="@form.Fecha.Month" asp-route-fechaDia="@form.Fecha.Day"
+                               asp-route-fisioterapeutaId="@e.UsuarioId" asp-route-hora="@form.Hora" asp-route-servicio="@form.Servicio"
+                               asp-route-mesAnio="@Model.MesVisible.Year" asp-route-mesMes="@Model.MesVisible.Month">
+                                <div class="flex items-center gap-3">
+                                    <span class="avatar-circle">@e.Iniciales</span>
+                                    <div>
+                                        <div class="font-semibold">@e.NombreCompleto</div>
+                                        <div class="text-xs opacity-80">@e.Especialidad</div>
+                                    </div>
+                                </div>
+                            </a>
+                        }
+                    </div>
+                }
+            </section>
+
+            <section class="fs-card">
+                <h3>Tipo de servicio</h3>
+                <div class="flex flex-wrap gap-2">
+                    @foreach (var s in Model.Servicios)
+                    {
+                        <a class="pill-btn @(form.Servicio == s ? "active" : "")"
+                           asp-action="Citas"
+                           asp-route-vista="nueva"
+                           asp-route-fechaAnio="@form.Fecha.Year" asp-route-fechaMes="@form.Fecha.Month" asp-route-fechaDia="@form.Fecha.Day"
+                           asp-route-fisioterapeutaId="@form.FisioterapeutaId" asp-route-hora="@form.Hora" asp-route-servicio="@s"
+                           asp-route-mesAnio="@Model.MesVisible.Year" asp-route-mesMes="@Model.MesVisible.Month">@s</a>
+                    }
+                </div>
+            </section>
+
+            <section class="fs-card">
+                <h3>Horarios disponibles</h3>
+                <div class="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                    @foreach (var h in Model.Horarios)
+                    {
+                        if (h.Ocupado)
+                        {
+                            <span class="slot-btn busy">@h.Hora · Ocupado</span>
+                        }
+                        else
+                        {
+                            <a class="slot-btn @(h.Seleccionado ? "active" : "")"
+                               asp-action="Citas"
+                               asp-route-vista="nueva"
+                               asp-route-fechaAnio="@form.Fecha.Year" asp-route-fechaMes="@form.Fecha.Month" asp-route-fechaDia="@form.Fecha.Day"
+                               asp-route-fisioterapeutaId="@form.FisioterapeutaId" asp-route-hora="@h.Hora" asp-route-servicio="@form.Servicio"
+                               asp-route-mesAnio="@Model.MesVisible.Year" asp-route-mesMes="@Model.MesVisible.Month">@h.Hora</a>
+                        }
+                    }
+                </div>
+            </section>
+        </div>
+
+        <aside class="space-y-4">
+            <section class="fs-card" style="background:#F8EDE4;">
+                <h3>Resumen de tu cita</h3>
+                <p class="text-sm mb-1"><strong>Fecha:</strong> @form.Fecha.ToString("d 'de' MMMM, yyyy", new System.Globalization.CultureInfo("es-ES"))</p>
+                <p class="text-sm mb-1"><strong>Hora:</strong> @(form.Hora ?? "Sin seleccionar")</p>
+                <p class="text-sm mb-1"><strong>Especialista:</strong> @(Model.EspecialistaNombre ?? "Sin seleccionar")</p>
+                <p class="text-sm mb-1"><strong>Servicio:</strong> @(form.Servicio ?? "Sin seleccionar")</p>
+                <p class="text-sm mb-3"><strong>Sede:</strong> @Model.Consultorio</p>
+
+                <form asp-action="AgendarCita" method="post">
+                    @Html.AntiForgeryToken()
+                    <input type="hidden" name="Fecha" value="@form.Fecha.ToString("yyyy-MM-dd")" />
+                    <input type="hidden" name="FisioterapeutaId" value="@form.FisioterapeutaId" />
+                    <input type="hidden" name="Hora" value="@form.Hora" />
+                    <input type="hidden" name="Servicio" value="@form.Servicio" />
+                    <label class="text-xs font-semibold uppercase tracking-wide text-terracotta">Nota (opcional)</label>
+                    <textarea name="Mensaje" class="w-full rounded-xl p-3 mt-1 mb-3 text-sm" rows="3" placeholder="Motivo o indicación adicional"></textarea>
+                    <button type="submit" class="w-full py-3 rounded-full text-white font-semibold" style="background:#3C2A21;">Confirmar cita</button>
+                </form>
+            </section>
+
+            <section class="rounded-2xl p-5 text-white" style="background:#3C2A21;">
+                <h4 class="text-white font-semibold mb-3">Tus estadísticas</h4>
+                <div class="grid grid-cols-3 gap-2 text-center">
+                    <div><div class="text-2xl font-bold">@Model.Citas.Count</div><div class="text-xs opacity-70">Sesiones</div></div>
+                    <div><div class="text-2xl font-bold">@Model.Citas.Count(c => c.Estado == CitaEstados.Programada)</div><div class="text-xs opacity-70">Próximas</div></div>
+                    <div><div class="text-2xl font-bold">@Model.Citas.Count(c => c.Estado == CitaEstados.Atendida)</div><div class="text-xs opacity-70">Completadas</div></div>
+                </div>
+            </section>
+        </aside>
+    </div>
+}

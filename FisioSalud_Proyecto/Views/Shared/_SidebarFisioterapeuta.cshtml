@@ -1,0 +1,91 @@
+@{
+    var currentAction = ViewContext.RouteData.Values["action"]?.ToString() ?? "";
+}
+
+<aside class="fisio-sidebar" id="fisioSidebar">
+    <div class="fisio-sidebar-brand">
+        <div class="fisio-brand-logo">FisioSalud</div>
+        <div class="fisio-brand-sub">Panel del Fisioterapeuta</div>
+    </div>
+
+    <div class="fisio-user-badge">
+        <div class="user-avatar-circle">CG</div>
+        <div class="user-info-text">
+            <div class="user-name">Dr. Carlos Gómez</div>
+            <div class="user-status">
+                <span class="user-status-dot"></span> En consulta
+            </div>
+        </div>
+    </div>
+
+    <div class="sidebar-section-header">Principal</div>
+    <ul class="fisio-nav">
+        <li class="fisio-nav-item">
+            <a asp-controller="Fisioterapeuta" asp-action="Dashboard" class="fisio-nav-link @(currentAction == "Dashboard" ? "active" : "")">
+                <i class="bi bi-grid-fill"></i>
+                <span>Mi Panel</span>
+            </a>
+        </li>
+        <li class="fisio-nav-item">
+            <a asp-controller="Fisioterapeuta" asp-action="Agenda" class="fisio-nav-link @(currentAction == "Agenda" ? "active" : "")">
+                <i class="bi bi-calendar-week-fill"></i>
+                <span>Agenda</span>
+            </a>
+        </li>
+        <li class="fisio-nav-item">
+            <a asp-controller="Fisioterapeuta" asp-action="Pacientes" class="fisio-nav-link @(currentAction == "Pacientes" || currentAction.Contains("Paciente") ? "active" : "")">
+                <i class="bi bi-people-fill"></i>
+                <span>Pacientes</span>
+            </a>
+        </li>
+        <li class="fisio-nav-item">
+            <a asp-controller="Fisioterapeuta" asp-action="Ejercicios" class="fisio-nav-link @(currentAction == "Ejercicios" ? "active" : "")">
+                <i class="bi bi-activity"></i>
+                <span>Ejercicios</span>
+            </a>
+        </li>
+        <li class="fisio-nav-item">
+            <a asp-controller="Fisioterapeuta" asp-action="Mensajes" class="fisio-nav-link @(currentAction == "Mensajes" ? "active" : "")">
+                <i class="bi bi-chat-dots-fill"></i>
+                <span>Mensajes</span>
+                <span class="fisio-nav-badge">2</span>
+            </a>
+        </li>
+    </ul>
+
+    <div class="sidebar-section-header mt-2">Sistema</div>
+    <ul class="fisio-nav">
+        <li class="fisio-nav-item">
+            <a asp-controller="Fisioterapeuta" asp-action="Configuracion" class="fisio-nav-link @(currentAction == "Configuracion" ? "active" : "")">
+                <i class="bi bi-gear-fill"></i>
+                <span>Configuración</span>
+            </a>
+        </li>
+    </ul>
+
+    <div class="sidebar-tasks-box">
+        <div class="sidebar-tasks-title">
+            <i class="bi bi-list-task"></i> Tareas pendientes
+        </div>
+        <div class="sidebar-task-item">
+            <span class="task-dot red"></span>
+            <span>Revisar expediente de Pedro Jiménez</span>
+        </div>
+        <div class="sidebar-task-item">
+            <span class="task-dot orange"></span>
+            <span>Preparar rutina semanal para Luis M.</span>
+        </div>
+        <div class="sidebar-task-item">
+            <span class="task-dot amber"></span>
+            <span>Evaluar progreso de Carlos Ruiz</span>
+        </div>
+    </div>
+
+    <form asp-controller="Auth" asp-action="Logout" method="post">
+        @Html.AntiForgeryToken()
+        <button type="submit" class="fisio-logout-btn">
+            <i class="bi bi-box-arrow-right"></i>
+            <span>Cerrar sesión</span>
+        </button>
+    </form>
+</aside>

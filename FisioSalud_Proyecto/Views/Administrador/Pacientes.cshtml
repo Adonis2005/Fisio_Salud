@@ -1,0 +1,151 @@
+@model FisioSalud_Proyecto.Models.Administrador.AdminPacientesPageViewModel
+@{
+    Layout = "_LayoutAdmin";
+    ViewData["Title"] = "Todos los Pacientes";
+    string[] filtros = { "Todos", "Activos", "Riesgo", "Nuevos", "Inactivos" };
+}
+
+<!-- KPI Cards pacientes -->
+<div class="admin-kpi-grid mb-4">
+    <div class="kpi-card">
+        <div class="kpi-icon-box blue"><i class="bi bi-people-fill"></i></div>
+        <div>
+            <div class="kpi-number">@Model.Total</div>
+            <div class="kpi-title">Total de pacientes</div>
+            <div class="kpi-sub blue">Registrados en el sistema</div>
+        </div>
+    </div>
+    <div class="kpi-card">
+        <div class="kpi-icon-box green"><i class="bi bi-activity"></i></div>
+        <div>
+            <div class="kpi-number">@Model.Activos</div>
+            <div class="kpi-title">Pacientes activos</div>
+            <div class="kpi-sub green">Con tratamiento en curso</div>
+        </div>
+    </div>
+    <div class="kpi-card">
+        <div class="kpi-icon-box yellow"><i class="bi bi-exclamation-triangle-fill"></i></div>
+        <div>
+            <div class="kpi-number">@Model.EnRiesgo</div>
+            <div class="kpi-title">En riesgo</div>
+            <div class="kpi-sub yellow">Sin actividad reciente</div>
+        </div>
+    </div>
+    <div class="kpi-card">
+        <div class="kpi-icon-box cyan"><i class="bi bi-person-plus-fill"></i></div>
+        <div>
+            <div class="kpi-number">@Model.Nuevos</div>
+            <div class="kpi-title">Altas este mes</div>
+            <div class="kpi-sub cyan">Nuevos ingresos</div>
+        </div>
+    </div>
+</div>
+
+<div class="fisio-card mb-0">
+    <!-- Toolbar -->
+    <div class="d-flex flex-wrap align-items-center justify-content-between gap-3 mb-3">
+        <div class="filter-pills">
+            @foreach (var f in filtros)
+            {
+                <a asp-action="Pacientes" asp-route-filtro="@f" asp-route-busqueda="@Model.Busqueda"
+                   class="@(Model.Filtro == f ? "active" : "")">@f</a>
+            }
+        </div>
+        <div class="d-flex gap-2 align-items-center">
+            <form method="get" class="d-flex gap-2">
+                <input type="hidden" name="filtro" value="@Model.Filtro" />
+                <div style="position:relative;">
+                    <i class="bi bi-search" style="position:absolute;left:10px;top:50%;transform:translateY(-50%);color:#94a3b8;font-size:0.8rem;"></i>
+                    <input name="busqueda" value="@Model.Busqueda" placeholder="Buscar paciente…"
+                           style="padding:0.45rem 0.85rem 0.45rem 2rem;border:1px solid #e2e8f0;border-radius:50px;font-size:0.8rem;font-family:inherit;outline:none;min-width:200px;" />
+                </div>
+            </form>
+            <a asp-action="CrearPaciente" class="btn-fisio-primary d-flex align-items-center gap-1" style="font-size:0.8rem;">
+                <i class="bi bi-plus-lg"></i> Nuevo paciente
+            </a>
+        </div>
+    </div>
+
+    @if (Model.Pacientes.Any())
+    {
+        <div class="fisio-table-container">
+            <table class="fisio-table">
+                <thead>
+                    <tr>
+                        <th>Paciente</th>
+                        <th>Edad</th>
+                        <th>Diagnóstico</th>
+                        <th>Terapeuta</th>
+                        <th>Progreso</th>
+                        <th>Sesiones</th>
+                        <th>Próx. cita</th>
+                        <th>Estado</th>
+                        <th></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var p in Model.Pacientes)
+                    {
+                        <tr>
+                            <td>
+                                <div class="person-cell">
+                                    <div class="avatar-sm" style="background:@p.Color;">@p.Iniciales</div>
+                                    <div>
+                                        <div class="fw-bold" style="font-size:0.85rem;">@p.Nombre</div>
+                                    </div>
+                                </div>
+                            </td>
+                            <td style="font-size:0.82rem;">@p.Edad años</td>
+                            <td style="font-size:0.78rem; max-width:150px;" class="text-truncate">@p.Diagnostico</td>
+                            <td>
+                                <div class="person-cell">
+                                    @if (p.TerapeutaIniciales != "—")
+                                    {
+                                        <div class="avatar-sm" style="background:#8b5cf6; width:28px; height:28px; font-size:0.65rem;">@p.TerapeutaIniciales</div>
+                                    }
+                                    <span style="font-size:0.78rem;">@p.Terapeuta</span>
+                                </div>
+                            </td>
+                            <td>
+                                <div class="progress-bar-container">
+                                    <div class="progress-track">
+                                        <div class="progress-fill @p.BarClass" style="width:@p.Progreso%;"></div>
+                                    </div>
+                                    <span class="progress-text">@p.Progreso%</span>
+                                </div>
+                            </td>
+                            <td style="font-size:0.82rem; font-weight:700;">@p.Sesiones</td>
+                            <td style="font-size:0.78rem; color:var(--admin-primary); font-weight:600;">@p.ProximaCita</td>
+                            <td><span class="status-badge @p.EstadoClass">@p.Estado</span></td>
+                            <td>
+                                <a asp-action="EditarPaciente" asp-route-id="@p.PacienteId" class="icon-action" title="Editar">
+                                    <i class="bi bi-pencil"></i>
+                                </a>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    }
+    else
+    {
+        <div class="empty-state">
+            <i class="bi bi-people d-block fs-2 mb-2 opacity-40"></i>
+            @if (!string.IsNullOrWhiteSpace(Model.Busqueda) || Model.Filtro != "Todos")
+            {
+                <p class="mb-1 fw-semibold">Sin resultados para los filtros aplicados.</p>
+                <a asp-action="Pacientes" class="text-decoration-none" style="color:var(--admin-primary); font-size:0.82rem;">
+                    <i class="bi bi-x-circle me-1"></i> Limpiar filtros
+                </a>
+            }
+            else
+            {
+                <p class="mb-1 fw-semibold">No hay pacientes registrados en el sistema.</p>
+                <a asp-action="CrearPaciente" class="btn-fisio-primary d-inline-flex align-items-center gap-1 mt-3" style="font-size:0.78rem;">
+                    <i class="bi bi-plus-lg"></i> Registrar primer paciente
+                </a>
+            }
+        </div>
+    }
+</div>

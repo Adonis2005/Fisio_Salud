@@ -1,0 +1,84 @@
+@model ProgresoPageViewModel
+@{
+    Layout = "_LayoutCliente";
+    ViewData["Title"] = "Mi Progreso";
+    var maxChart = Math.Max(1, Model.EvolucionSemanal.SelectMany(p => new[] { p.Atendidas, p.Programadas }).DefaultIfEmpty(0).Max());
+}
+
+<div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4 mb-4">
+    <div class="fs-card">
+        <div class="text-sm text-terracotta">Asistencia</div>
+        <div class="text-3xl font-bold my-1">@Model.AsistenciaPorcentaje%</div>
+        <div class="progress-track"><div class="progress-fill" style="width:@Model.AsistenciaPorcentaje%"></div></div>
+    </div>
+    <div class="fs-card">
+        <div class="text-sm text-terracotta">Sesiones realizadas</div>
+        <div class="text-3xl font-bold my-1">@Model.CitasAtendidas</div>
+        <div class="progress-track"><div class="progress-fill" style="width:@(Model.TotalCitas == 0 ? 0 : Model.CitasAtendidas * 100 / Model.TotalCitas)%"></div></div>
+        <div class="text-xs text-terracotta mt-2">de @Model.TotalCitas registradas</div>
+    </div>
+    <div class="fs-card">
+        <div class="text-sm text-terracotta">Programadas</div>
+        <div class="text-3xl font-bold my-1">@Model.CitasProgramadas</div>
+        <div class="progress-track"><div class="progress-fill" style="width:@(Model.TotalCitas == 0 ? 0 : Model.CitasProgramadas * 100 / Model.TotalCitas)%;background:#C4A484;"></div></div>
+    </div>
+    <div class="fs-card">
+        <div class="text-sm text-terracotta">Semana de rehab</div>
+        <div class="text-3xl font-bold my-1">@Model.SemanaRehabilitacion</div>
+        <p class="text-xs text-terracotta mb-0 mt-2">Desde @(Model.FechaInicioTratamiento?.ToString("dd/MM/yyyy") ?? "tu registro")</p>
+    </div>
+</div>
+
+<div class="grid grid-cols-1 xl:grid-cols-3 gap-4">
+    <section class="fs-card xl:col-span-2">
+        <h3>Evolución de mi recuperación</h3>
+        <p class="text-sm text-terracotta">Conteo semanal tomado de Citas. Dolor, movilidad y fuerza del mockup no están en el esquema actual.</p>
+        <div class="flex gap-4 text-xs mb-2">
+            <span>Atendidas</span><span class="text-terracotta">Programadas</span>
+        </div>
+        <div class="chart-bars" style="height:220px;">
+            @foreach (var p in Model.EvolucionSemanal)
+            {
+                var hA = (int)Math.Round(p.Atendidas * 180.0 / maxChart);
+                var hB = (int)Math.Round(p.Programadas * 180.0 / maxChart);
+                <div class="chart-col">
+                    <div class="chart-stack" style="height:180px;">
+                        <div class="chart-bar a" style="height:@(Math.Max(hA, 8))px"></div>
+                        <div class="chart-bar b" style="height:@(Math.Max(hB, 8))px"></div>
+                    </div>
+                    <span class="text-xs">@p.Etiqueta</span>
+                </div>
+            }
+        </div>
+    </section>
+
+    <section class="fs-card">
+        <h3>Mis objetivos</h3>
+        <p class="text-sm mb-3">Completar las sesiones agendadas y mantener asistencia.</p>
+        <div class="ring mx-auto mb-3" style="background: conic-gradient(#3C2A21 0deg @(Model.CompletadasPorcentaje * 3.6)deg, #EADFD4 0deg);">
+            <div class="ring-inner">@Model.CompletadasPorcentaje%</div>
+        </div>
+        <p class="text-center text-sm text-terracotta">@Model.CitasAtendidas de @Model.TotalCitas citas completadas</p>
+    </section>
+</div>
+
+<section class="fs-card mt-4">
+    <h3>Sesiones recientes</h3>
+    @if (!Model.CitasRecientes.Any())
+    {
+        <p class="text-sm text-terracotta mb-0">Cuando tu fisioterapeuta registre citas, aparecerán aquí. Las rutinas de ejercicio del diseño se agregarán cuando exista esa entidad.</p>
+    }
+    else
+    {
+        foreach (var c in Model.CitasRecientes)
+        {
+            <div class="flex items-center justify-between py-3 border-b border-espresso/5">
+                <div>
+                    <div class="font-medium">@(c.MotivoConsulta ?? "Sesión")</div>
+                    <div class="text-xs text-terracotta">@c.Fisioterapeuta · @c.Fecha.ToString("dd/MM/yyyy")</div>
+                </div>
+                <span class="badge-soft @CitaEstados.Css(c.Estado)">@CitaEstados.Etiqueta(c.Estado)</span>
+            </div>
+        }
+    }
+</section>

@@ -1,0 +1,109 @@
+@model FisioEjerciciosViewModel
+@{
+    Layout = "_LayoutFisioterapeuta";
+    ViewData["Title"] = "Biblioteca de Ejercicios";
+}
+
+<!-- Top Header Controls & Categories -->
+<div class="d-flex align-items-center justify-content-between flex-wrap gap-3 mb-4">
+    <h2 class="fw-bold m-0" style="font-size: 1.15rem; color: var(--text-dark);">Biblioteca de Ejercicios</h2>
+</div>
+
+<!-- Search Input & Category Pills -->
+<div class="row g-2 align-items-center mb-4">
+    <div class="col-12 col-md-4">
+        <form method="get" asp-action="Ejercicios">
+            <div class="fisio-search-box max-w-100">
+                <i class="bi bi-search fisio-search-icon"></i>
+                <input type="text" name="busqueda" value="@Model.Busqueda" placeholder="Buscar ejercicio..." />
+            </div>
+        </form>
+    </div>
+    <div class="col-12 col-md-8">
+        <div class="filter-pills-row">
+            <a asp-action="Ejercicios" asp-route-categoria="Todos" class="filter-pill @(Model.CategoriaSeleccionada == "Todos" ? "active" : "")">Todos</a>
+            <a asp-action="Ejercicios" asp-route-categoria="Columna" class="filter-pill @(Model.CategoriaSeleccionada == "Columna" ? "active" : "")">Columna</a>
+            <a asp-action="Ejercicios" asp-route-categoria="Hombro" class="filter-pill @(Model.CategoriaSeleccionada == "Hombro" ? "active" : "")">Hombro</a>
+            <a asp-action="Ejercicios" asp-route-categoria="Caderas" class="filter-pill @(Model.CategoriaSeleccionada == "Caderas" ? "active" : "")">Caderas</a>
+            <a asp-action="Ejercicios" asp-route-categoria="Cuello" class="filter-pill @(Model.CategoriaSeleccionada == "Cuello" ? "active" : "")">Cuello</a>
+            <a asp-action="Ejercicios" asp-route-categoria="Rodilla" class="filter-pill @(Model.CategoriaSeleccionada == "Rodilla" ? "active" : "")">Rodilla</a>
+            <a asp-action="Ejercicios" asp-route-categoria="Tobillo" class="filter-pill @(Model.CategoriaSeleccionada == "Tobillo" ? "active" : "")">Tobillo</a>
+            <a asp-action="Ejercicios" asp-route-categoria="Respiración" class="filter-pill @(Model.CategoriaSeleccionada == "Respiración" ? "active" : "")">Respiración</a>
+        </div>
+    </div>
+</div>
+
+<!-- Stat Row -->
+<div class="row g-3 mb-4">
+    <div class="col-6 col-md-3">
+        <div class="kpi-card text-center flex-column justify-content-center">
+            <div class="kpi-number text-primary">@Model.TotalEjercicios</div>
+            <div class="kpi-title">Total ejercicios</div>
+        </div>
+    </div>
+    <div class="col-6 col-md-3">
+        <div class="kpi-card text-center flex-column justify-content-center">
+            <div class="kpi-number text-success">@Model.AsignadosActivos</div>
+            <div class="kpi-title">Asignados activos</div>
+        </div>
+    </div>
+    <div class="col-6 col-md-3">
+        <div class="kpi-card text-center flex-column justify-content-center">
+            <div class="kpi-number text-purple" style="color: #8b5cf6;">@Model.CategoriasCount</div>
+            <div class="kpi-title">Categorías</div>
+        </div>
+    </div>
+    <div class="col-6 col-md-3">
+        <div class="kpi-card text-center flex-column justify-content-center">
+            <div class="kpi-number text-warning">@Model.NuevosEsteMes</div>
+            <div class="kpi-title">Nuevos este mes</div>
+        </div>
+    </div>
+</div>
+
+<!-- Exercise Cards Grid -->
+<div class="row g-3">
+    @if (Model.Ejercicios != null && Model.Ejercicios.Any())
+    {
+        @foreach (var ex in Model.Ejercicios)
+        {
+            <div class="col-12 col-md-6 col-xl-4">
+                <div class="exercise-card">
+                    <div class="exercise-tag-header @ex.TagHeaderClass">
+                        <span class="d-flex align-items-center gap-1">
+                            <i class="@ex.IconClass"></i> @ex.Nombre
+                        </span>
+                    </div>
+                    <div class="exercise-subtitle">@ex.Dosificacion</div>
+
+                    <div class="d-flex align-items-center justify-content-between my-2" style="font-size: 0.75rem;">
+                        <span class="text-muted">Asignados</span>
+                        <span class="status-badge @ex.DificultadBadgeClass">@ex.Dificultad</span>
+                    </div>
+
+                    <div class="d-flex align-items-center gap-2 mb-3">
+                        <div class="progress-track flex-grow-1">
+                            <div class="progress-fill cyan" style="width: @(ex.ProgresoPorcentaje)%"></div>
+                        </div>
+                        <span class="fw-bold" style="font-size: 0.8rem; color: var(--text-dark);">@ex.AsignadosCount</span>
+                    </div>
+
+                    <div class="exercise-card-footer">
+                        <button class="btn-fisio-light flex-grow-1 justify-content-center">Editar</button>
+                        <button class="btn-fisio-primary flex-grow-1 justify-content-center">Asignar</button>
+                    </div>
+                </div>
+            </div>
+        }
+    }
+    else
+    {
+        <div class="col-12">
+            <div class="fisio-card text-center py-5">
+                <i class="bi bi-activity d-block display-4 text-muted mb-3 opacity-50"></i>
+                <h4 class="fw-bold text-dark mb-2">No hay ejercicios registrados</h4>
+                <p class="text-muted mb-0" style="font-size: 0.88rem;">Los ejercicios creados o asignados en el sistema aparecerán catalogados en esta sección.</p>
+            </div>
+        </div>
+    }
+</div>

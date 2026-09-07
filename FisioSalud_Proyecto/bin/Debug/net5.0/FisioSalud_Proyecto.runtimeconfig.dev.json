@@ -1,0 +1,8 @@
+{
+  "runtimeOptions": {
+    "additionalProbingPaths": [
+      "C:\\Users\\Espinoza\\.dotnet\\store\\|arch|\\|tfm|",
+      "C:\\Users\\Espinoza\\.nuget\\packages"
+    ]
+  }
+}

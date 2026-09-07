@@ -1,0 +1,201 @@
+@model ClienteDashboardViewModel
+@{
+    Layout = "_LayoutCliente";
+    ViewData["Title"] = "Mi Panel de Recuperación";
+    var maxChart = Math.Max(1, Model.EvolucionSemanal.SelectMany(p => new[] { p.Atendidas, p.Programadas }).DefaultIfEmpty(0).Max());
+}
+
+<div class="grid grid-cols-1 xl:grid-cols-3 gap-4 mb-4">
+    <section class="fs-card">
+        <div class="flex items-start gap-4">
+            <span class="avatar-circle avatar-lg">@Model.Iniciales</span>
+            <div>
+                <h3 class="mb-0 text-xl">@Model.NombreCompleto</h3>
+                <p class="text-sm text-terracotta mb-2">@(Model.Correo ?? "Sin correo en expediente")</p>
+                <span class="badge-soft @(Model.Activo ? "ok" : "warn")">
+                    <span>●</span> @(Model.Activo ? "Tratamiento activo" : "Expediente inactivo")
+                </span>
+            </div>
+        </div>
+        <div class="grid grid-cols-3 gap-2 mt-5 text-center">
+            <div>
+                <div class="text-2xl font-bold">@Model.TotalCitas</div>
+                <div class="text-xs text-terracotta">Sesiones</div>
+            </div>
+            <div>
+                <div class="text-2xl font-bold">@Model.SemanaRehabilitacion</div>
+                <div class="text-xs text-terracotta">Semanas</div>
+            </div>
+            <div>
+                <div class="text-2xl font-bold">@Model.AsistenciaPorcentaje%</div>
+                <div class="text-xs text-terracotta">Asistencia</div>
+            </div>
+        </div>
+        @if (!Model.TieneExpediente)
+        {
+            <p class="text-sm text-terracotta mt-4 mb-0">Aún no hay un registro en la tabla Pacientes vinculado a tu cuenta.</p>
+        }
+    </section>
+
+    <section class="fs-card">
+        <div class="flex justify-between items-start mb-3">
+            <h3 class="mb-0">Mi última cita</h3>
+            @if (Model.UltimaCita != null)
+            {
+                <span class="badge-soft @CitaEstados.Css(Model.UltimaCita.Estado)">@CitaEstados.Etiqueta(Model.UltimaCita.Estado)</span>
+            }
+        </div>
+        @if (Model.UltimaCita != null)
+        {
+            <div class="flex items-center gap-3 mb-3">
+                <span class="avatar-circle">@Model.UltimaCita.FisioterapeutaIniciales</span>
+                <div>
+                    <div class="font-semibold">@Model.UltimaCita.Fisioterapeuta</div>
+                    <div class="text-sm text-terracotta">@(Model.UltimaCita.MotivoConsulta ?? "Consulta de fisioterapia")</div>
+                </div>
+            </div>
+            <p class="text-sm mb-1"><i class="bi bi-calendar3 mr-1"></i> @Model.UltimaCita.Fecha.ToString("dddd d MMM", new System.Globalization.CultureInfo("es-ES")) · @Model.UltimaCita.HoraInicio.ToString(@"hh\:mm") hrs</p>
+            <div class="rounded-xl p-3 mt-3" style="background:#F8EDE4;">
+                <div class="text-xs font-semibold uppercase tracking-wide text-terracotta mb-1">Notas</div>
+                <p class="text-sm mb-0">@(string.IsNullOrWhiteSpace(Model.UltimaCita.Observaciones) ? "El fisioterapeuta aún no registró observaciones en esta cita." : Model.UltimaCita.Observaciones)</p>
+            </div>
+        }
+        else
+        {
+            <p class="text-sm text-terracotta">Todavía no tienes citas anteriores en la base de datos.</p>
+        }
+        <a asp-action="Citas" class="inline-flex mt-4 text-sm font-semibold text-espresso">Agendar próxima cita →</a>
+    </section>
+
+    <section class="fs-card">
+        <div class="flex justify-between items-center mb-3">
+            <h3 class="mb-0">Agenda de hoy</h3>
+            <span class="text-sm text-terracotta">@Model.CitasProgramadas programadas</span>
+        </div>
+        <div class="progress-track mb-4">
+            @{
+                var hoyProg = Model.ProximasCitas.Count(c => c.Fecha.Date == DateTime.Today);
+            }
+            <div class="progress-fill" style="width:@(Model.CitasProgramadas == 0 ? 0 : Math.Min(100, Model.CitasAtendidas * 100 / Math.Max(Model.TotalCitas, 1)))%"></div>
+        </div>
+        @if (Model.ProximasCitas.Any(c => c.Fecha.Date == DateTime.Today))
+        {
+            foreach (var cita in Model.ProximasCitas.Where(c => c.Fecha.Date == DateTime.Today))
+            {
+                <div class="flex justify-between items-center py-2 border-b border-espresso/5">
+                    <div>
+                        <div class="font-medium">@(cita.MotivoConsulta ?? "Sesión")</div>
+                        <div class="text-xs text-terracotta">@cita.Fisioterapeuta</div>
+                    </div>
+                    <span class="text-sm">@cita.HoraInicio.ToString(@"hh\:mm")</span>
+                </div>
+            }
+        }
+        else
+        {
+            <p class="text-sm text-terracotta mb-0">No hay citas para hoy. La rutina de ejercicios del diseño de Figma se mostrará cuando exista esa tabla; por ahora usamos tu agenda real en <strong>Citas</strong>.</p>
+        }
+    </section>
+</div>
+
+<div class="grid grid-cols-1 xl:grid-cols-3 gap-4 mb-4">
+    <section class="fs-card xl:col-span-1">
+        <h3>Mi gráfico de mejora</h3>
+        <p class="text-xs text-terracotta mb-3">Sesiones por semana según la tabla Citas (atendidas vs programadas).</p>
+        <div class="flex gap-4 text-xs mb-2">
+            <span><span class="inline-block w-3 h-3 rounded-sm mr-1" style="background:#3C2A21;"></span> Atendidas</span>
+            <span><span class="inline-block w-3 h-3 rounded-sm mr-1" style="background:#C4A484;"></span> Programadas</span>
+        </div>
+        <div class="chart-bars">
+            @foreach (var p in Model.EvolucionSemanal)
+            {
+                var hA = (int)Math.Round(p.Atendidas * 140.0 / maxChart);
+                var hB = (int)Math.Round(p.Programadas * 140.0 / maxChart);
+                <div class="chart-col">
+                    <div class="chart-stack">
+                        <div class="chart-bar a" style="height:@(Math.Max(hA, 8))px"></div>
+                        <div class="chart-bar b" style="height:@(Math.Max(hB, 8))px"></div>
+                    </div>
+                    <span class="text-xs text-terracotta">@p.Etiqueta</span>
+                </div>
+            }
+        </div>
+    </section>
+
+    <section class="fs-card flex flex-col items-center justify-center text-center">
+        <h3 class="self-start">Mi bienestar</h3>
+        <div class="ring my-3" style="background: conic-gradient(#3C2A21 0deg @(Model.AsistenciaPorcentaje * 3.6)deg, #EADFD4 0deg);">
+            <div class="ring-inner">@Model.AsistenciaPorcentaje%</div>
+        </div>
+        <p class="text-sm text-terracotta">Índice de asistencia basado en citas atendidas y canceladas. No inventamos dolor/movilidad: esas métricas no existen aún en la base.</p>
+        <a asp-action="Progreso" class="text-sm font-semibold text-espresso mt-2">Ver progreso completo →</a>
+    </section>
+
+    <section class="fs-card">
+        <h3>Mi progreso</h3>
+        <div class="mb-4">
+            <div class="flex justify-between text-sm mb-1"><span>Citas atendidas</span><span>@Model.CitasAtendidas / @Model.TotalCitas</span></div>
+            <div class="progress-track"><div class="progress-fill" style="width:@(Model.TotalCitas == 0 ? 0 : Model.CitasAtendidas * 100 / Model.TotalCitas)%"></div></div>
+        </div>
+        <div class="mb-4">
+            <div class="flex justify-between text-sm mb-1"><span>Programadas</span><span>@Model.CitasProgramadas</span></div>
+            <div class="progress-track"><div class="progress-fill" style="width:@(Model.TotalCitas == 0 ? 0 : Model.CitasProgramadas * 100 / Model.TotalCitas)%;background:#C4A484;"></div></div>
+        </div>
+        <div>
+            <div class="flex justify-between text-sm mb-1"><span>Asistencia</span><span>@Model.AsistenciaPorcentaje%</span></div>
+            <div class="progress-track"><div class="progress-fill" style="width:@Model.AsistenciaPorcentaje%"></div></div>
+        </div>
+    </section>
+</div>
+
+<div class="grid grid-cols-1 xl:grid-cols-2 gap-4">
+    <section class="fs-card">
+        <div class="flex justify-between items-center mb-3">
+            <h3 class="mb-0">Mis próximas citas</h3>
+            <a asp-action="Citas" asp-route-vista="lista" class="text-sm font-semibold">Ver todas →</a>
+        </div>
+        @if (Model.ProximasCitas.Any())
+        {
+            foreach (var c in Model.ProximasCitas)
+            {
+                <div class="flex items-center gap-3 py-3 border-b border-espresso/5 last:border-0">
+                    <div class="rounded-xl text-center px-3 py-2" style="background:#F8EDE4;min-width:70px;">
+                        <div class="text-xs uppercase text-terracotta">@c.Fecha.ToString("MMM", new System.Globalization.CultureInfo("es-ES"))</div>
+                        <div class="text-lg font-bold leading-none">@c.Fecha.Day</div>
+                    </div>
+                    <div class="flex-1">
+                        <div class="font-semibold">@(c.MotivoConsulta ?? "Sesión")</div>
+                        <div class="text-sm text-terracotta">@c.Fisioterapeuta</div>
+                    </div>
+                    <div class="text-sm">@c.HoraInicio.ToString(@"hh\:mm")</div>
+                </div>
+            }
+        }
+        else
+        {
+            <p class="text-sm text-terracotta mb-0">No tienes citas programadas. Agenda la siguiente desde Citas.</p>
+        }
+    </section>
+
+    <section class="fs-card">
+        <div class="flex items-center justify-between mb-3">
+            <div>
+                <h3 class="mb-0">@(Model.TerapeutaAsignado ?? "Tu fisioterapeuta")</h3>
+                <p class="text-xs text-terracotta mb-0">Notas clínicas de la tabla Citas · Observaciones</p>
+            </div>
+            @if (!string.IsNullOrEmpty(Model.TerapeutaIniciales))
+            {
+                <span class="avatar-circle">@Model.TerapeutaIniciales</span>
+            }
+        </div>
+        @if (!string.IsNullOrWhiteSpace(Model.UltimaNotaClinica))
+        {
+            <div class="chat-in mb-3">@Model.UltimaNotaClinica</div>
+        }
+        else
+        {
+            <p class="text-sm text-terracotta">Aún no hay mensajes ni observaciones. El chat del mockup se conectará cuando exista esa tabla; por ahora se muestran las notas reales de tus citas.</p>
+        }
+        <a asp-action="Mensajes" class="text-sm font-semibold">Abrir mensajes →</a>
+    </section>
+</div>

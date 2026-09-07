@@ -1,0 +1,33 @@
+@model FisioSalud_Proyecto.Models.Cliente.ClientePageViewModel
+@{
+    var action = ViewContext.RouteData.Values["action"]?.ToString();
+    string NavClass(string name) => action == name ? "active" : "";
+}
+<aside class="panel-sidebar" id="sidebar">
+    <div class="panel-logo">FisioSalud</div>
+    <ul class="panel-nav">
+        <li><a asp-controller="Cliente" asp-action="Dashboard" class="@NavClass("Dashboard")"><i class="bi bi-grid"></i> Panel</a></li>
+        <li><a asp-controller="Cliente" asp-action="Citas" class="@NavClass("Citas")"><i class="bi bi-calendar3"></i> Citas</a></li>
+        <li><a asp-controller="Cliente" asp-action="Progreso" class="@NavClass("Progreso")"><i class="bi bi-graph-up"></i> Progreso</a></li>
+        <li><a asp-controller="Cliente" asp-action="Historial" class="@NavClass("Historial")"><i class="bi bi-journal-text"></i> Historial</a></li>
+        <li><a asp-controller="Cliente" asp-action="Facturas" class="@NavClass("Facturas")"><i class="bi bi-receipt"></i> Facturas</a></li>
+        <li><a asp-controller="Cliente" asp-action="Mensajes" class="@NavClass("Mensajes")"><i class="bi bi-chat-dots"></i> Mensajes</a></li>
+        <li><a asp-controller="Cliente" asp-action="Perfil" class="@NavClass("Perfil")"><i class="bi bi-person"></i> Perfil</a></li>
+        <li><a asp-controller="Cliente" asp-action="Configuracion" class="@NavClass("Configuracion")"><i class="bi bi-gear"></i> Configuración</a></li>
+    </ul>
+    <div class="panel-sidebar-foot">
+        <form asp-controller="Auth" asp-action="Logout" method="post">
+            @Html.AntiForgeryToken()
+            <button type="submit" class="flex items-center gap-3 w-full px-3 py-2 rounded-full text-left" style="background:none;border:none;color:rgba(247,240,232,.78);font-size:.92rem;cursor:pointer;">
+                <i class="bi bi-box-arrow-left"></i> Cerrar sesión
+            </button>
+        </form>
+        <div class="panel-user-pill">
+            <span class="avatar-circle">@(Model?.Iniciales ?? "FS")</span>
+            <div style="min-width:0;">
+                <div style="font-size:.82rem;font-weight:600;color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">@(Model?.NombreCompleto ?? User.Identity.Name)</div>
+                <div style="font-size:.7rem;color:rgba(255,255,255,.6);">Paciente</div>
+            </div>
+        </div>
+    </div>
+</aside>

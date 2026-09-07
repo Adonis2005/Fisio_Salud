@@ -1,0 +1,64 @@
+@model FacturasPageViewModel
+@{
+    Layout = "_LayoutCliente";
+    ViewData["Title"] = "Mis Facturas y Cobros";
+}
+
+<div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+    <div class="fs-card">
+        <div class="text-sm text-terracotta">Total pagado</div>
+        <div class="text-3xl font-bold my-1 text-emerald-700">@Model.TotalPagado.ToString("C0")</div>
+        <div class="text-xs text-terracotta">Facturas liquidadas</div>
+    </div>
+    <div class="fs-card">
+        <div class="text-sm text-terracotta">Total pendiente por pagar</div>
+        <div class="text-3xl font-bold my-1 text-amber-700">@Model.TotalPendiente.ToString("C0")</div>
+        <div class="text-xs text-terracotta">Facturas abiertas o por vencer</div>
+    </div>
+</div>
+
+<section class="fs-card">
+    <div class="flex justify-between items-center mb-4">
+        <h3 class="mb-0">Historial de Facturación</h3>
+        <span class="text-xs text-terracotta">Total de comprobantes: @Model.Facturas.Count</span>
+    </div>
+
+    @if (!Model.Facturas.Any())
+    {
+        <div class="text-center py-8">
+            <i class="bi bi-receipt text-4xl opacity-40 block mb-2"></i>
+            <p class="font-semibold text-sm mb-1">No tienes facturas emitidas en tu expediente.</p>
+            <p class="text-xs text-terracotta mb-0">Cuando la clínica emita un comprobante o recibo de tus sesiones, aparecerá registrado en esta sección.</p>
+        </div>
+    }
+    else
+    {
+        <div class="overflow-x-auto">
+            <table class="w-full text-sm">
+                <thead>
+                    <tr class="text-left text-terracotta border-b border-espresso/10">
+                        <th class="pb-3">Nº Factura</th>
+                        <th class="pb-3">Fecha</th>
+                        <th class="pb-3">Especialista / Emisor</th>
+                        <th class="pb-3 text-right">Monto</th>
+                        <th class="pb-3 text-center">Estado</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var f in Model.Facturas)
+                    {
+                        <tr class="border-b border-espresso/5 hover:bg-espresso/5">
+                            <td class="py-3 font-semibold">@f.NumeroFactura</td>
+                            <td>@f.Fecha.ToString("dd/MM/yyyy")</td>
+                            <td>@f.Fisioterapeuta</td>
+                            <td class="text-right font-bold">@f.Monto.ToString("C0")</td>
+                            <td class="text-center">
+                                <span class="badge-soft @f.EstadoClass">@f.Estado</span>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    }
+</section>

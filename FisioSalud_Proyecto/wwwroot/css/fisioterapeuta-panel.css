@@ -1,0 +1,1240 @@
+@import url('https://fonts.googleapis.com/css2?family=Caveat:wght@600;700&family=Plus+Jakarta+Sans:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;1,400&display=swap');
+
+:root {
+    --fisio-bg: #f3f6f9;
+    --sidebar-bg: #132332;
+    --sidebar-header: #1c3144;
+    --sidebar-hover: #1c3144;
+    --sidebar-text: #8e9dae;
+    --sidebar-text-active: #ffffff;
+    --sidebar-active-pill: #0096e6;
+    
+    --card-bg: #ffffff;
+    --card-border: #eef2f7;
+    --card-shadow: 0 4px 15px rgba(19, 35, 50, 0.03);
+
+    --primary-cyan: #0096e6;
+    --primary-cyan-hover: #0082ca;
+    --primary-cyan-light: #e6f5fc;
+
+    --status-green: #10b981;
+    --status-green-bg: #e6f7ef;
+    --status-red: #ef4444;
+    --status-red-bg: #fee2e2;
+    --status-amber: #f59e0b;
+    --status-amber-bg: #fef3c7;
+    --status-purple: #8b5cf6;
+    --status-purple-bg: #f3e8ff;
+    --status-blue: #0ea5e9;
+    --status-blue-bg: #e0f2fe;
+
+    --text-dark: #1b2533;
+    --text-muted: #64748b;
+    --text-light: #94a3b8;
+    
+    --radius-lg: 16px;
+    --radius-md: 12px;
+    --radius-sm: 8px;
+    --radius-pill: 50px;
+}
+
+body.fisio-theme {
+    font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    background-color: var(--fisio-bg);
+    color: var(--text-dark);
+    margin: 0;
+    padding: 0;
+    min-height: 100vh;
+}
+
+/* Layout Wrapper */
+.fisio-wrapper {
+    display: flex;
+    min-height: 100vh;
+}
+
+/* Sidebar Estilizada */
+.fisio-sidebar {
+    width: 260px;
+    background-color: var(--sidebar-bg);
+    color: #ffffff;
+    display: flex;
+    flex-direction: column;
+    position: fixed;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    z-index: 1050;
+    overflow-y: auto;
+    transition: all 0.3s ease;
+}
+
+.fisio-sidebar-brand {
+    padding: 1.5rem 1.25rem 1rem 1.25rem;
+}
+
+.fisio-brand-logo {
+    font-family: 'Caveat', cursive;
+    font-size: 2.2rem;
+    font-weight: 700;
+    color: #ffffff;
+    line-height: 1;
+    margin-bottom: 2px;
+}
+
+.fisio-brand-sub {
+    font-size: 0.75rem;
+    color: #8096ac;
+    letter-spacing: 0.05em;
+}
+
+/* Profile Badge in Sidebar */
+.fisio-user-badge {
+    margin: 0.75rem 1.25rem 1.25rem 1.25rem;
+    padding: 0.65rem 0.85rem;
+    background-color: #1a2e42;
+    border-radius: var(--radius-md);
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.user-avatar-circle {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    background-color: #00a8cc;
+    color: #ffffff;
+    font-weight: 700;
+    font-size: 0.85rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+.user-info-text {
+    overflow: hidden;
+}
+
+.user-name {
+    font-size: 0.82rem;
+    font-weight: 700;
+    color: #ffffff;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+    overflow: hidden;
+    margin: 0;
+}
+
+.user-status {
+    font-size: 0.7rem;
+    color: #34d399;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.user-status-dot {
+    width: 6px;
+    height: 6px;
+    background-color: #34d399;
+    border-radius: 50%;
+}
+
+/* Sidebar Navigation */
+.sidebar-section-header {
+    font-size: 0.68rem;
+    font-weight: 800;
+    color: #556c82;
+    letter-spacing: 0.08em;
+    padding: 0.75rem 1.5rem 0.35rem 1.5rem;
+    text-transform: uppercase;
+}
+
+.fisio-nav {
+    list-style: none;
+    padding: 0 0.85rem;
+    margin: 0;
+}
+
+.fisio-nav-item {
+    margin-bottom: 4px;
+}
+
+.fisio-nav-link {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.65rem 1rem;
+    color: var(--sidebar-text);
+    text-decoration: none;
+    font-size: 0.88rem;
+    font-weight: 500;
+    border-radius: var(--radius-pill);
+    transition: all 0.2s ease;
+}
+
+.fisio-nav-link i, .fisio-nav-link svg {
+    font-size: 1.1rem;
+    width: 20px;
+    text-align: center;
+    opacity: 0.8;
+}
+
+.fisio-nav-link:hover {
+    color: #ffffff;
+    background-color: var(--sidebar-hover);
+}
+
+.fisio-nav-link.active {
+    background-color: var(--sidebar-active-pill);
+    color: #ffffff;
+    font-weight: 600;
+    box-shadow: 0 4px 12px rgba(0, 150, 230, 0.3);
+}
+
+.fisio-nav-badge {
+    margin-left: auto;
+    background-color: #ef4444;
+    color: #ffffff;
+    font-size: 0.7rem;
+    font-weight: 700;
+    padding: 2px 7px;
+    border-radius: 50px;
+}
+
+/* Pending Tasks Widget in Sidebar */
+.sidebar-tasks-box {
+    margin: auto 1rem 1.25rem 1rem;
+    background-color: #192c3f;
+    border-radius: var(--radius-md);
+    padding: 1rem;
+    border: 1px solid #233a52;
+}
+
+.sidebar-tasks-title {
+    font-size: 0.78rem;
+    font-weight: 700;
+    color: #9cb1c9;
+    margin-bottom: 0.6rem;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.sidebar-task-item {
+    font-size: 0.75rem;
+    color: #cbd5e1;
+    margin-bottom: 0.5rem;
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+    line-height: 1.3;
+}
+
+.sidebar-task-item:last-child {
+    margin-bottom: 0;
+}
+
+.task-dot {
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    margin-top: 4px;
+    flex-shrink: 0;
+}
+
+.task-dot.red { background-color: #ef4444; }
+.task-dot.orange { background-color: #f97316; }
+.task-dot.amber { background-color: #f59e0b; }
+
+.fisio-logout-btn {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    color: #7b91a7;
+    font-size: 0.83rem;
+    font-weight: 500;
+    padding: 0.85rem 1.5rem;
+    border-top: 1px solid #1a2d40;
+    background: transparent;
+    border-left: none;
+    border-right: none;
+    border-bottom: none;
+    width: 100%;
+    text-align: left;
+    cursor: pointer;
+    transition: color 0.2s;
+}
+
+.fisio-logout-btn:hover {
+    color: #f87171;
+}
+
+/* Main Content Area */
+.fisio-content {
+    margin-left: 260px;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+}
+
+/* Top Navbar */
+.fisio-navbar {
+    background-color: #ffffff;
+    height: 70px;
+    padding: 0 1.75rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.02);
+    border-bottom: 1px solid var(--card-border);
+    position: sticky;
+    top: 0;
+    z-index: 1000;
+}
+
+.fisio-page-header {
+    display: flex;
+    flex-direction: column;
+}
+
+.fisio-page-title {
+    font-size: 1.15rem;
+    font-weight: 800;
+    color: var(--text-dark);
+    margin: 0;
+}
+
+.fisio-page-subtitle {
+    font-size: 0.75rem;
+    color: var(--text-muted);
+    margin: 0;
+}
+
+.fisio-navbar-actions {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.btn-icon-round {
+    width: 38px;
+    height: 38px;
+    border-radius: 50%;
+    background-color: #f1f5f9;
+    border: none;
+    color: #64748b;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    position: relative;
+    transition: all 0.2s;
+}
+
+.btn-icon-round:hover {
+    background-color: #e2e8f0;
+    color: var(--text-dark);
+}
+
+.notification-badge {
+    position: absolute;
+    top: 3px;
+    right: 3px;
+    width: 8px;
+    height: 8px;
+    background-color: #ef4444;
+    border-radius: 50%;
+    border: 2px solid #ffffff;
+}
+
+.citas-today-pill {
+    background-color: var(--primary-cyan-light);
+    color: var(--primary-cyan);
+    font-size: 0.78rem;
+    font-weight: 700;
+    padding: 0.45rem 1rem;
+    border-radius: var(--radius-pill);
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.citas-today-dot {
+    width: 7px;
+    height: 7px;
+    background-color: var(--primary-cyan);
+    border-radius: 50%;
+}
+
+.nav-user-avatar {
+    width: 38px;
+    height: 38px;
+    border-radius: 50%;
+    background-color: var(--primary-cyan);
+    color: #ffffff;
+    font-weight: 700;
+    font-size: 0.85rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+}
+
+/* Page Body Canvas */
+.fisio-main-body {
+    padding: 1.75rem;
+    flex: 1;
+}
+
+/* Metric KPI Cards Row */
+.kpi-card {
+    background-color: var(--card-bg);
+    border: 1px solid var(--card-border);
+    border-radius: var(--radius-lg);
+    padding: 1.25rem 1.5rem;
+    box-shadow: var(--card-shadow);
+    display: flex;
+    align-items: center;
+    gap: 1.25rem;
+    height: 100%;
+    transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.kpi-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.05);
+}
+
+.kpi-icon-box {
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.3rem;
+    flex-shrink: 0;
+}
+
+.kpi-icon-box.blue { background-color: #e0f2fe; color: #0284c7; }
+.kpi-icon-box.cyan { background-color: #e0f7fa; color: #00acc1; }
+.kpi-icon-box.green { background-color: #e6f7ef; color: #10b981; }
+.kpi-icon-box.yellow { background-color: #fff8e1; color: #f59e0b; }
+
+.kpi-number {
+    font-size: 1.8rem;
+    font-weight: 800;
+    color: var(--text-dark);
+    line-height: 1.1;
+}
+
+.kpi-title {
+    font-size: 0.8rem;
+    color: var(--text-muted);
+    font-weight: 600;
+}
+
+.kpi-sub {
+    font-size: 0.72rem;
+    font-weight: 600;
+    margin-top: 2px;
+}
+
+.kpi-sub.blue { color: #0284c7; }
+.kpi-sub.cyan { color: #00acc1; }
+.kpi-sub.green { color: #10b981; }
+.kpi-sub.yellow { color: #d97706; }
+
+/* Custom Buttons */
+.btn-fisio-primary {
+    background-color: var(--primary-cyan);
+    color: #ffffff;
+    border: none;
+    border-radius: var(--radius-pill);
+    padding: 0.55rem 1.25rem;
+    font-size: 0.83rem;
+    font-weight: 700;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    transition: all 0.2s ease;
+    cursor: pointer;
+    text-decoration: none;
+}
+
+.btn-fisio-primary:hover {
+    background-color: var(--primary-cyan-hover);
+    color: #ffffff;
+    box-shadow: 0 4px 12px rgba(0, 150, 230, 0.3);
+}
+
+.btn-fisio-outline {
+    background-color: transparent;
+    color: var(--primary-cyan);
+    border: 1.5px solid var(--primary-cyan);
+    border-radius: var(--radius-pill);
+    padding: 0.5rem 1.1rem;
+    font-size: 0.8rem;
+    font-weight: 700;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    transition: all 0.2s ease;
+    cursor: pointer;
+    text-decoration: none;
+}
+
+.btn-fisio-outline:hover {
+    background-color: var(--primary-cyan-light);
+    color: var(--primary-cyan-hover);
+}
+
+.btn-fisio-light {
+    background-color: #f1f5f9;
+    color: var(--text-dark);
+    border: none;
+    border-radius: var(--radius-pill);
+    padding: 0.5rem 1rem;
+    font-size: 0.8rem;
+    font-weight: 600;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    transition: all 0.2s ease;
+    text-decoration: none;
+}
+
+.btn-fisio-light:hover {
+    background-color: #e2e8f0;
+}
+
+/* Card Panels */
+.fisio-card {
+    background-color: var(--card-bg);
+    border: 1px solid var(--card-border);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--card-shadow);
+    padding: 1.5rem;
+    margin-bottom: 1.5rem;
+}
+
+.fisio-card-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 1.25rem;
+}
+
+.fisio-card-title {
+    font-size: 0.98rem;
+    font-weight: 800;
+    color: var(--text-dark);
+    margin: 0;
+}
+
+/* Timeline Agenda de Hoy */
+.agenda-timeline {
+    display: flex;
+    flex-direction: column;
+    gap: 0.85rem;
+}
+
+.agenda-item {
+    display: flex;
+    align-items: center;
+    gap: 0.85rem;
+}
+
+.agenda-time {
+    font-size: 0.78rem;
+    font-weight: 700;
+    color: var(--text-muted);
+    width: 45px;
+    flex-shrink: 0;
+}
+
+.agenda-card {
+    flex: 1;
+    background-color: #ffffff;
+    border: 1px solid #eef2f6;
+    border-radius: var(--radius-md);
+    padding: 0.65rem 0.85rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    transition: border-color 0.2s;
+}
+
+.agenda-card:hover {
+    border-color: #cbd5e1;
+}
+
+.agenda-card.en-curso {
+    background-color: #f0f9ff;
+    border-color: #bae6fd;
+}
+
+.agenda-patient-info {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+}
+
+.agenda-avatar {
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    color: #ffffff;
+    font-size: 0.72rem;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.agenda-patient-name {
+    font-size: 0.82rem;
+    font-weight: 700;
+    color: var(--text-dark);
+    margin: 0;
+}
+
+.agenda-patient-diag {
+    font-size: 0.72rem;
+    color: var(--text-muted);
+    margin: 0;
+}
+
+/* Chips / Badges */
+.status-badge {
+    font-size: 0.72rem;
+    font-weight: 700;
+    padding: 3px 10px;
+    border-radius: var(--radius-pill);
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.status-badge.activo, .status-badge.completada, .status-badge.facil {
+    background-color: var(--status-green-bg);
+    color: var(--status-green);
+}
+
+.status-badge.riesgo, .status-badge.urgente, .status-badge.dificil {
+    background-color: var(--status-red-bg);
+    color: var(--status-red);
+}
+
+.status-badge.pendiente, .status-badge.siguiente, .status-badge.moderado {
+    background-color: var(--status-amber-bg);
+    color: #d97706;
+}
+
+.status-badge.nuevo, .status-badge.especial {
+    background-color: var(--status-purple-bg);
+    color: var(--status-purple);
+}
+
+.status-badge.en-curso {
+    background-color: var(--status-blue-bg);
+    color: var(--status-blue);
+}
+
+/* Tables */
+.fisio-table-container {
+    overflow-x: auto;
+}
+
+.fisio-table {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0;
+}
+
+.fisio-table th {
+    font-size: 0.75rem;
+    font-weight: 700;
+    color: var(--text-light);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    padding: 0.75rem 1rem;
+    border-bottom: 1px solid var(--card-border);
+    text-align: left;
+}
+
+.fisio-table td {
+    padding: 0.85rem 1rem;
+    font-size: 0.83rem;
+    color: var(--text-dark);
+    border-bottom: 1px solid #f1f5f9;
+    vertical-align: middle;
+}
+
+.fisio-table tbody tr:last-child td {
+    border-bottom: none;
+}
+
+.fisio-table tbody tr:hover {
+    background-color: #fafcfe;
+}
+
+/* Progress bar inside tables */
+.progress-bar-container {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    width: 100%;
+    max-width: 130px;
+}
+
+.progress-track {
+    flex: 1;
+    height: 6px;
+    background-color: #e2e8f0;
+    border-radius: 10px;
+    overflow: hidden;
+}
+
+.progress-fill {
+    height: 100%;
+    border-radius: 10px;
+    transition: width 0.3s ease;
+}
+
+.progress-fill.cyan { background-color: #0096e6; }
+.progress-fill.purple { background-color: #8b5cf6; }
+.progress-fill.green { background-color: #10b981; }
+.progress-fill.amber { background-color: #f59e0b; }
+.progress-fill.red { background-color: #ef4444; }
+
+.progress-text {
+    font-size: 0.72rem;
+    font-weight: 700;
+    color: var(--text-muted);
+    min-width: 30px;
+}
+
+/* Pain Level Score Indicator */
+.pain-score-indicator {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 0.78rem;
+    font-weight: 700;
+}
+
+.pain-bar {
+    width: 24px;
+    height: 5px;
+    border-radius: 3px;
+}
+
+.pain-bar.low { background-color: #10b981; }
+.pain-bar.mid { background-color: #f59e0b; }
+.pain-bar.high { background-color: #ef4444; }
+
+/* Filter Pills */
+.filter-pills-row {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    overflow-x: auto;
+    padding-bottom: 4px;
+}
+
+.filter-pill {
+    background-color: #ffffff;
+    border: 1px solid #e2e8f0;
+    color: var(--text-muted);
+    font-size: 0.78rem;
+    font-weight: 600;
+    padding: 0.4rem 1rem;
+    border-radius: var(--radius-pill);
+    cursor: pointer;
+    transition: all 0.2s ease;
+    white-space: nowrap;
+    text-decoration: none;
+}
+
+.filter-pill:hover {
+    border-color: #cbd5e1;
+    color: var(--text-dark);
+}
+
+.filter-pill.active {
+    background-color: var(--primary-cyan);
+    color: #ffffff;
+    border-color: var(--primary-cyan);
+    box-shadow: 0 2px 8px rgba(0, 150, 230, 0.25);
+}
+
+/* Search Box */
+.fisio-search-box {
+    position: relative;
+    width: 100%;
+    max-width: 320px;
+}
+
+.fisio-search-box input {
+    width: 100%;
+    background-color: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: var(--radius-pill);
+    padding: 0.45rem 1rem 0.45rem 2.4rem;
+    font-size: 0.8rem;
+    color: var(--text-dark);
+    transition: all 0.2s;
+}
+
+.fisio-search-box input:focus {
+    outline: none;
+    background-color: #ffffff;
+    border-color: var(--primary-cyan);
+    box-shadow: 0 0 0 3px rgba(0, 150, 230, 0.12);
+}
+
+.fisio-search-icon {
+    position: absolute;
+    left: 0.9rem;
+    top: 50%;
+    transform: translateY(-50%);
+    color: #94a3b8;
+    font-size: 0.85rem;
+}
+
+/* Mini Calendar Widget */
+.mini-calendar {
+    width: 100%;
+}
+
+.calendar-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 0.75rem;
+}
+
+.calendar-month-title {
+    font-size: 0.85rem;
+    font-weight: 800;
+    color: var(--text-dark);
+}
+
+.calendar-days-grid {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    text-align: center;
+    gap: 4px;
+}
+
+.cal-day-name {
+    font-size: 0.68rem;
+    font-weight: 700;
+    color: var(--text-light);
+    padding: 4px 0;
+}
+
+.cal-date-cell {
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: var(--text-dark);
+    padding: 6px 0;
+    border-radius: 50%;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    aspect-ratio: 1;
+}
+
+.cal-date-cell:hover {
+    background-color: #f1f5f9;
+}
+
+.cal-date-cell.today {
+    background-color: var(--primary-cyan);
+    color: #ffffff;
+    font-weight: 800;
+}
+
+.cal-date-cell.has-event {
+    position: relative;
+}
+
+.cal-date-cell.has-event::after {
+    content: '';
+    position: absolute;
+    bottom: 2px;
+    width: 3px;
+    height: 3px;
+    background-color: var(--primary-cyan);
+    border-radius: 50%;
+}
+
+.cal-date-cell.today.has-event::after {
+    background-color: #ffffff;
+}
+
+/* Weekly Agenda Grid View (Image 2) */
+.weekly-agenda-container {
+    background-color: #ffffff;
+    border: 1px solid var(--card-border);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--card-shadow);
+    overflow: hidden;
+}
+
+.weekly-agenda-grid {
+    display: grid;
+    grid-template-columns: 70px repeat(6, 1fr);
+    border-collapse: collapse;
+}
+
+.agenda-grid-header {
+    background-color: #f8fafc;
+    border-bottom: 1px solid #e2e8f0;
+    padding: 0.85rem 0.5rem;
+    text-align: center;
+    font-size: 0.8rem;
+    font-weight: 700;
+    color: var(--text-dark);
+}
+
+.agenda-grid-header.today-col {
+    background-color: #e0f2fe;
+    color: var(--primary-cyan);
+    border-bottom: 2px solid var(--primary-cyan);
+}
+
+.agenda-grid-time {
+    border-right: 1px solid #f1f5f9;
+    border-bottom: 1px solid #f1f5f9;
+    padding: 0.75rem 0.5rem;
+    text-align: center;
+    font-size: 0.72rem;
+    font-weight: 600;
+    color: var(--text-muted);
+}
+
+.agenda-grid-cell {
+    border-right: 1px solid #f1f5f9;
+    border-bottom: 1px solid #f1f5f9;
+    padding: 6px;
+    min-height: 80px;
+    position: relative;
+}
+
+.agenda-grid-cell.today-col {
+    background-color: #f8fafc;
+}
+
+.appointment-card-block {
+    border-radius: var(--radius-md);
+    padding: 0.55rem 0.65rem;
+    margin-bottom: 4px;
+    font-size: 0.72rem;
+    line-height: 1.3;
+    border-left: 3px solid transparent;
+}
+
+.appointment-card-block.pink {
+    background-color: #fce7f3;
+    border-left-color: #ec4899;
+    color: #831843;
+}
+
+.appointment-card-block.cyan {
+    background-color: #e0f2fe;
+    border-left-color: #0ea5e9;
+    color: #0369a1;
+}
+
+.appointment-card-block.purple {
+    background-color: #f3e8ff;
+    border-left-color: #a855f7;
+    color: #6b21a8;
+}
+
+.appointment-card-block.green {
+    background-color: #dcfce7;
+    border-left-color: #22c55e;
+    color: #14532d;
+}
+
+.appointment-card-block.yellow {
+    background-color: #fef3c7;
+    border-left-color: #f59e0b;
+    color: #78350f;
+}
+
+.appt-title {
+    font-weight: 800;
+    margin-bottom: 2px;
+}
+
+.appt-desc {
+    opacity: 0.85;
+}
+
+/* Exercise Grid Cards (Image 4) */
+.exercise-card {
+    background-color: #ffffff;
+    border: 1px solid var(--card-border);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--card-shadow);
+    padding: 1.25rem;
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.exercise-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.05);
+}
+
+.exercise-tag-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0.4rem 0.75rem;
+    border-radius: var(--radius-md);
+    margin-bottom: 0.85rem;
+    font-size: 0.75rem;
+    font-weight: 700;
+}
+
+.exercise-tag-header.blue { background-color: #e0f2fe; color: #0284c7; }
+.exercise-tag-header.green { background-color: #dcfce7; color: #15803d; }
+.exercise-tag-header.purple { background-color: #f3e8ff; color: #7e22ce; }
+.exercise-tag-header.yellow { background-color: #fef3c7; color: #b45309; }
+.exercise-tag-header.pink { background-color: #fce7f3; color: #be185d; }
+.exercise-tag-header.cyan { background-color: #e0f7fa; color: #00838f; }
+
+.exercise-title {
+    font-size: 0.92rem;
+    font-weight: 800;
+    color: var(--text-dark);
+    margin: 0 0 2px 0;
+}
+
+.exercise-subtitle {
+    font-size: 0.75rem;
+    color: var(--text-muted);
+    margin-bottom: 0.85rem;
+}
+
+.exercise-card-footer {
+    margin-top: auto;
+    padding-top: 0.85rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+/* Chat Layout (Image 5) */
+.chat-container-layout {
+    display: grid;
+    grid-template-columns: 280px 1fr 280px;
+    gap: 1.25rem;
+    height: calc(100vh - 140px);
+}
+
+@media (max-width: 1200px) {
+    .chat-container-layout {
+        grid-template-columns: 260px 1fr;
+    }
+    .chat-detail-drawer {
+        display: none;
+    }
+}
+
+.chat-list-panel {
+    background-color: #ffffff;
+    border: 1px solid var(--card-border);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--card-shadow);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+
+.chat-list-header {
+    padding: 1rem;
+    border-bottom: 1px solid var(--card-border);
+}
+
+.chat-patient-item {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.85rem 1rem;
+    border-bottom: 1px solid #f1f5f9;
+    cursor: pointer;
+    transition: background-color 0.2s;
+    text-decoration: none;
+}
+
+.chat-patient-item:hover {
+    background-color: #f8fafc;
+}
+
+.chat-patient-item.active {
+    background-color: #e0f2fe;
+}
+
+.chat-patient-name {
+    font-size: 0.82rem;
+    font-weight: 700;
+    color: var(--text-dark);
+    margin: 0;
+}
+
+.chat-patient-preview {
+    font-size: 0.73rem;
+    color: var(--text-muted);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    margin: 0;
+}
+
+.chat-active-panel {
+    background-color: #ffffff;
+    border: 1px solid var(--card-border);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--card-shadow);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+
+.chat-active-header {
+    padding: 1rem 1.25rem;
+    border-bottom: 1px solid var(--card-border);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.chat-messages-scroll {
+    flex: 1;
+    padding: 1.25rem;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    background-color: #f8fafc;
+}
+
+.chat-bubble {
+    max-width: 70%;
+    padding: 0.75rem 1rem;
+    border-radius: 16px;
+    font-size: 0.83rem;
+    line-height: 1.4;
+    position: relative;
+}
+
+.chat-bubble.incoming {
+    align-self: flex-start;
+    background-color: #ffffff;
+    color: var(--text-dark);
+    border: 1px solid #e2e8f0;
+    border-bottom-left-radius: 4px;
+}
+
+.chat-bubble.outgoing {
+    align-self: flex-end;
+    background-color: var(--primary-cyan);
+    color: #ffffff;
+    border-bottom-right-radius: 4px;
+}
+
+.chat-time {
+    font-size: 0.65rem;
+    opacity: 0.7;
+    margin-top: 4px;
+    text-align: right;
+}
+
+.chat-input-bar {
+    padding: 1rem;
+    background-color: #ffffff;
+    border-top: 1px solid var(--card-border);
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.chat-input-field {
+    flex: 1;
+    background-color: #f1f5f9;
+    border: 1px solid #e2e8f0;
+    border-radius: var(--radius-pill);
+    padding: 0.6rem 1.25rem;
+    font-size: 0.83rem;
+}
+
+.chat-input-field:focus {
+    outline: none;
+    background-color: #ffffff;
+    border-color: var(--primary-cyan);
+}
+
+.chat-detail-drawer {
+    background-color: #ffffff;
+    border: 1px solid var(--card-border);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--card-shadow);
+    padding: 1.25rem;
+    display: flex;
+    flex-direction: column;
+    overflow-y: auto;
+}
+
+/* Quick Action Buttons in Drawer */
+.btn-action-drawer {
+    width: 100%;
+    padding: 0.65rem;
+    font-size: 0.78rem;
+    font-weight: 700;
+    border-radius: var(--radius-pill);
+    margin-bottom: 0.5rem;
+    border: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    cursor: pointer;
+    transition: all 0.2s;
+    text-decoration: none;
+}
+
+.btn-action-drawer.blue { background-color: #e0f2fe; color: #0284c7; }
+.btn-action-drawer.green { background-color: #dcfce7; color: #15803d; }
+.btn-action-drawer.light-blue { background-color: #f0f9ff; color: #0369a1; border: 1px solid #bae6fd; }
+.btn-action-drawer.yellow { background-color: #fef3c7; color: #b45309; }
+
+.btn-action-drawer:hover {
+    filter: brightness(0.95);
+}
+
+/* Responsive Sidebar Toggle for mobile */
+@media (max-width: 991.98px) {
+    .fisio-sidebar {
+        transform: translateX(-100%);
+    }
+    .fisio-sidebar.show {
+        transform: translateX(0);
+    }
+    .fisio-content {
+        margin-left: 0;
+    }
+}

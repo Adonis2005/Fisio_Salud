@@ -1,0 +1,63 @@
+@model FisioConfiguracionViewModel
+@{
+    Layout = "_LayoutFisioterapeuta";
+    ViewData["Title"] = "Configuración del Perfil";
+}
+
+<div class="row justify-content-center">
+    <div class="col-12 col-lg-9">
+        <div class="fisio-card">
+            <div class="fisio-card-header mb-4">
+                <h2 class="fisio-card-title">Ajustes de Perfil y Consultorio</h2>
+            </div>
+
+            <form asp-action="Configuracion" method="post">
+                @Html.AntiForgeryToken()
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <label class="form-label fw-bold" style="font-size: 0.8rem;">Nombres</label>
+                        <input type="text" asp-for="Nombres" class="form-control rounded-pill px-3" style="font-size: 0.85rem;" />
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label fw-bold" style="font-size: 0.8rem;">Apellidos</label>
+                        <input type="text" asp-for="Apellidos" class="form-control rounded-pill px-3" style="font-size: 0.85rem;" />
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label fw-bold" style="font-size: 0.8rem;">Correo profesional</label>
+                        <input type="email" asp-for="Correo" class="form-control rounded-pill px-3" style="font-size: 0.85rem;" />
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label fw-bold" style="font-size: 0.8rem;">Teléfono de contacto</label>
+                        <input type="text" asp-for="Telefono" class="form-control rounded-pill px-3" style="font-size: 0.85rem;" />
+                    </div>
+                    <div class="col-md-12">
+                        <label class="form-label fw-bold" style="font-size: 0.8rem;">Especialidad / Área médica</label>
+                        <input type="text" asp-for="Especialidad" class="form-control rounded-pill px-3" style="font-size: 0.85rem;" />
+                    </div>
+                    <div class="col-md-12">
+                        <label class="form-label fw-bold" style="font-size: 0.8rem;">Dirección del Consultorio</label>
+                        <input type="text" asp-for="DireccionConsultorio" class="form-control rounded-pill px-3" style="font-size: 0.85rem;" />
+                    </div>
+
+                    <div class="col-md-12 border-top pt-3 mt-3">
+                        <h5 class="fw-bold mb-3" style="font-size: 0.9rem;">Preferencias de Notificación</h5>
+                        <div class="form-check form-switch mb-2">
+                            <input class="form-check-input" type="checkbox" asp-for="NotificacionesEmail" id="n1" />
+                            <label class="form-check-label fw-bold" for="n1" style="font-size: 0.82rem;">Recibir resúmenes por correo electrónico</label>
+                        </div>
+                        <div class="form-check form-switch">
+                            <input class="form-check-input" type="checkbox" asp-for="NotificacionesCitas" id="n2" />
+                            <label class="form-check-label fw-bold" for="n2" style="font-size: 0.82rem;">Notificar sobre nuevas citas reservadas</label>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="d-flex justify-content-end gap-2 mt-4 pt-3 border-top">
+                    <button type="submit" class="btn-fisio-primary">
+                        <i class="bi bi-save"></i> Guardar Cambios
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>

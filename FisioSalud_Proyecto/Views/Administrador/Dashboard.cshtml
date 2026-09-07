@@ -1,0 +1,260 @@
+@model FisioSalud_Proyecto.Models.Administrador.AdminDashboardPageViewModel
+@{
+    Layout = "_LayoutAdmin";
+    ViewData["Title"] = "Panel de Administración Central";
+    var maxSemana = Model.MaxCitasDia > 0 ? Model.MaxCitasDia : 1;
+    var maxMensual = Model.MaxActividadMes > 0 ? Model.MaxActividadMes : 1;
+    var hoy = DateTime.Today;
+    var firstDay = new DateTime(hoy.Year, hoy.Month, 1);
+    int startOffset = (int)firstDay.DayOfWeek;
+    int daysInMonth = DateTime.DaysInMonth(hoy.Year, hoy.Month);
+    var mesAno = hoy.ToString("MMMM yyyy", new System.Globalization.CultureInfo("es-ES"));
+}
+
+<!-- KPI Cards -->
+<div class="admin-kpi-grid">
+    @foreach (var kpi in Model.Kpis)
+    {
+        <div class="kpi-card">
+            <div class="kpi-icon-box @kpi.Color">
+                <i class="bi @kpi.Icono"></i>
+            </div>
+            <div>
+                <div class="kpi-number">@kpi.Valor</div>
+                <div class="kpi-title">@kpi.Titulo</div>
+                <div class="kpi-sub @kpi.Color">@kpi.Subtitulo</div>
+            </div>
+        </div>
+    }
+</div>
+
+<!-- Main grid: 3 columns -->
+<div class="admin-grid-3">
+
+    <!-- Col 1: Carga de Terapeutas -->
+    <div class="fisio-card mb-0">
+        <div class="fisio-card-header">
+            <h2 class="fisio-card-title">Carga de Terapeutas</h2>
+            <a asp-action="Terapeutas" class="text-decoration-none fw-bold" style="font-size:0.78rem; color:var(--admin-primary);">Ver todos</a>
+        </div>
+        @if (Model.CargaTerapeutas.Any())
+        {
+            @foreach (var t in Model.CargaTerapeutas)
+            {
+                <div class="load-row">
+                    <div class="avatar-sm" style="background:@t.Color;">@t.Iniciales</div>
+                    <div class="load-meta">
+                        <p class="load-name">@t.Nombre</p>
+                        <span class="load-sub">@t.Pacientes / @t.Capacidad pac.</span>
+                    </div>
+                    <div class="load-bar">
+                        <span class="@t.BarClass" style="width:@t.Porcentaje%;"></span>
+                    </div>
+                    <span class="load-pct">@t.Porcentaje%</span>
+                </div>
+            }
+        }
+        else
+        {
+            <div class="empty-state">
+                <i class="bi bi-heart-pulse d-block fs-2 mb-2 opacity-40"></i>
+                <p class="mb-0" style="font-size:0.82rem;">Aún no hay fisioterapeutas registrados.</p>
+                <a asp-action="CrearUsuario" class="btn-fisio-primary d-inline-flex align-items-center gap-1 mt-3" style="font-size:0.78rem;">
+                    <i class="bi bi-plus-lg"></i> Agregar terapeuta
+                </a>
+            </div>
+        }
+
+        <div class="border-top mt-3 pt-3">
+            <div class="fisio-card-header mb-2 p-0">
+                <h2 class="fisio-card-title">Acciones rápidas</h2>
+            </div>
+            <div class="admin-action-stack">
+                <a asp-action="CrearPaciente" class="admin-action-btn blue">
+                    <i class="bi bi-person-plus-fill"></i> Registrar nuevo paciente
+                </a>
+                <a asp-action="CrearUsuario" class="admin-action-btn gray">
+                    <i class="bi bi-person-gear"></i> Crear usuario del sistema
+                </a>
+                <a asp-action="Reportes" class="admin-action-btn cyan">
+                    <i class="bi bi-file-earmark-arrow-down-fill"></i> Exportar reporte CSV
+                </a>
+                <a asp-action="Terapeutas" class="admin-action-btn green">
+                    <i class="bi bi-heart-pulse-fill"></i> Ver panel terapeutas
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Col 2: Gráfico semanal de citas -->
+    <div class="fisio-card mb-0">
+        <div class="fisio-card-header">
+            <h2 class="fisio-card-title">Citas esta semana</h2>
+            <div class="week-legend">
+                <span><i class="dot-blue"></i>Atendidas</span>
+                <span><i class="dot-orange"></i>Pendientes</span>
+                <span><i class="dot-red"></i>Canceladas</span>
+            </div>
+        </div>
+        <div class="week-chart">
+            @foreach (var dia in Model.CitasSemana)
+            {
+                var totalH = dia.Total == 0 ? 0 : (int)Math.Round(dia.Total * 100.0 / maxSemana);
+                var confH = dia.Total == 0 ? 0 : (int)Math.Round(dia.Confirmadas * 100.0 / maxSemana);
+                var pendH = dia.Total == 0 ? 0 : (int)Math.Round(dia.Pendientes * 100.0 / maxSemana);
+                var cancH = dia.Total == 0 ? 0 : (int)Math.Round(dia.Canceladas * 100.0 / maxSemana);
+                <div class="week-col">
+                    <div class="week-stack">
+                        @if (dia.Canceladas > 0) { <div class="week-seg canc" style="height:@cancH%;"></div> }
+                        @if (dia.Pendientes > 0) { <div class="week-seg pend" style="height:@pendH%;"></div> }
+                        @if (dia.Confirmadas > 0) { <div class="week-seg conf" style="height:@confH%;"></div> }
+                    </div>
+                    <span class="week-label">@dia.Dia</span>
+                </div>
+            }
+        </div>
+
+        <div class="border-top mt-3 pt-3">
+            <div class="fisio-card-header mb-2 p-0">
+                <h2 class="fisio-card-title">Actividad mensual</h2>
+                <a asp-action="Analitica" class="text-decoration-none fw-bold" style="font-size:0.78rem; color:var(--admin-primary);">Analítica</a>
+            </div>
+            <div class="area-chart">
+                @foreach (var m in Model.ActividadMensual)
+                {
+                    var barH = m.Total == 0 ? 4 : (int)Math.Round(m.Total * 100.0 / maxMensual);
+                    <div class="area-col">
+                        <div class="area-bar" style="height:@(Math.Max(6, barH))%;"></div>
+                        <span class="area-label">@m.Mes</span>
+                    </div>
+                }
+            </div>
+        </div>
+
+        <!-- Próximas citas -->
+        <div class="border-top mt-3 pt-3">
+            <div class="fisio-card-header mb-2 p-0">
+                <h2 class="fisio-card-title">Próximas citas</h2>
+            </div>
+            @if (Model.ProximasCitas.Any())
+            {
+                <div class="fisio-table-container" style="max-height:200px;overflow-y:auto;">
+                    <table class="fisio-table">
+                        <thead>
+                            <tr>
+                                <th>Paciente</th>
+                                <th>Terapeuta</th>
+                                <th>Fecha</th>
+                                <th>Estado</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var c in Model.ProximasCitas)
+                            {
+                                <tr>
+                                    <td><span class="fw-bold">@c.Paciente</span></td>
+                                    <td style="font-size:0.75rem; color:var(--text-muted);">@c.Terapeuta</td>
+                                    <td style="font-size:0.75rem;">@c.Fecha @c.Hora</td>
+                                    <td><span class="status-badge @c.EstadoClass">@c.Estado</span></td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            }
+            else
+            {
+                <div class="empty-state py-3">
+                    <i class="bi bi-calendar-x d-block fs-3 mb-1 opacity-40"></i>
+                    <p class="mb-0" style="font-size:0.78rem;">No hay citas programadas próximamente.</p>
+                </div>
+            }
+        </div>
+    </div>
+
+    <!-- Col 3: Alertas + Mini Calendario + Planes -->
+    <div class="d-flex flex-column gap-3">
+
+        <!-- Alertas -->
+        <div class="fisio-card mb-0">
+            <div class="fisio-card-header">
+                <h2 class="fisio-card-title">Alertas del sistema</h2>
+                @if (Model.Alertas.Any())
+                {
+                    <span class="fisio-nav-badge">@Model.Alertas.Count</span>
+                }
+            </div>
+            @if (Model.Alertas.Any())
+            {
+                @foreach (var a in Model.Alertas)
+                {
+                    <div class="alert-line">
+                        <span class="task-dot @a.CssDot" style="flex-shrink:0; margin-top:4px;"></span>
+                        <span>@a.Mensaje</span>
+                    </div>
+                }
+            }
+            else
+            {
+                <div class="text-center py-2 text-muted" style="font-size:0.8rem;">
+                    <i class="bi bi-check-circle-fill text-success d-block fs-4 mb-1"></i>
+                    Sin alertas clínicas activas.
+                </div>
+            }
+        </div>
+
+        <!-- Mini Calendario -->
+        <div class="fisio-card mb-0">
+            <div class="mini-calendar">
+                <div class="calendar-header">
+                    <span class="calendar-month-title text-capitalize">@mesAno</span>
+                </div>
+                <div class="calendar-days-grid">
+                    <div class="cal-day-name">D</div>
+                    <div class="cal-day-name">L</div>
+                    <div class="cal-day-name">M</div>
+                    <div class="cal-day-name">M</div>
+                    <div class="cal-day-name">J</div>
+                    <div class="cal-day-name">V</div>
+                    <div class="cal-day-name">S</div>
+                    @for (int i = 0; i < startOffset; i++)
+                    {
+                        <div class="cal-date-cell"></div>
+                    }
+                    @for (int day = 1; day <= daysInMonth; day++)
+                    {
+                        bool isToday = (day == hoy.Day);
+                        <div class="cal-date-cell @(isToday ? "today" : "")">@day</div>
+                    }
+                </div>
+            </div>
+        </div>
+
+        <!-- Planes recientes -->
+        <div class="fisio-card mb-0">
+            <div class="fisio-card-header">
+                <h2 class="fisio-card-title">Protocolos usados</h2>
+                <a asp-action="Planes" class="text-decoration-none fw-bold" style="font-size:0.78rem; color:var(--admin-primary);">Ver todos</a>
+            </div>
+            @if (Model.Planes.Any())
+            {
+                @foreach (var p in Model.Planes)
+                {
+                    <div class="plan-mini">
+                        <div>
+                            <div class="fw-bold" style="font-size:0.82rem;">@p.Titulo</div>
+                            <div class="text-muted" style="font-size:0.72rem;">@p.Autor · @p.Actualizado</div>
+                        </div>
+                        <span class="load-sub fw-bold">@p.Usos usos</span>
+                    </div>
+                }
+            }
+            else
+            {
+                <div class="empty-state py-2">
+                    <p class="mb-0" style="font-size:0.78rem;">Sin protocolos registrados aún.</p>
+                </div>
+            }
+        </div>
+    </div>
+</div>

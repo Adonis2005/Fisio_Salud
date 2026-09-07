@@ -1,0 +1,168 @@
+﻿@{
+    var navVariant = ViewData["NavVariant"]?.ToString() ?? "solid";
+    var isHeroNav = navVariant == "hero";
+    var currentController = ViewContext.RouteData.Values["controller"]?.ToString();
+}
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"] - FisioSalud</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" />
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        espresso: '#3C2A21',
+                        cream: '#FAF7F2',
+                        terracotta: '#8C6A4A',
+                        'cream-dark': '#F7F4EF',
+                        'body-text': '#4A4A4A',
+                        'cta-tan': '#E8D8C9',
+                    },
+                    fontFamily: {
+                        serif: ['"Playfair Display"', 'Georgia', 'serif'],
+                        sans: ['Inter', 'system-ui', 'sans-serif'],
+                    },
+                }
+            }
+        }
+    </script>
+    <link rel="stylesheet" href="~/css/fisiosalud.css" asp-append-version="true" />
+</head>
+<body class="font-sans text-body-text bg-cream antialiased">
+    <header class="@(isHeroNav ? "absolute top-0 left-0 right-0 z-50" : "sticky top-0 z-50 bg-cream/95 backdrop-blur-sm border-b border-espresso/5")">
+        <nav class="container mx-auto px-6 lg:px-12 py-5 flex items-center justify-between">
+            <a asp-controller="Home" asp-action="Index"
+               class="font-serif text-2xl lg:text-3xl @(isHeroNav ? "text-white" : "text-espresso") hover:opacity-80 transition-opacity">
+                FisioSalud
+            </a>
+
+            <button type="button" id="mobileMenuBtn"
+                    class="lg:hidden @(isHeroNav ? "text-white" : "text-espresso") p-2"
+                    aria-label="Abrir menú">
+                <i class="bi bi-list text-2xl"></i>
+            </button>
+
+            <div id="mobileMenu" class="hidden lg:flex items-center gap-8">
+                <a asp-controller="Servicios" asp-action="Index"
+                   class="text-sm font-medium transition-colors @(isHeroNav ? "text-white/90 hover:text-white" : currentController == "Servicios" ? "text-espresso underline underline-offset-4" : "text-body-text hover:text-espresso")">
+                    Servicios
+                </a>
+                <a asp-controller="Nosotros" asp-action="Index"
+                   class="text-sm font-medium transition-colors @(isHeroNav ? "text-white/90 hover:text-white" : currentController == "Nosotros" ? "text-espresso underline underline-offset-4" : "text-body-text hover:text-espresso")">
+                    Nosotros
+                </a>
+                <a asp-controller="Contacto" asp-action="Index"
+                   class="text-sm font-medium transition-colors @(isHeroNav ? "text-white/90 hover:text-white" : currentController == "Contacto" ? "text-espresso underline underline-offset-4" : "text-body-text hover:text-espresso")">
+                    Contacto
+                </a>
+                <a asp-controller="Auth" asp-action="Login"
+                   class="inline-flex items-center px-6 py-2.5 rounded-full text-sm font-medium transition-all
+                          @(isHeroNav ? "bg-white/20 text-white hover:bg-white/30 backdrop-blur-sm" : "bg-espresso text-white hover:bg-espresso/90")">
+                    Iniciar Sesión
+                </a>
+            </div>
+        </nav>
+
+        <div id="mobileMenuPanel" class="hidden lg:hidden @(isHeroNav ? "bg-espresso/95 backdrop-blur-md" : "bg-cream border-b border-espresso/10")">
+            <div class="container mx-auto px-6 py-4 flex flex-col gap-4">
+                <a asp-controller="Servicios" asp-action="Index" class="text-sm font-medium @(isHeroNav ? "text-white" : "text-body-text")">Servicios</a>
+                <a asp-controller="Nosotros" asp-action="Index" class="text-sm font-medium @(isHeroNav ? "text-white" : "text-body-text")">Nosotros</a>
+                <a asp-controller="Contacto" asp-action="Index" class="text-sm font-medium @(isHeroNav ? "text-white" : "text-body-text")">Contacto</a>
+                <a asp-controller="Auth" asp-action="Login"
+                   class="inline-flex items-center justify-center px-6 py-2.5 rounded-full text-sm font-medium
+                          @(isHeroNav ? "bg-white/20 text-white" : "bg-espresso text-white")">
+                    Iniciar Sesión
+                </a>
+            </div>
+        </div>
+    </header>
+
+    <main>
+        @RenderBody()
+    </main>
+
+    <footer class="bg-espresso text-white">
+        <div class="container mx-auto px-6 lg:px-12 py-16">
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-10">
+                <div>
+                    <h3 class="font-serif text-2xl mb-4">FisioSalud</h3>
+                    <p class="text-white/70 text-sm leading-relaxed mb-6">
+                        Centro de fisioterapia y rehabilitación comprometido con devolverte el movimiento y la calidad de vida.
+                    </p>
+                    <div class="flex gap-3">
+                        <a href="#" class="w-9 h-9 rounded-full bg-white/10 flex items-center justify-center hover:bg-white/20 transition-colors" aria-label="Facebook">
+                            <i class="bi bi-facebook"></i>
+                        </a>
+                        <a href="#" class="w-9 h-9 rounded-full bg-white/10 flex items-center justify-center hover:bg-white/20 transition-colors" aria-label="Instagram">
+                            <i class="bi bi-instagram"></i>
+                        </a>
+                        <a href="#" class="w-9 h-9 rounded-full bg-white/10 flex items-center justify-center hover:bg-white/20 transition-colors" aria-label="LinkedIn">
+                            <i class="bi bi-linkedin"></i>
+                        </a>
+                    </div>
+                </div>
+
+                <div>
+                    <h4 class="text-xs font-semibold tracking-widest uppercase text-white/50 mb-5">Servicios</h4>
+                    <ul class="space-y-3 text-sm text-white/80">
+                        <li><a asp-controller="Servicios" asp-action="Index" class="hover:text-white transition-colors">Fisioterapia Manual</a></li>
+                        <li><a asp-controller="Servicios" asp-action="Index" class="hover:text-white transition-colors">Rehabilitación Deportiva</a></li>
+                        <li><a asp-controller="Servicios" asp-action="Index" class="hover:text-white transition-colors">Electroterapia</a></li>
+                        <li><a asp-controller="Servicios" asp-action="Index" class="hover:text-white transition-colors">Masajes Terapéuticos</a></li>
+                        <li><a asp-controller="Servicios" asp-action="Index" class="hover:text-white transition-colors">Pilates Terapéutico</a></li>
+                    </ul>
+                </div>
+
+                <div>
+                    <h4 class="text-xs font-semibold tracking-widest uppercase text-white/50 mb-5">Empresa</h4>
+                    <ul class="space-y-3 text-sm text-white/80">
+                        <li><a asp-controller="Nosotros" asp-action="Index" class="hover:text-white transition-colors">Sobre Nosotros</a></li>
+                        <li><a asp-controller="Nosotros" asp-action="Index" class="hover:text-white transition-colors">Nuestro Equipo</a></li>
+                        <li><a asp-controller="Contacto" asp-action="Index" class="hover:text-white transition-colors">Contacto</a></li>
+                        <li><a asp-controller="Home" asp-action="Privacy" class="hover:text-white transition-colors">Política de Privacidad</a></li>
+                    </ul>
+                </div>
+
+                <div>
+                    <h4 class="text-xs font-semibold tracking-widest uppercase text-white/50 mb-5">Contacto</h4>
+                    <ul class="space-y-4 text-sm text-white/80">
+                        <li class="flex items-start gap-3">
+                            <i class="bi bi-geo-alt text-terracotta mt-0.5"></i>
+                            <span>Av. Salud #123, Col. Bienestar, Ciudad de México</span>
+                        </li>
+                        <li class="flex items-center gap-3">
+                            <i class="bi bi-telephone text-terracotta"></i>
+                            <span>+52 55 1234 5678</span>
+                        </li>
+                        <li class="flex items-center gap-3">
+                            <i class="bi bi-envelope text-terracotta"></i>
+                            <span>contacto@fisiosalud.com</span>
+                        </li>
+                        <li class="flex items-center gap-3">
+                            <i class="bi bi-clock text-terracotta"></i>
+                            <span>Lun - Sáb: 8:00 - 20:00</span>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="border-t border-white/10 mt-12 pt-8 flex flex-col md:flex-row justify-between items-center gap-4 text-sm text-white/50">
+                <p>&copy; @DateTime.Now.Year FisioSalud. Todos los derechos reservados.</p>
+                <p>Diseñado con dedicación para tu bienestar</p>
+            </div>
+        </div>
+    </footer>
+
+    <script src="~/lib/jquery/dist/jquery.min.js"></script>
+    <script src="~/js/site.js" asp-append-version="true"></script>
+    @await RenderSectionAsync("Scripts", required: false)
+</body>
+</html>

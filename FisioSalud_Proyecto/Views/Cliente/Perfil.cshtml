@@ -1,0 +1,120 @@
+@model PerfilFormViewModel
+@{
+    Layout = "_LayoutCliente";
+    ViewData["Title"] = "Mi Perfil";
+    var edad = DateTime.Today.Year - Model.FechaNacimiento.Year;
+    if (Model.FechaNacimiento.Date > DateTime.Today.AddYears(-edad)) { edad--; }
+}
+
+<div class="grid grid-cols-1 xl:grid-cols-3 gap-4">
+    <div class="space-y-4">
+        <section class="fs-card text-center">
+            <span class="avatar-circle avatar-lg mx-auto mb-3">@Model.Iniciales</span>
+            <h3 class="mb-0">@Model.Nombres @Model.Apellidos</h3>
+            <p class="text-sm text-terracotta">@Model.CorreoPerfil</p>
+            <span class="badge-soft @(Model.Activo ? "ok" : "warn")">● @(Model.Activo ? "Paciente activo" : "Inactivo")</span>
+        </section>
+        <div class="grid grid-cols-2 gap-3">
+            <div class="fs-card text-center"><div class="text-lg font-bold">@Model.SesionesCompletadas/@Math.Max(Model.SesionesTotales, Model.SesionesCompletadas)</div><div class="text-xs text-terracotta">Sesiones</div></div>
+            <div class="fs-card text-center"><div class="text-lg font-bold">@Model.ProgresoPorcentaje%</div><div class="text-xs text-terracotta">Asistencia</div></div>
+            <div class="fs-card text-center"><div class="text-lg font-bold">@Model.DiasActivo</div><div class="text-xs text-terracotta">Días activo</div></div>
+            <div class="fs-card text-center"><div class="text-lg font-bold">@Model.SemanaRehabilitacion</div><div class="text-xs text-terracotta">Semana</div></div>
+        </div>
+        <section class="fs-card">
+            <h3>Progreso del tratamiento</h3>
+            <div class="progress-track mb-2"><div class="progress-fill" style="width:@Model.ProgresoPorcentaje%"></div></div>
+            <p class="text-sm text-terracotta">@Model.SesionesCompletadas sesiones completadas de @Model.SesionesTotales.</p>
+            @if (Model.ProximaCita != null)
+            {
+                <p class="text-sm mb-0">Próxima cita: @Model.ProximaCita.Fecha.ToString("dddd d 'de' MMMM", new System.Globalization.CultureInfo("es-ES")), @Model.ProximaCita.HoraInicio.ToString(@"hh\:mm") hrs</p>
+            }
+        </section>
+        <section class="fs-card">
+            <div class="text-xs text-terracotta mb-2">Terapeuta asignado</div>
+            @if (string.IsNullOrEmpty(Model.TerapeutaAsignado))
+            {
+                <p class="text-sm mb-0">Se asigna automáticamente con la primera cita.</p>
+            }
+            else
+            {
+                <div class="flex items-center gap-3">
+                    <span class="avatar-circle">@Model.TerapeutaIniciales</span>
+                    <div>
+                        <div class="font-semibold">@Model.TerapeutaAsignado</div>
+                        <div class="text-xs text-terracotta">Desde @Model.TerapeutaDesde?.ToString("d 'de' MMMM, yyyy", new System.Globalization.CultureInfo("es-ES"))</div>
+                    </div>
+                </div>
+            }
+        </section>
+    </div>
+
+    <div class="xl:col-span-2 fs-card">
+        <div class="flex flex-wrap gap-4 border-b border-espresso/10 mb-4">
+            <a class="pb-2 @(Model.Tab == "personal" ? "font-semibold border-b-2 border-espresso" : "text-terracotta")" asp-action="Perfil" asp-route-tab="personal">Información personal</a>
+            <a class="pb-2 @(Model.Tab == "medico" ? "font-semibold border-b-2 border-espresso" : "text-terracotta")" asp-action="Perfil" asp-route-tab="medico">Historial médico</a>
+            <a class="pb-2 @(Model.Tab == "seguridad" ? "font-semibold border-b-2 border-espresso" : "text-terracotta")" asp-action="Perfil" asp-route-tab="seguridad">Seguridad y cuenta</a>
+        </div>
+
+        @if (Model.Tab == "medico")
+        {
+            <p class="text-sm text-terracotta">Altura, peso, IMC y tipo de sangre no existen en Pacientes. Aquí solo se muestra lo persistido:</p>
+            <div class="grid grid-cols-2 gap-3 mt-3">
+                <div class="rounded-xl p-4" style="background:#F8EDE4;"><div class="text-xs text-terracotta">Sexo</div><div class="font-semibold">@(Model.Sexo == "M" ? "Masculino" : Model.Sexo == "F" ? "Femenino" : "Otro")</div></div>
+                <div class="rounded-xl p-4" style="background:#F8EDE4;"><div class="text-xs text-terracotta">Edad</div><div class="font-semibold">@edad años</div></div>
+                <div class="rounded-xl p-4" style="background:#F8EDE4;"><div class="text-xs text-terracotta">Nacimiento</div><div class="font-semibold">@Model.FechaNacimiento.ToString("dd/MM/yyyy")</div></div>
+                <div class="rounded-xl p-4" style="background:#F8EDE4;"><div class="text-xs text-terracotta">Identificación</div><div class="font-semibold">@Model.Identificacion</div></div>
+            </div>
+        }
+        else if (Model.Tab == "seguridad")
+        {
+            <p class="text-sm">La contraseña se cambia en Configuración y se guarda en Usuarios.PasswordHash.</p>
+            <a asp-action="Configuracion" class="inline-flex mt-3 px-5 py-2 rounded-full text-white" style="background:#3C2A21;">Ir a cambiar contraseña</a>
+        }
+        else
+        {
+            <form asp-action="Perfil" method="post" class="space-y-4">
+                @Html.AntiForgeryToken()
+                <input type="hidden" asp-for="PacienteId" />
+                <input type="hidden" asp-for="Identificacion" />
+                <input type="hidden" asp-for="Tab" />
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <label class="text-xs font-semibold uppercase tracking-wide text-terracotta">Nombres</label>
+                        <input asp-for="Nombres" class="w-full rounded-xl px-3 py-2 mt-1" style="background:#F7F4EF;border:none;" />
+                        <span asp-validation-for="Nombres" class="text-xs text-red-700"></span>
+                    </div>
+                    <div>
+                        <label class="text-xs font-semibold uppercase tracking-wide text-terracotta">Apellidos</label>
+                        <input asp-for="Apellidos" class="w-full rounded-xl px-3 py-2 mt-1" style="background:#F7F4EF;border:none;" />
+                        <span asp-validation-for="Apellidos" class="text-xs text-red-700"></span>
+                    </div>
+                    <div>
+                        <label class="text-xs font-semibold uppercase tracking-wide text-terracotta">Correo</label>
+                        <input asp-for="CorreoPerfil" class="w-full rounded-xl px-3 py-2 mt-1" style="background:#F7F4EF;border:none;" />
+                    </div>
+                    <div>
+                        <label class="text-xs font-semibold uppercase tracking-wide text-terracotta">Teléfono</label>
+                        <input asp-for="TelefonoPerfil" class="w-full rounded-xl px-3 py-2 mt-1" style="background:#F7F4EF;border:none;" />
+                    </div>
+                    <div>
+                        <label class="text-xs font-semibold uppercase tracking-wide text-terracotta">Fecha de nacimiento</label>
+                        <input asp-for="FechaNacimiento" type="date" class="w-full rounded-xl px-3 py-2 mt-1" style="background:#F7F4EF;border:none;" />
+                    </div>
+                    <div>
+                        <label class="text-xs font-semibold uppercase tracking-wide text-terracotta">Sexo</label>
+                        <select asp-for="Sexo" class="w-full rounded-xl px-3 py-2 mt-1" style="background:#F7F4EF;border:none;">
+                            <option value="M">Masculino</option>
+                            <option value="F">Femenino</option>
+                            <option value="O">Otro</option>
+                        </select>
+                    </div>
+                    <div class="md:col-span-2">
+                        <label class="text-xs font-semibold uppercase tracking-wide text-terracotta">Dirección</label>
+                        <input asp-for="Direccion" class="w-full rounded-xl px-3 py-2 mt-1" style="background:#F7F4EF;border:none;" />
+                    </div>
+                </div>
+                <button type="submit" class="px-6 py-2.5 rounded-full text-white font-semibold" style="background:#3C2A21;"><i class="bi bi-save mr-1"></i> Guardar cambios</button>
+            </form>
+        }
+    </div>
+</div>

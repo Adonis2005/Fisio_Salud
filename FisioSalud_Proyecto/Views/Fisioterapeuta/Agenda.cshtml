@@ -1,0 +1,61 @@
+@model FisioAgendaViewModel
+@{
+    Layout = "_LayoutFisioterapeuta";
+    ViewData["Title"] = "Agenda y Citas";
+}
+
+<!-- Top Header Controls -->
+<div class="d-flex align-items-center justify-content-between flex-wrap gap-3 mb-4">
+    <div class="d-flex align-items-center gap-3">
+        <h2 class="fw-bold m-0" style="font-size: 1.15rem; color: var(--text-dark);">Agenda Semanal</h2>
+        <span class="badge bg-white text-primary border px-3 py-2 rounded-pill fw-bold text-capitalize" style="font-size: 0.8rem;">
+            @Model.RangoFechas
+        </span>
+    </div>
+</div>
+
+@if (Model.CitasBloque != null && Model.CitasBloque.Any())
+{
+    <!-- Weekly Grid View -->
+    <div class="weekly-agenda-container">
+        <div class="weekly-agenda-grid">
+            <!-- Header Row -->
+            <div class="agenda-grid-header">Hora</div>
+            <div class="agenda-grid-header">Lun</div>
+            <div class="agenda-grid-header">Mar</div>
+            <div class="agenda-grid-header">Mié</div>
+            <div class="agenda-grid-header">Jue</div>
+            <div class="agenda-grid-header">Vie</div>
+            <div class="agenda-grid-header">Sáb</div>
+
+            @for (int slot = 8; slot <= 16; slot++)
+            {
+                <div class="agenda-grid-time">@($"{slot:D2}:00")</div>
+
+                @for (int dia = 1; dia <= 6; dia++)
+                {
+                    var citaEnSlot = Model.CitasBloque.FirstOrDefault(c => c.DiaSemana == dia && c.HoraSlot == slot);
+
+                    <div class="agenda-grid-cell">
+                        @if (citaEnSlot != null)
+                        {
+                            <div class="appointment-card-block @citaEnSlot.ColorClass">
+                                <div class="appt-title">@citaEnSlot.PacienteNombre</div>
+                                <div class="appt-desc">@citaEnSlot.Diagnostico</div>
+                                <div class="appt-desc">@citaEnSlot.Duracion &middot; @citaEnSlot.HoraInicio</div>
+                            </div>
+                        }
+                    </div>
+                }
+            }
+        </div>
+    </div>
+}
+else
+{
+    <div class="fisio-card text-center py-5">
+        <i class="bi bi-calendar-x d-block display-4 text-muted mb-3 opacity-50"></i>
+        <h4 class="fw-bold text-dark mb-2">No hay citas programadas para esta semana</h4>
+        <p class="text-muted mb-0" style="font-size: 0.88rem;">Las citas agendadas en el sistema aparecerán organizadas en este calendario semanal.</p>
+    </div>
+}

@@ -1,0 +1,127 @@
+@model FisioSalud_Proyecto.Models.Administrador.AdminClinicaPageViewModel
+@{
+    Layout = "_LayoutAdmin";
+    ViewData["Title"] = "Gestión de la Clínica";
+}
+
+<!-- KPI Cards clínica -->
+<div class="admin-kpi-grid mb-4">
+    <div class="kpi-card">
+        <div class="kpi-icon-box blue">
+            <i class="bi bi-building"></i>
+        </div>
+        <div>
+            <div class="kpi-number">@Model.OcupacionPorcentaje<small style="font-size:1rem;">%</small></div>
+            <div class="kpi-title">Ocupación actual</div>
+            <div class="kpi-sub blue">De las salas disponibles</div>
+        </div>
+    </div>
+    <div class="kpi-card">
+        <div class="kpi-icon-box green">
+            <i class="bi bi-door-open-fill"></i>
+        </div>
+        <div>
+            <div class="kpi-number">@Model.SalasLibres</div>
+            <div class="kpi-title">Salas libres</div>
+            <div class="kpi-sub green">Disponibles ahora</div>
+        </div>
+    </div>
+    <div class="kpi-card">
+        <div class="kpi-icon-box cyan">
+            <i class="bi bi-people-fill"></i>
+        </div>
+        <div>
+            <div class="kpi-number">@Model.PacientesEnClinica</div>
+            <div class="kpi-title">Pacientes en clínica</div>
+            <div class="kpi-sub cyan">En sesión activa</div>
+        </div>
+    </div>
+    <div class="kpi-card">
+        <div class="kpi-icon-box yellow">
+            <i class="bi bi-calendar-check-fill"></i>
+        </div>
+        <div>
+            <div class="kpi-number">@Model.CitasHoy</div>
+            <div class="kpi-title">Citas de hoy</div>
+            <div class="kpi-sub yellow">Total programadas</div>
+        </div>
+    </div>
+</div>
+
+<div class="row g-3">
+    <!-- Salas / Consultorios -->
+    <div class="col-12 col-xl-8">
+        <div class="fisio-card mb-0 h-100">
+            <div class="fisio-card-header mb-3">
+                <h2 class="fisio-card-title">Consultorios</h2>
+                <span class="status-badge activo" style="font-size:0.72rem;">Tiempo real</span>
+            </div>
+
+            @if (Model.Salas.Any())
+            {
+                <div class="room-grid">
+                    @foreach (var sala in Model.Salas)
+                    {
+                        <div class="room-card">
+                            <div class="room-top">
+                                <h3>@sala.Nombre</h3>
+                                <span class="badge-@sala.EstadoClass status-badge">@sala.Estado</span>
+                            </div>
+                            <p class="room-meta"><i class="bi bi-person-fill me-1"></i>@sala.Terapeuta</p>
+                            <p class="room-meta"><i class="bi bi-people-fill me-1"></i>@sala.Paciente</p>
+                            <p class="room-meta"><i class="bi bi-clock me-1"></i>@sala.Horario</p>
+                            @if (!string.IsNullOrWhiteSpace(sala.Motivo))
+                            {
+                                <p class="room-meta text-truncate"><i class="bi bi-clipboard2-pulse me-1"></i>@sala.Motivo</p>
+                            }
+                        </div>
+                    }
+                </div>
+            }
+            else
+            {
+                <div class="empty-state">
+                    <i class="bi bi-building d-block fs-2 mb-2 opacity-40"></i>
+                    <p class="mb-1 fw-semibold">Sin consultorios asignados.</p>
+                    <p class="mb-0" style="font-size:0.8rem;">Los consultorios se crean automáticamente cuando hay fisioterapeutas registrados.</p>
+                    <a asp-action="CrearUsuario" class="btn-fisio-primary d-inline-flex align-items-center gap-1 mt-3" style="font-size:0.78rem;">
+                        <i class="bi bi-plus-lg"></i> Agregar fisioterapeuta
+                    </a>
+                </div>
+            }
+        </div>
+    </div>
+
+    <!-- Carga de hoy -->
+    <div class="col-12 col-xl-4">
+        <div class="fisio-card mb-0 h-100">
+            <div class="fisio-card-header mb-3">
+                <h2 class="fisio-card-title">Carga del día</h2>
+            </div>
+            @if (Model.CargaHoy.Any())
+            {
+                @foreach (var t in Model.CargaHoy)
+                {
+                    <div class="load-row">
+                        <div class="avatar-sm" style="background:@t.Color;">@t.Iniciales</div>
+                        <div class="load-meta">
+                            <p class="load-name">@t.Nombre</p>
+                            <span class="load-sub">@t.Pacientes citas hoy</span>
+                        </div>
+                        <div class="load-bar">
+                            <span class="@t.BarClass" style="width:@t.Porcentaje%;"></span>
+                        </div>
+                        <span class="load-pct">@t.Porcentaje%</span>
+                    </div>
+                }
+            }
+            else
+            {
+                <div class="empty-state">
+                    <i class="bi bi-calendar-x d-block fs-2 mb-2 opacity-40"></i>
+                    <p class="mb-0" style="font-size:0.8rem;">Sin actividad registrada para hoy.</p>
+                </div>
+            }
+        </div>
+    </div>
+</div>

@@ -1,0 +1,69 @@
+@model MensajesPageViewModel
+@{
+    Layout = "_LayoutCliente";
+    ViewData["Title"] = "Mensajes";
+}
+
+<div class="grid grid-cols-1 xl:grid-cols-5 gap-4" style="min-height:520px;">
+    <section class="fs-card xl:col-span-2" style="background:#F5EBE0;">
+        <h3>Conversaciones</h3>
+        <p class="text-xs text-terracotta mb-3">Contactos reales: fisioterapeutas de tus citas. El chat en vivo no tiene tabla todavía.</p>
+        @if (!Model.Conversaciones.Any())
+        {
+            <p class="text-sm">Cuando agendes una cita, tu especialista aparecerá en esta lista.</p>
+        }
+        else
+        {
+            foreach (var conv in Model.Conversaciones)
+            {
+                <a asp-action="Mensajes" asp-route-fisioterapeutaId="@conv.FisioterapeutaId"
+                   class="flex gap-3 p-3 rounded-2xl mb-2 no-underline text-espresso @(conv.Seleccionada ? "bg-white" : "")">
+                    <span class="avatar-circle">@conv.Iniciales</span>
+                    <div class="min-w-0">
+                        <div class="font-semibold">@conv.Nombre</div>
+                        <div class="text-xs text-terracotta truncate">@(conv.UltimoMotivo ?? "Sesión") · @conv.UltimaFecha?.ToString("dd MMM")</div>
+                    </div>
+                </a>
+            }
+        }
+    </section>
+
+    <section class="fs-card xl:col-span-3 flex flex-col">
+        @if (Model.ConversacionActiva == null)
+        {
+            <div class="m-auto text-center text-terracotta">
+                <i class="bi bi-chat-dots text-4xl"></i>
+                <p class="mt-3">No hay conversación activa.</p>
+            </div>
+        }
+        else
+        {
+            <div class="flex items-center justify-between pb-3 border-b border-espresso/10 mb-4">
+                <div class="flex items-center gap-3">
+                    <span class="avatar-circle">@Model.ConversacionActiva.Iniciales</span>
+                    <div>
+                        <div class="font-bold">@Model.ConversacionActiva.Nombre</div>
+                        <div class="text-xs text-terracotta">Última cita: @Model.ConversacionActiva.UltimaFecha?.ToString("dd/MM/yyyy")</div>
+                    </div>
+                </div>
+            </div>
+            <div class="flex-1 space-y-3 mb-4">
+                @if (!string.IsNullOrWhiteSpace(Model.ConversacionActiva.UltimaNota))
+                {
+                    <div class="chat-in">
+                        <div class="text-xs mb-1 opacity-70">Nota de la última cita</div>
+                        @Model.ConversacionActiva.UltimaNota
+                    </div>
+                }
+                else
+                {
+                    <p class="text-sm text-terracotta">Todavía no hay observaciones de este especialista. El hilo de chat del diseño se habilitará con una tabla Mensajes; no se simulan conversaciones.</p>
+                }
+            </div>
+            <div class="rounded-full px-4 py-3 flex items-center gap-2" style="background:#F5EBE0;">
+                <span class="text-sm text-terracotta flex-1">El envío de mensajes se activará cuando exista persistencia de chat.</span>
+                <span class="avatar-circle" style="width:36px;height:36px;background:#3C2A21;color:#fff;"><i class="bi bi-send"></i></span>
+            </div>
+        }
+    </section>
+</div>

@@ -1,0 +1,90 @@
+@model FisioSalud_Proyecto.Models.Administrador.AdminPlanesPageViewModel
+@{
+    Layout = "_LayoutAdmin";
+    ViewData["Title"] = "Planes y Biblioteca";
+}
+
+<!-- KPI Cards -->
+<div class="admin-kpi-grid mb-4">
+    <div class="kpi-card">
+        <div class="kpi-icon-box blue"><i class="bi bi-journal-medical"></i></div>
+        <div>
+            <div class="kpi-number">@Model.TotalPlanes</div>
+            <div class="kpi-title">Protocolos registrados</div>
+            <div class="kpi-sub blue">En la biblioteca clínica</div>
+        </div>
+    </div>
+    <div class="kpi-card">
+        <div class="kpi-icon-box cyan"><i class="bi bi-clipboard2-check-fill"></i></div>
+        <div>
+            <div class="kpi-number">@Model.UsosMes</div>
+            <div class="kpi-title">Usos este mes</div>
+            <div class="kpi-sub cyan">Motivos de consulta registrados</div>
+        </div>
+    </div>
+    <div class="kpi-card">
+        <div class="kpi-icon-box green"><i class="bi bi-heart-pulse-fill"></i></div>
+        <div>
+            <div class="kpi-number">@Model.TerapeutasActivos</div>
+            <div class="kpi-title">Terapeutas activos</div>
+            <div class="kpi-sub green">Aplicando protocolos</div>
+        </div>
+    </div>
+    <div class="kpi-card">
+        <div class="kpi-icon-box yellow"><i class="bi bi-activity"></i></div>
+        <div>
+            <div class="kpi-number">—</div>
+            <div class="kpi-title">Ejercicios en BD</div>
+            <div class="kpi-sub yellow">Módulo próximamente</div>
+        </div>
+    </div>
+</div>
+
+<div class="fisio-card mb-0">
+    <!-- Tabs -->
+    <div class="admin-tabs">
+        <a asp-action="Planes" asp-route-tab="ejercicios" class="@(Model.Tab == "ejercicios" ? "active" : "")">
+            <i class="bi bi-activity me-1"></i>Ejercicios y Protocolos
+        </a>
+        <a asp-action="Planes" asp-route-tab="tratamientos" class="@(Model.Tab == "tratamientos" ? "active" : "")">
+            <i class="bi bi-clipboard2-pulse me-1"></i>Tratamientos
+        </a>
+    </div>
+
+    @if (Model.Planes.Any())
+    {
+        <div class="plan-grid">
+            @foreach (var p in Model.Planes)
+            {
+                <div class="plan-card">
+                    <div class="plan-icon">
+                        <i class="bi @p.Icono"></i>
+                    </div>
+                    <div class="fw-bold mb-1" style="font-size:0.9rem;">@p.Titulo</div>
+                    <div class="text-muted mb-2" style="font-size:0.75rem;">
+                        <i class="bi bi-person me-1"></i>@p.Autor
+                    </div>
+                    <div class="d-flex justify-content-between align-items-center">
+                        <span class="text-muted" style="font-size:0.72rem;">
+                            <i class="bi bi-clock me-1"></i>@p.Actualizado
+                        </span>
+                        <span class="status-badge activo">@p.Usos usos</span>
+                    </div>
+                </div>
+            }
+        </div>
+    }
+    else
+    {
+        <div class="empty-state py-5">
+            <i class="bi bi-journal-medical d-block fs-1 mb-3 opacity-30"></i>
+            <p class="fw-semibold mb-1">La biblioteca está vacía.</p>
+            <p class="text-muted mb-3" style="font-size:0.85rem;">
+                Los protocolos y tratamientos aparecen aquí cuando los fisioterapeutas registren motivos de consulta en las citas.
+            </p>
+            <a asp-action="Dashboard" class="btn-fisio-primary d-inline-flex align-items-center gap-1" style="font-size:0.82rem;">
+                <i class="bi bi-grid-1x2-fill"></i> Volver al dashboard
+            </a>
+        </div>
+    }
+</div>

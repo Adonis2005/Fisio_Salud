@@ -1,0 +1,75 @@
+@model FisioSalud_Proyecto.Models.Administrador.AdminBusquedaPageViewModel
+@{
+    Layout = "_LayoutAdmin";
+    ViewData["Title"] = "Búsqueda en el sistema";
+}
+
+<div class="fisio-card mb-0">
+    <div class="fisio-card-header mb-3">
+        <h2 class="fisio-card-title">Resultados de búsqueda</h2>
+        @if (!string.IsNullOrWhiteSpace(Model.Q))
+        {
+            <span class="status-badge activo" style="font-size:0.75rem;">Buscando: "@Model.Q"</span>
+        }
+    </div>
+
+    <form method="get" asp-action="Buscar" class="mb-4">
+        <div class="d-flex gap-2" style="max-width:500px;">
+            <div style="position:relative; flex:1;">
+                <i class="bi bi-search" style="position:absolute;left:12px;top:50%;transform:translateY(-50%);color:#94a3b8;"></i>
+                <input name="q" value="@Model.Q" placeholder="Buscar por paciente, correo, identificación, terapeuta…"
+                       style="width:100%;padding:0.6rem 1rem 0.6rem 2.4rem;border:1px solid #e2e8f0;border-radius:50px;font-size:0.85rem;font-family:inherit;outline:none;" />
+            </div>
+            <button type="submit" class="btn-fisio-primary" style="font-size:0.82rem;">Buscar</button>
+        </div>
+    </form>
+
+    @if (Model.Resultados.Any())
+    {
+        <div class="fisio-table-container">
+            <table class="fisio-table">
+                <thead>
+                    <tr>
+                        <th>Tipo</th>
+                        <th>Nombre / Registro</th>
+                        <th>Detalle / Correo / ID</th>
+                        <th>Acción</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var item in Model.Resultados)
+                    {
+                        <tr>
+                            <td>
+                                <span class="status-badge @(item.Tipo == "Paciente" ? "activo" : "nuevo")">@item.Tipo</span>
+                            </td>
+                            <td><span class="fw-bold">@item.Titulo</span></td>
+                            <td style="font-size:0.78rem; color:var(--text-muted);">@item.Subtitulo</td>
+                            <td>
+                                <a asp-controller="@item.Controlador" asp-action="@item.Accion" asp-route-seleccionadoId="@item.Id" asp-route-busqueda="@item.Titulo"
+                                   class="icon-action" title="Ir al registro">
+                                    <i class="bi bi-arrow-right"></i>
+                                </a>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    }
+    else
+    {
+        <div class="empty-state py-5">
+            <i class="bi bi-search d-block fs-1 mb-2 opacity-30"></i>
+            @if (!string.IsNullOrWhiteSpace(Model.Q))
+            {
+                <p class="fw-semibold mb-1">No se encontraron resultados para "@Model.Q".</p>
+                <p class="text-muted" style="font-size:0.82rem;">Intenta buscar por nombre, apellido, cédula/identificación o correo.</p>
+            }
+            else
+            {
+                <p class="fw-semibold mb-1">Ingresa un término para buscar en la base de datos.</p>
+            }
+        </div>
+    }
+</div>

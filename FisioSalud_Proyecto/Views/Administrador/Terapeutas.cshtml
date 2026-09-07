@@ -1,0 +1,154 @@
+@model FisioSalud_Proyecto.Models.Administrador.AdminTerapeutasPageViewModel
+@{
+    Layout = "_LayoutAdmin";
+    ViewData["Title"] = "Terapeutas y Personal";
+}
+
+<div class="therapist-layout">
+
+    <!-- Tabla de terapeutas -->
+    <div class="fisio-card mb-0">
+        <div class="fisio-card-header mb-3">
+            <h2 class="fisio-card-title">Equipo clínico</h2>
+            <form method="get" class="d-flex gap-2 align-items-center">
+                <div style="position:relative;">
+                    <i class="bi bi-search" style="position:absolute;left:10px;top:50%;transform:translateY(-50%);color:#94a3b8;font-size:0.8rem;"></i>
+                    <input name="busqueda" value="@Model.Busqueda" placeholder="Buscar terapeuta…"
+                           style="padding:0.45rem 0.85rem 0.45rem 2rem;border:1px solid #e2e8f0;border-radius:50px;font-size:0.8rem;font-family:inherit;outline:none;min-width:200px;" />
+                </div>
+                <button type="submit" class="btn-fisio-primary" style="font-size:0.8rem;">Buscar</button>
+            </form>
+        </div>
+
+        @if (Model.Terapeutas.Any())
+        {
+            <div class="fisio-table-container">
+                <table class="fisio-table">
+                    <thead>
+                        <tr>
+                            <th>Terapeuta</th>
+                            <th>Contacto</th>
+                            <th>Desde</th>
+                            <th>Pacientes</th>
+                            <th>Carga</th>
+                            <th>Asistencia</th>
+                            <th>Estado</th>
+                            <th></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var t in Model.Terapeutas)
+                        {
+                            <tr class="@(Model.SeleccionadoId == t.UsuarioId ? "table-active" : "")">
+                                <td>
+                                    <div class="person-cell">
+                                        <div class="avatar-sm" style="background:@t.Color;">@t.Iniciales</div>
+                                        <div>
+                                            <div class="fw-bold" style="font-size:0.85rem;">@t.Nombre</div>
+                                            <div class="sub">Fisioterapeuta</div>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td>
+                                    <div style="font-size:0.78rem;">@t.Correo</div>
+                                    @if (!string.IsNullOrWhiteSpace(t.Telefono))
+                                    {
+                                        <div class="sub">@t.Telefono</div>
+                                    }
+                                </td>
+                                <td style="font-size:0.78rem; text-transform:capitalize;">@t.Desde</td>
+                                <td style="font-size:0.85rem; font-weight:700;">@t.Pacientes <span class="sub">/ @t.Capacidad</span></td>
+                                <td>
+                                    <div class="load-bar" style="width:80px;">
+                                        <span class="@t.BarClass" style="width:@t.Porcentaje%;"></span>
+                                    </div>
+                                    <span style="font-size:0.72rem; color:var(--text-muted);">@t.Porcentaje%</span>
+                                </td>
+                                <td style="font-size:0.82rem; font-weight:700;">@t.AsistenciaPorcentaje%</td>
+                                <td><span class="status-badge @t.EstadoClass">@t.EstadoTexto</span></td>
+                                <td>
+                                    <a asp-action="Terapeutas" asp-route-seleccionadoId="@t.UsuarioId" class="icon-action" title="Ver detalle">
+                                        <i class="bi bi-eye"></i>
+                                    </a>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        }
+        else
+        {
+            <div class="empty-state">
+                <i class="bi bi-heart-pulse d-block fs-2 mb-2 opacity-40"></i>
+                <p class="mb-1 fw-semibold">
+                    @if (!string.IsNullOrWhiteSpace(Model.Busqueda))
+                    {
+                        <span>No se encontraron terapeutas con "@Model.Busqueda".</span>
+                    }
+                    else
+                    {
+                        <span>No hay fisioterapeutas registrados en el sistema.</span>
+                    }
+                </p>
+                <a asp-action="CrearUsuario" class="btn-fisio-primary d-inline-flex align-items-center gap-1 mt-3" style="font-size:0.78rem;">
+                    <i class="bi bi-plus-lg"></i> Agregar terapeuta
+                </a>
+            </div>
+        }
+    </div>
+
+    <!-- Panel de detalle -->
+    <div class="fisio-card mb-0">
+        @if (Model.Detalle != null)
+        {
+            var d = Model.Detalle;
+            <div class="text-center mb-3">
+                <div class="avatar-lg mx-auto mb-2" style="background:@d.Color;">@d.Iniciales</div>
+                <div class="fw-bold" style="font-size:1rem;">@d.Nombre</div>
+                <div class="text-muted" style="font-size:0.78rem;">@d.Correo</div>
+            </div>
+
+            <div class="detail-stat">
+                <span class="text-muted">Pacientes asignados</span>
+                <span class="fw-bold">@d.Pacientes / @d.Capacidad</span>
+            </div>
+            <div class="load-bar mb-3" style="height:10px;">
+                <span class="@(d.Porcentaje >= 80 ? "high" : d.Porcentaje >= 55 ? "mid" : "low")" style="width:@d.Porcentaje%;"></span>
+            </div>
+            <div class="detail-stat">
+                <span class="text-muted">Miembro desde</span>
+                <span class="fw-bold text-capitalize">@d.Desde</span>
+            </div>
+
+            <div class="border-top mt-3 pt-3">
+                <div class="fw-bold mb-2" style="font-size:0.82rem;">Pacientes recientes</div>
+                @if (d.PacientesAsignados.Any())
+                {
+                    @foreach (var p in d.PacientesAsignados)
+                    {
+                        <div class="load-row">
+                            <div class="avatar-sm" style="background:@p.Color; width:32px; height:32px; font-size:0.68rem;">@p.Iniciales</div>
+                            <div class="load-meta">
+                                <p class="load-name" style="font-size:0.78rem;">@p.Nombre</p>
+                                <span class="load-sub" style="font-size:0.68rem;">@p.Diagnostico</span>
+                            </div>
+                            <span class="load-pct" style="width:36px;">@p.Progreso%</span>
+                        </div>
+                    }
+                }
+                else
+                {
+                    <p class="text-muted mb-0" style="font-size:0.8rem;">Sin pacientes asignados aún.</p>
+                }
+            </div>
+        }
+        else
+        {
+            <div class="empty-state">
+                <i class="bi bi-person-lines-fill d-block fs-2 mb-2 opacity-40"></i>
+                <p class="mb-0" style="font-size:0.82rem;">Selecciona un terapeuta para ver su detalle.</p>
+            </div>
+        }
+    </div>
+</div>

@@ -1,0 +1,39 @@
+html {
+    scroll-behavior: smooth;
+}
+
+.hero-bg {
+    background-image: url('https://images.unsplash.com/photo-1576091160399-112ba8d25d1d?auto=format&fit=crop&w=1920&q=80');
+    background-size: cover;
+    background-position: center;
+}
+
+.service-img {
+    object-fit: cover;
+}
+
+.form-input-fisio {
+    background-color: #F7F4EF;
+    border: none;
+    border-radius: 0.75rem;
+    padding: 0.75rem 1rem;
+    width: 100%;
+    font-size: 0.875rem;
+    color: #3C2A21;
+    transition: box-shadow 0.2s;
+}
+
+.form-input-fisio:focus {
+    outline: none;
+    box-shadow: 0 0 0 2px rgba(140, 106, 74, 0.4);
+}
+
+.form-label-fisio {
+    display: block;
+    font-size: 0.7rem;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: #8C6A4A;
+    margin-bottom: 0.5rem;
+}

@@ -1,0 +1,164 @@
+@model PacienteListViewModel
+@{
+    Layout = "_LayoutFisioterapeuta";
+    ViewData["Title"] = "Expediente de Paciente";
+}
+
+<div class="d-flex align-items-center justify-content-between mb-4 flex-wrap gap-2">
+    <div class="d-flex align-items-center gap-3">
+        <a asp-action="Pacientes" class="btn-icon-round"><i class="bi bi-arrow-left"></i></a>
+        <div>
+            <h2 class="fw-bold m-0" style="font-size: 1.15rem; color: var(--text-dark);">@Model.NombreCompleto</h2>
+            <p class="text-muted m-0" style="font-size: 0.78rem;">Identificación: @Model.Identificacion &middot; Edad: @Model.Edad años</p>
+        </div>
+    </div>
+    <div class="d-flex gap-2">
+        <a asp-action="EditarPaciente" asp-route-id="@Model.PacienteId" class="btn-fisio-outline">
+            <i class="bi bi-pencil"></i> Editar Datos
+        </a>
+        <a asp-action="Mensajes" asp-route-pacienteId="@Model.PacienteId" class="btn-fisio-primary">
+            <i class="bi bi-chat-dots-fill"></i> Enviar Mensaje
+        </a>
+    </div>
+</div>
+
+<div class="row g-3">
+    <!-- Left Summary Card -->
+    <div class="col-12 col-lg-4">
+        <div class="fisio-card mb-3 text-center">
+            <div class="user-avatar-circle mx-auto mb-3" style="width: 72px; height: 72px; font-size: 1.8rem; background-color: #0096e6;">
+                @Model.Iniciales
+            </div>
+            <h3 class="fw-bold fs-5 mb-1">@Model.NombreCompleto</h3>
+            <span class="status-badge @Model.EstadoBadgeClass mb-3">@Model.EstadoTexto</span>
+
+            <div class="border-top pt-3 text-start">
+                <div class="mb-2" style="font-size: 0.8rem;"><strong class="text-muted">Correo:</strong> @(Model.Correo ?? "-")</div>
+                <div class="mb-2" style="font-size: 0.8rem;"><strong class="text-muted">Teléfono:</strong> @(Model.Telefono ?? "-")</div>
+                <div class="mb-2" style="font-size: 0.8rem;"><strong class="text-muted">Sexo:</strong> @(Model.Sexo == "M" ? "Masculino" : Model.Sexo == "F" ? "Femenino" : "Otro")</div>
+                <div class="mb-2" style="font-size: 0.8rem;"><strong class="text-muted">Fecha registro:</strong> @Model.FechaRegistro.ToString("dd/MM/yyyy")</div>
+            </div>
+        </div>
+
+        <div class="fisio-card mb-0">
+            <h4 class="fisio-card-title mb-3">Estado Clínico</h4>
+            <div class="d-flex justify-content-between align-items-center mb-2" style="font-size: 0.8rem;">
+                <span class="text-muted">Diagnóstico actual</span>
+                <span class="fw-bold text-dark">@Model.Diagnostico</span>
+            </div>
+            <div class="d-flex justify-content-between align-items-center mb-2" style="font-size: 0.8rem;">
+                <span class="text-muted">Sesiones realizadas</span>
+                <span class="fw-bold text-dark">@Model.SesionesTexto</span>
+            </div>
+            <div class="d-flex justify-content-between align-items-center mb-2" style="font-size: 0.8rem;">
+                <span class="text-muted">Nivel de dolor</span>
+                <span class="fw-bold text-danger">@Model.NivelDolor / 10</span>
+            </div>
+            <div class="d-flex justify-content-between align-items-center" style="font-size: 0.8rem;">
+                <span class="text-muted">Progreso global</span>
+                <span class="fw-bold text-primary">@Model.ProgresoPorcentaje%</span>
+            </div>
+            <div class="progress-track mt-2" style="height: 8px;">
+                <div class="progress-fill cyan" style="width: @(Model.ProgresoPorcentaje)%"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Right Content Tabs -->
+    <div class="col-12 col-lg-8">
+        <div class="fisio-card h-100 mb-0">
+            <ul class="nav nav-pills mb-4 border-bottom pb-2" id="expedienteTab" role="tablist">
+                <li class="nav-item" role="presentation">
+                    <button class="filter-pill active" id="evolucion-tab" data-bs-toggle="pill" data-bs-target="#evolucion">Evolución Médica</button>
+                </li>
+                <li class="nav-item ms-2" role="presentation">
+                    <button class="filter-pill" id="ejercicios-tab" data-bs-toggle="pill" data-bs-target="#ejerciciosTabContent">Rutina de Ejercicios</button>
+                </li>
+                <li class="nav-item ms-2" role="presentation">
+                    <button class="filter-pill" id="citas-tab" data-bs-toggle="pill" data-bs-target="#citasTabContent">Historial de Citas</button>
+                </li>
+            </ul>
+
+            <div class="tab-content" id="expedienteTabContent">
+                <!-- Tab 1: Evolución -->
+                <div class="tab-pane fade show active" id="evolucion" role="tabpanel">
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <h5 class="fw-bold m-0" style="font-size: 0.9rem;">Notas de Sesión</h5>
+                        <button class="btn-fisio-primary py-1 px-3" style="font-size: 0.78rem;">+ Nueva Nota</button>
+                    </div>
+
+                    <div class="timeline border-start border-2 ps-3 ms-2">
+                        <div class="mb-4 position-relative">
+                            <div class="position-absolute" style="left: -23px; top: 0; width: 12px; height: 12px; background: #0096e6; border-radius: 50%;"></div>
+                            <div class="fw-bold" style="font-size: 0.83rem;">Sesión 5 - @Model.UltimaSesionTexto</div>
+                            <p class="text-muted mb-1" style="font-size: 0.78rem;">Paciente refiere disminución significativa del dolor en escala 4/10. Excelente respuesta a movilidad pasiva.</p>
+                        </div>
+                        <div class="mb-3 position-relative">
+                            <div class="position-absolute" style="left: -23px; top: 0; width: 12px; height: 12px; background: #94a3b8; border-radius: 50%;"></div>
+                            <div class="fw-bold" style="font-size: 0.83rem;">Sesión 4 - Hace 4 días</div>
+                            <p class="text-muted mb-0" style="font-size: 0.78rem;">Aplicación de ultrasonido terapéutico y estiramiento asistido.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Tab 2: Ejercicios -->
+                <div class="tab-pane fade" id="ejerciciosTabContent" role="tabpanel">
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <h5 class="fw-bold m-0" style="font-size: 0.9rem;">Ejercicios Asignados</h5>
+                        <a asp-action="Ejercicios" class="btn-fisio-primary py-1 px-3" style="font-size: 0.78rem;">+ Asignar Ejercicio</a>
+                    </div>
+                    <div class="list-group list-group-flush">
+                        <div class="list-group-item d-flex justify-content-between align-items-center py-3">
+                            <div>
+                                <div class="fw-bold" style="font-size: 0.85rem;">Extensión lumbar</div>
+                                <div class="text-muted" style="font-size: 0.75rem;">3 series x 15 repeticiones &middot; Diario</div>
+                            </div>
+                            <span class="status-badge activo">Cumplido 80%</span>
+                        </div>
+                        <div class="list-group-item d-flex justify-content-between align-items-center py-3">
+                            <div>
+                                <div class="fw-bold" style="font-size: 0.85rem;">Puente de glúteos</div>
+                                <div class="text-muted" style="font-size: 0.75rem;">3 series x 20 repeticiones &middot; 3 veces por semana</div>
+                            </div>
+                            <span class="status-badge activo">Cumplido 100%</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Tab 3: Citas -->
+                <div class="tab-pane fade" id="citasTabContent" role="tabpanel">
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <h5 class="fw-bold m-0" style="font-size: 0.9rem;">Citas Registradas</h5>
+                        <a asp-action="Agenda" class="btn-fisio-primary py-1 px-3" style="font-size: 0.78rem;">+ Agendar Cita</a>
+                    </div>
+                    <div class="table-responsive">
+                        <table class="table table-hover align-middle" style="font-size: 0.82rem;">
+                            <thead>
+                                <tr>
+                                    <th>Fecha</th>
+                                    <th>Hora</th>
+                                    <th>Motivo</th>
+                                    <th>Estado</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td>Hoy</td>
+                                    <td>10:15 AM</td>
+                                    <td>Evaluación periódica</td>
+                                    <td><span class="status-badge en-curso">En curso</span></td>
+                                </tr>
+                                <tr>
+                                    <td>14/07/2026</td>
+                                    <td>11:00 AM</td>
+                                    <td>Sesión de seguimiento</td>
+                                    <td><span class="status-badge pendiente">Programada</span></td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
