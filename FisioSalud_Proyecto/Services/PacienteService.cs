@@ -11,10 +11,10 @@ namespace FisioSalud_Proyecto.Services
 {
     public interface IPacienteService
     {
-        Task<FisioDashboardViewModel> GetDashboardAsync();
-        Task<FisioAgendaViewModel> GetAgendaAsync();
-        Task<PacienteFilterViewModel> GetPacientesAsync(string busqueda, string filtro);
-        Task<FisioEjerciciosViewModel> GetEjerciciosAsync(string busqueda, string categoria);
+        Task<FisioDashboardViewModel> GetDashboardAsync(int fisioterapeutaId);
+        Task<FisioAgendaViewModel> GetAgendaAsync(int fisioterapeutaId);
+        Task<PacienteFilterViewModel> GetPacientesAsync(int fisioterapeutaId, string busqueda, string filtro);
+        Task<FisioEjerciciosViewModel> GetEjerciciosAsync(int fisioterapeutaId, string busqueda, string categoria);
         Task<FisioMensajesViewModel> GetMensajesAsync(int? pacienteId);
         Task<PacienteFormViewModel> GetPacienteFormAsync(int? id);
         Task<PacienteListViewModel> GetPacienteDetalleAsync(int id);
@@ -31,9 +31,10 @@ namespace FisioSalud_Proyecto.Services
             _context = context;
         }
 
-        public async Task<FisioDashboardViewModel> GetDashboardAsync()
+        public async Task<FisioDashboardViewModel> GetDashboardAsync(int fisioterapeutaId)
         {
-            var dbPacientes = await _context.Pacientes
+            var pacienteIds = _context.Citas.Where(c => c.FisioterapeutaId == fisioterapeutaId).Select(c => c.PacienteId).Distinct();
+            var dbPacientes = await _context.Pacientes.Where(p => pacienteIds.Contains(p.PacienteId)).AsNoTracking()
                 .OrderByDescending(p => p.FechaRegistro)
                 .ToListAsync();
 
@@ -42,7 +43,8 @@ namespace FisioSalud_Proyecto.Services
             var hoy = DateTime.Today;
             var citasHoy = await _context.Citas
                 .Include(c => c.Paciente)
-                .Where(c => c.Fecha.Date == hoy)
+                .Where(c => c.FisioterapeutaId == fisioterapeutaId && c.Fecha.Date == hoy)
+                .AsNoTracking()
                 .OrderBy(c => c.HoraInicio)
                 .ToListAsync();
 
@@ -76,7 +78,7 @@ namespace FisioSalud_Proyecto.Services
             };
         }
 
-        public async Task<FisioAgendaViewModel> GetAgendaAsync()
+        public async Task<FisioAgendaViewModel> GetAgendaAsync(int fisioterapeutaId)
         {
             var hoy = DateTime.Today;
             int diff = (7 + (hoy.DayOfWeek - DayOfWeek.Monday)) % 7;
@@ -85,7 +87,8 @@ namespace FisioSalud_Proyecto.Services
 
             var dbCitas = await _context.Citas
                 .Include(c => c.Paciente)
-                .Where(c => c.Fecha.Date >= inicioSemana && c.Fecha.Date <= finSemana)
+                .Where(c => c.FisioterapeutaId == fisioterapeutaId && c.Fecha.Date >= inicioSemana && c.Fecha.Date <= finSemana)
+                .AsNoTracking()
                 .ToListAsync();
 
             var citasBloque = dbCitas.Select(c =>
@@ -118,9 +121,10 @@ namespace FisioSalud_Proyecto.Services
             };
         }
 
-        public async Task<PacienteFilterViewModel> GetPacientesAsync(string busqueda, string filtro)
+        public async Task<PacienteFilterViewModel> GetPacientesAsync(int fisioterapeutaId, string busqueda, string filtro)
         {
-            var query = _context.Pacientes.AsQueryable();
+            var pacienteIds = _context.Citas.Where(c => c.FisioterapeutaId == fisioterapeutaId).Select(c => c.PacienteId).Distinct();
+            var query = _context.Pacientes.AsNoTracking().Where(p => pacienteIds.Contains(p.PacienteId));
 
             if (!string.IsNullOrWhiteSpace(busqueda))
             {
@@ -154,18 +158,27 @@ namespace FisioSalud_Proyecto.Services
             };
         }
 
-        public async Task<FisioEjerciciosViewModel> GetEjerciciosAsync(string busqueda, string categoria)
+        public async Task<FisioEjerciciosViewModel> GetEjerciciosAsync(int fisioterapeutaId, string busqueda, string categoria)
         {
-            await Task.CompletedTask;
+            var query = _context.Ejercicios.AsNoTracking().Where(e => e.Estado);
+            if (!string.IsNullOrWhiteSpace(busqueda))
+            {
+                var term = busqueda.Trim().ToLower();
+                query = query.Where(e => e.Nombre.ToLower().Contains(term) || (e.Descripcion != null && e.Descripcion.ToLower().Contains(term)));
+            }
+            var ejercicios = await query.OrderBy(e => e.Nombre).ToListAsync();
+            var asignados = await _context.TratamientoEjercicios.AsNoTracking()
+                .Where(te => te.Estado && te.PlanTratamiento.FisioterapeutaId == fisioterapeutaId)
+                .GroupBy(te => te.EjercicioId).Select(g => new { EjercicioId = g.Key, Count = g.Count() }).ToDictionaryAsync(x => x.EjercicioId, x => x.Count);
             return new FisioEjerciciosViewModel
             {
                 Busqueda = busqueda,
                 CategoriaSeleccionada = string.IsNullOrEmpty(categoria) ? "Todos" : categoria,
-                TotalEjercicios = 0,
-                AsignadosActivos = 0,
-                CategoriasCount = 0,
-                NuevosEsteMes = 0,
-                Ejercicios = new List<EjercicioCardViewModel>()
+                TotalEjercicios = ejercicios.Count,
+                AsignadosActivos = asignados.Values.Sum(),
+                CategoriasCount = 1,
+                NuevosEsteMes = ejercicios.Count(e => e.FechaRegistro >= new DateTime(DateTime.Today.Year, DateTime.Today.Month, 1)),
+                Ejercicios = ejercicios.Select(e => new EjercicioCardViewModel { EjercicioId = e.EjercicioId, Nombre = e.Nombre, AsignadosCount = asignados.ContainsKey(e.EjercicioId) ? asignados[e.EjercicioId] : 0, Dosificacion = e.DuracionMinutos.HasValue ? $"{e.DuracionMinutos} min" : "Sin duración", Dificultad = "No especificada" }).ToList()
             };
         }
 
@@ -205,7 +218,7 @@ namespace FisioSalud_Proyecto.Services
 
         public async Task<PacienteListViewModel> GetPacienteDetalleAsync(int id)
         {
-            var paciente = await _context.Pacientes.FindAsync(id);
+            var paciente = await _context.Pacientes.AsNoTracking().FirstOrDefaultAsync(p => p.PacienteId == id);
             if (paciente == null) return null;
             return MapToList(paciente);
         }
@@ -225,7 +238,7 @@ namespace FisioSalud_Proyecto.Services
 
         public async Task<(bool Success, string Error)> UpdateAsync(PacienteFormViewModel model)
         {
-            var paciente = await _context.Pacientes.FindAsync(model.PacienteId);
+            var paciente = await _context.Pacientes.FirstOrDefaultAsync(p => p.PacienteId == model.PacienteId);
             if (paciente == null)
                 return (false, "Paciente no encontrado.");
 

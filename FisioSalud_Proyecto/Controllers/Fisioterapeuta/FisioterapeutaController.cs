@@ -27,25 +27,33 @@ namespace FisioSalud_Proyecto.Controllers.Fisioterapeuta
 
         public async Task<IActionResult> Dashboard()
         {
-            var model = await _pacienteService.GetDashboardAsync();
+            var fisioterapeutaId = ObtenerUsuarioAutenticado();
+            if (fisioterapeutaId == null) return Forbid();
+            var model = await _pacienteService.GetDashboardAsync(fisioterapeutaId.Value);
             return View(model);
         }
 
         public async Task<IActionResult> Agenda()
         {
-            var model = await _pacienteService.GetAgendaAsync();
+            var fisioterapeutaId = ObtenerUsuarioAutenticado();
+            if (fisioterapeutaId == null) return Forbid();
+            var model = await _pacienteService.GetAgendaAsync(fisioterapeutaId.Value);
             return View(model);
         }
 
         public async Task<IActionResult> Pacientes(string busqueda, string filtro = "Todos")
         {
-            var model = await _pacienteService.GetPacientesAsync(busqueda, filtro);
+            var fisioterapeutaId = ObtenerUsuarioAutenticado();
+            if (fisioterapeutaId == null) return Forbid();
+            var model = await _pacienteService.GetPacientesAsync(fisioterapeutaId.Value, busqueda, filtro);
             return View(model);
         }
 
         public async Task<IActionResult> Ejercicios(string busqueda, string categoria = "Todos")
         {
-            var model = await _pacienteService.GetEjerciciosAsync(busqueda, categoria);
+            var fisioterapeutaId = ObtenerUsuarioAutenticado();
+            if (fisioterapeutaId == null) return Forbid();
+            var model = await _pacienteService.GetEjerciciosAsync(fisioterapeutaId.Value, busqueda, categoria);
             return View(model);
         }
 

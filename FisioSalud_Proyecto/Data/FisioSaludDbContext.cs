@@ -56,6 +56,7 @@ namespace FisioSalud_Proyecto.Data
             modelBuilder.Entity<PlanTratamiento>(entity =>
             {
                 entity.Property(e => e.FechaInicio).HasColumnType("date");
+                entity.HasOne(e => e.Diagnostico).WithMany(d => d.PlanesTratamiento).HasForeignKey(e => e.DiagnosticoId).OnDelete(DeleteBehavior.Restrict);
                 entity.Property(e => e.FechaFinEstimada).HasColumnType("date");
                 entity.HasOne(e => e.Paciente).WithMany().HasForeignKey(e => e.PacienteId).OnDelete(DeleteBehavior.Restrict);
                 entity.HasOne(e => e.Fisioterapeuta).WithMany().HasForeignKey(e => e.FisioterapeutaId).OnDelete(DeleteBehavior.Restrict);
