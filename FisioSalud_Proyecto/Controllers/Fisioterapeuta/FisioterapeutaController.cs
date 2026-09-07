@@ -62,7 +62,9 @@ namespace FisioSalud_Proyecto.Controllers.Fisioterapeuta
             var userId = ObtenerUsuarioAutenticado();
             if (userId == null) return Forbid();
 
-            var model = await _pacienteService.GetMensajesAsync(pacienteId);
+            var model = await _pacienteService.GetMensajesAsync(userId.Value, pacienteId);
+            if (pacienteId.HasValue && model.ConversacionActiva == null) return Forbid();
+
             var conversaciones = await _mensajeService.ListarConversacionesAsync(userId.Value);
             model.Conversaciones = conversaciones.Select(c => new ChatConversationViewModel
             {

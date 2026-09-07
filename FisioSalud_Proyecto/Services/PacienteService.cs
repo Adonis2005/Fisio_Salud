@@ -15,7 +15,7 @@ namespace FisioSalud_Proyecto.Services
         Task<FisioAgendaViewModel> GetAgendaAsync(int fisioterapeutaId);
         Task<PacienteFilterViewModel> GetPacientesAsync(int fisioterapeutaId, string busqueda, string filtro);
         Task<FisioEjerciciosViewModel> GetEjerciciosAsync(int fisioterapeutaId, string busqueda, string categoria);
-        Task<FisioMensajesViewModel> GetMensajesAsync(int? pacienteId);
+        Task<FisioMensajesViewModel> GetMensajesAsync(int fisioterapeutaId, int? pacienteId);
         Task<PacienteFormViewModel> GetPacienteFormAsync(int? id);
         Task<PacienteListViewModel> GetPacienteDetalleAsync(int id);
         Task<(bool Success, string Error)> CreateAsync(PacienteFormViewModel model);
@@ -182,15 +182,37 @@ namespace FisioSalud_Proyecto.Services
             };
         }
 
-        public async Task<FisioMensajesViewModel> GetMensajesAsync(int? pacienteId)
+        public async Task<FisioMensajesViewModel> GetMensajesAsync(int fisioterapeutaId, int? pacienteId)
         {
-            await Task.CompletedTask;
-            return new FisioMensajesViewModel
+            var model = new FisioMensajesViewModel();
+            if (!pacienteId.HasValue) return model;
+
+            var paciente = await _context.Pacientes.AsNoTracking()
+                .Where(p => p.PacienteId == pacienteId.Value &&
+                    _context.Citas.Any(c => c.PacienteId == p.PacienteId && c.FisioterapeutaId == fisioterapeutaId))
+                .Select(p => new
+                {
+                    p.PacienteId,
+                    p.UsuarioId,
+                    p.Nombres,
+                    p.Apellidos,
+                    p.FechaNacimiento
+                })
+                .FirstOrDefaultAsync();
+
+            if (paciente == null) return model;
+
+            model.ConversacionActiva = new ChatConversationViewModel
             {
-                Conversaciones = new List<ChatConversationViewModel>(),
-                ConversacionActiva = null,
-                MensajesChat = new List<ChatMessageItemViewModel>()
+                PacienteId = paciente.PacienteId,
+                PacienteNombre = $"{paciente.Nombres} {paciente.Apellidos}".Trim(),
+                Iniciales = GetIniciales(paciente.Nombres, paciente.Apellidos),
+                Diagnostico = "Consulta de fisioterapia",
+                Edad = DateTime.Today.Year - paciente.FechaNacimiento.Year -
+                    (DateTime.Today < paciente.FechaNacimiento.Date.AddYears(DateTime.Today.Year - paciente.FechaNacimiento.Year) ? 1 : 0)
             };
+
+            return model;
         }
 
         public async Task<PacienteFormViewModel> GetPacienteFormAsync(int? id)
