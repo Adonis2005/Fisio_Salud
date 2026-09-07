@@ -7,7 +7,7 @@
 <div class="grid grid-cols-1 xl:grid-cols-5 gap-4" style="min-height:520px;">
     <section class="fs-card xl:col-span-2" style="background:#F5EBE0;">
         <h3>Conversaciones</h3>
-        <p class="text-xs text-terracotta mb-3">Contactos reales: fisioterapeutas de tus citas. El chat en vivo no tiene tabla todavía.</p>
+        <p class="text-xs text-terracotta mb-3">Contactos reales: fisioterapeutas de tus citas.</p>
         @if (!Model.Conversaciones.Any())
         {
             <p class="text-sm">Cuando agendes una cita, tu especialista aparecerá en esta lista.</p>
@@ -48,22 +48,27 @@
                 </div>
             </div>
             <div class="flex-1 space-y-3 mb-4">
-                @if (!string.IsNullOrWhiteSpace(Model.ConversacionActiva.UltimaNota))
+                @if (Model.Mensajes.Any())
                 {
-                    <div class="chat-in">
-                        <div class="text-xs mb-1 opacity-70">Nota de la última cita</div>
-                        @Model.ConversacionActiva.UltimaNota
-                    </div>
+                    foreach (var mensaje in Model.Mensajes)
+                    {
+                        <div class="@(mensaje.EsSaliente ? "chat-out ml-auto" : "chat-in")" style="max-width:80%;">
+                            <div class="text-xs mb-1 opacity-70">@mensaje.RemitenteNombre · @mensaje.FechaEnvio.ToString("g")</div>
+                            @mensaje.Contenido
+                        </div>
+                    }
                 }
                 else
                 {
-                    <p class="text-sm text-terracotta">Todavía no hay observaciones de este especialista. El hilo de chat del diseño se habilitará con una tabla Mensajes; no se simulan conversaciones.</p>
+                    <p class="text-sm text-terracotta">Todavía no hay mensajes en esta conversación.</p>
                 }
             </div>
-            <div class="rounded-full px-4 py-3 flex items-center gap-2" style="background:#F5EBE0;">
-                <span class="text-sm text-terracotta flex-1">El envío de mensajes se activará cuando exista persistencia de chat.</span>
-                <span class="avatar-circle" style="width:36px;height:36px;background:#3C2A21;color:#fff;"><i class="bi bi-send"></i></span>
-            </div>
+            <form asp-action="EnviarMensaje" method="post" class="rounded-2xl px-4 py-3 flex items-end gap-2" style="background:#F5EBE0;">
+                @Html.AntiForgeryToken()
+                <input type="hidden" name="fisioterapeutaId" value="@Model.ConversacionActiva.FisioterapeutaId" />
+                <textarea name="nuevoMensaje" required maxlength="2000" rows="2" class="form-control flex-1" placeholder="Escribe un mensaje..."></textarea>
+                <button type="submit" class="avatar-circle border-0" style="width:36px;height:36px;background:#3C2A21;color:#fff;" aria-label="Enviar mensaje"><i class="bi bi-send"></i></button>
+            </form>
         }
     </section>
 </div>
