@@ -33,7 +33,9 @@ namespace FisioSalud_Proyecto.Services
 
         public async Task<FisioDashboardViewModel> GetDashboardAsync(int fisioterapeutaId)
         {
-            var pacienteIds = _context.Citas.Where(c => c.FisioterapeutaId == fisioterapeutaId).Select(c => c.PacienteId).Distinct();
+            var pacienteIds = _context.Citas
+                .Where(c => c.FisioterapeutaId == fisioterapeutaId && c.Estado != "CANCELADA")
+                .Select(c => c.PacienteId).Distinct();
             var dbPacientes = await _context.Pacientes.Where(p => pacienteIds.Contains(p.PacienteId)).AsNoTracking()
                 .OrderByDescending(p => p.FechaRegistro)
                 .ToListAsync();
@@ -123,7 +125,9 @@ namespace FisioSalud_Proyecto.Services
 
         public async Task<PacienteFilterViewModel> GetPacientesAsync(int fisioterapeutaId, string busqueda, string filtro)
         {
-            var pacienteIds = _context.Citas.Where(c => c.FisioterapeutaId == fisioterapeutaId).Select(c => c.PacienteId).Distinct();
+            var pacienteIds = _context.Citas
+                .Where(c => c.FisioterapeutaId == fisioterapeutaId && c.Estado != "CANCELADA")
+                .Select(c => c.PacienteId).Distinct();
             var query = _context.Pacientes.AsNoTracking().Where(p => pacienteIds.Contains(p.PacienteId));
 
             if (!string.IsNullOrWhiteSpace(busqueda))
