@@ -58,12 +58,15 @@ namespace FisioSalud_Proyecto.Services
                 .Select(u => new { u.UsuarioId, Rol = u.Rol.Nombre, u.Estado })
                 .ToListAsync();
 
-            return usuarios.Count == 2 && usuarios.All(u => u.Estado) &&
-                ((usuarios[0].Rol == Roles.Cliente && usuarios[1].Rol == Roles.Fisioterapeuta) ||
-                 (usuarios[1].Rol == Roles.Cliente && usuarios[0].Rol == Roles.Fisioterapeuta)) &&
-                await _context.Citas.AsNoTracking().AnyAsync(c =>
-                    (c.Paciente.UsuarioId == usuarioId && c.FisioterapeutaId == otroUsuarioId) ||
-                    (c.Paciente.UsuarioId == otroUsuarioId && c.FisioterapeutaId == usuarioId));
+            if (usuarios.Count != 2 || !usuarios.All(u => u.Estado) ||
+                !((usuarios[0].Rol == Roles.Cliente && usuarios[1].Rol == Roles.Fisioterapeuta) ||
+                  (usuarios[1].Rol == Roles.Cliente && usuarios[0].Rol == Roles.Fisioterapeuta)))
+                return false;
+
+            return await _context.Citas.AsNoTracking().AnyAsync(c =>
+                c.Estado != "CANCELADA" &&
+                ((c.Paciente.UsuarioId == usuarioId && c.FisioterapeutaId == otroUsuarioId) ||
+                 (c.Paciente.UsuarioId == otroUsuarioId && c.FisioterapeutaId == usuarioId)));
         }
 
         public async Task<IReadOnlyList<MensajeResumen>> ListarConversacionesAsync(int usuarioId)

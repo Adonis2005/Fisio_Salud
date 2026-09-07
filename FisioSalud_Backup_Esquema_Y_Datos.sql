@@ -66,6 +66,40 @@ SET IDENTITY_INSERT dbo.[Usuarios] OFF;
 GO
 
 -- ----------------------------------------------------------
+-- Tabla: [Mensajes]
+-- ----------------------------------------------------------
+IF OBJECT_ID('dbo.[Mensajes]', 'U') IS NULL
+BEGIN
+    CREATE TABLE dbo.[Mensajes] (
+        [MensajeId] int IDENTITY(1,1) NOT NULL,
+        [RemitenteId] int NOT NULL,
+        [DestinatarioId] int NOT NULL,
+        [Contenido] nvarchar(2000) NOT NULL,
+        [FechaEnvio] datetime2 NOT NULL DEFAULT (sysdatetime()),
+        [Leido] bit NOT NULL,
+        CONSTRAINT [PK_Mensajes] PRIMARY KEY ([MensajeId])
+    );
+END;
+GO
+
+IF OBJECT_ID('dbo.[Mensajes]', 'U') IS NOT NULL
+BEGIN
+    ALTER TABLE dbo.[Mensajes] ALTER COLUMN [Contenido] nvarchar(2000) NOT NULL;
+    ALTER TABLE dbo.[Mensajes] ALTER COLUMN [FechaEnvio] datetime2 NOT NULL;
+    ALTER TABLE dbo.[Mensajes] ALTER COLUMN [Leido] bit NOT NULL;
+END;
+GO
+
+IF NOT EXISTS (SELECT 1 FROM sys.indexes WHERE name = 'IX_Mensajes_RemitenteId' AND object_id = OBJECT_ID('dbo.[Mensajes]'))
+    CREATE INDEX [IX_Mensajes_RemitenteId] ON dbo.[Mensajes] ([RemitenteId]);
+IF NOT EXISTS (SELECT 1 FROM sys.indexes WHERE name = 'IX_Mensajes_DestinatarioId' AND object_id = OBJECT_ID('dbo.[Mensajes]'))
+    CREATE INDEX [IX_Mensajes_DestinatarioId] ON dbo.[Mensajes] ([DestinatarioId]);
+IF NOT EXISTS (SELECT 1 FROM sys.indexes WHERE name = 'IX_Mensajes_Conversacion_FechaEnvio' AND object_id = OBJECT_ID('dbo.[Mensajes]'))
+    CREATE INDEX [IX_Mensajes_Conversacion_FechaEnvio]
+        ON dbo.[Mensajes] ([RemitenteId], [DestinatarioId], [FechaEnvio]);
+GO
+
+-- ----------------------------------------------------------
 -- Tabla: [Pacientes]
 -- ----------------------------------------------------------
 IF OBJECT_ID('dbo.[Pacientes]', 'U') IS NOT NULL DROP TABLE dbo.[Pacientes];
@@ -376,6 +410,12 @@ IF NOT EXISTS (SELECT * FROM sys.foreign_keys WHERE name = 'FK_Facturas_Paciente
 GO
 IF NOT EXISTS (SELECT * FROM sys.foreign_keys WHERE name = 'FK_Pacientes_Usuarios')
     ALTER TABLE dbo.[Pacientes] ADD CONSTRAINT [FK_Pacientes_Usuarios] FOREIGN KEY ([UsuarioId]) REFERENCES dbo.[Usuarios]([UsuarioId]);
+GO
+IF NOT EXISTS (SELECT * FROM sys.foreign_keys WHERE name = 'FK_Mensajes_Remitente')
+    ALTER TABLE dbo.[Mensajes] ADD CONSTRAINT [FK_Mensajes_Remitente] FOREIGN KEY ([RemitenteId]) REFERENCES dbo.[Usuarios]([UsuarioId]);
+GO
+IF NOT EXISTS (SELECT * FROM sys.foreign_keys WHERE name = 'FK_Mensajes_Destinatario')
+    ALTER TABLE dbo.[Mensajes] ADD CONSTRAINT [FK_Mensajes_Destinatario] FOREIGN KEY ([DestinatarioId]) REFERENCES dbo.[Usuarios]([UsuarioId]);
 GO
 IF NOT EXISTS (SELECT * FROM sys.foreign_keys WHERE name = 'FK_PasswordResetTokens_Usuarios')
     ALTER TABLE dbo.[PasswordResetTokens] ADD CONSTRAINT [FK_PasswordResetTokens_Usuarios] FOREIGN KEY ([UsuarioId]) REFERENCES dbo.[Usuarios]([UsuarioId]);

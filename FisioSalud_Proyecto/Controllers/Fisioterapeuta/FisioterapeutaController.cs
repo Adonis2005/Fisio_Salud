@@ -178,6 +178,8 @@ namespace FisioSalud_Proyecto.Controllers.Fisioterapeuta
         [HttpGet]
         public async Task<IActionResult> EditarPaciente(int id)
         {
+            var fisioterapeutaId = ObtenerUsuarioAutenticado();
+            if (fisioterapeutaId == null || !await _context.Citas.AsNoTracking().AnyAsync(c => c.PacienteId == id && c.FisioterapeutaId == fisioterapeutaId.Value && c.Estado != "CANCELADA")) return Forbid();
             var model = await _pacienteService.GetPacienteFormAsync(id);
             if (model == null) return NotFound();
             return View("PacienteForm", model);
@@ -187,6 +189,8 @@ namespace FisioSalud_Proyecto.Controllers.Fisioterapeuta
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> EditarPaciente(PacienteFormViewModel model)
         {
+            var fisioterapeutaId = ObtenerUsuarioAutenticado();
+            if (fisioterapeutaId == null || !await _context.Citas.AsNoTracking().AnyAsync(c => c.PacienteId == model.PacienteId && c.FisioterapeutaId == fisioterapeutaId.Value && c.Estado != "CANCELADA")) return Forbid();
             if (!ModelState.IsValid)
                 return View("PacienteForm", model);
 
@@ -204,6 +208,8 @@ namespace FisioSalud_Proyecto.Controllers.Fisioterapeuta
         [HttpGet]
         public async Task<IActionResult> VerPaciente(int id)
         {
+            var fisioterapeutaId = ObtenerUsuarioAutenticado();
+            if (fisioterapeutaId == null || !await _context.Citas.AsNoTracking().AnyAsync(c => c.PacienteId == id && c.FisioterapeutaId == fisioterapeutaId.Value && c.Estado != "CANCELADA")) return Forbid();
             var model = await _pacienteService.GetPacienteDetalleAsync(id);
             if (model == null) return NotFound();
             return View(model);
