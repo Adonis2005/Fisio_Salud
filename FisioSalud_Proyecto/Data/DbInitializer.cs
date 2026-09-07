@@ -23,6 +23,7 @@ namespace FisioSalud_Proyecto.Data
             try
             {
                 await EnsurePasswordResetTableAsync(context, logger);
+                await EnsureMensajesTableAsync(context);
                 await SeedRolesAsync(context);
                 await SeedAdminAsync(context, passwordService);
             }
@@ -48,6 +49,28 @@ namespace FisioSalud_Proyecto.Data
                         CONSTRAINT FK_PasswordResetTokens_Usuarios FOREIGN KEY (UsuarioId) REFERENCES Usuarios(UsuarioId),
                         CONSTRAINT UQ_PasswordResetTokens_Token UNIQUE (Token)
                     );
+                END";
+
+            await context.Database.ExecuteSqlRawAsync(sql);
+        }
+
+        private static async Task EnsureMensajesTableAsync(FisioSaludDbContext context)
+        {
+            const string sql = @"
+                IF NOT EXISTS (SELECT * FROM sys.tables WHERE name = 'Mensajes')
+                BEGIN
+                    CREATE TABLE Mensajes (
+                        MensajeId INT IDENTITY(1,1) NOT NULL,
+                        RemitenteId INT NOT NULL,
+                        DestinatarioId INT NOT NULL,
+                        Contenido VARCHAR(2000) NOT NULL,
+                        FechaEnvio DATETIME2 NOT NULL DEFAULT SYSDATETIME(),
+                        Leido BIT NOT NULL DEFAULT 0,
+                        CONSTRAINT PK_Mensajes PRIMARY KEY (MensajeId),
+                        CONSTRAINT FK_Mensajes_Remitente FOREIGN KEY (RemitenteId) REFERENCES Usuarios(UsuarioId),
+                        CONSTRAINT FK_Mensajes_Destinatario FOREIGN KEY (DestinatarioId) REFERENCES Usuarios(UsuarioId)
+                    );
+                    CREATE INDEX IX_Mensajes_Conversacion ON Mensajes(RemitenteId, DestinatarioId, FechaEnvio);
                 END";
 
             await context.Database.ExecuteSqlRawAsync(sql);

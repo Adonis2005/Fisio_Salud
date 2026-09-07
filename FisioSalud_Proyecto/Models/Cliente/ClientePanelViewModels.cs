@@ -147,6 +147,17 @@ namespace FisioSalud_Proyecto.Models.Cliente
     {
         public List<ConversacionResumenViewModel> Conversaciones { get; set; } = new List<ConversacionResumenViewModel>();
         public ConversacionResumenViewModel ConversacionActiva { get; set; }
+        public List<MensajeClienteViewModel> Mensajes { get; set; } = new List<MensajeClienteViewModel>();
+        public string NuevoMensaje { get; set; }
+    }
+
+    public class MensajeClienteViewModel
+    {
+        public int RemitenteId { get; set; }
+        public string RemitenteNombre { get; set; }
+        public string Contenido { get; set; }
+        public DateTime FechaEnvio { get; set; }
+        public bool EsSaliente { get; set; }
     }
 
     public class PerfilFormViewModel : ClientePageViewModel
