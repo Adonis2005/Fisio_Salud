@@ -16,49 +16,96 @@ namespace FisioSalud_Proyecto.Controllers.Fisioterapeuta
     {
         private readonly IPacienteService _pacienteService;
         private readonly FisioSaludDbContext _context;
+        private readonly IMensajeService _mensajeService;
 
-        public FisioterapeutaController(IPacienteService pacienteService, FisioSaludDbContext context)
+        public FisioterapeutaController(IPacienteService pacienteService, FisioSaludDbContext context, IMensajeService mensajeService)
         {
             _pacienteService = pacienteService;
             _context = context;
+            _mensajeService = mensajeService;
         }
 
         public async Task<IActionResult> Dashboard()
         {
-            var model = await _pacienteService.GetDashboardAsync();
+            var fisioterapeutaId = ObtenerUsuarioAutenticado();
+            if (fisioterapeutaId == null) return Forbid();
+            var model = await _pacienteService.GetDashboardAsync(fisioterapeutaId.Value);
             return View(model);
         }
 
         public async Task<IActionResult> Agenda()
         {
-            var model = await _pacienteService.GetAgendaAsync();
+            var fisioterapeutaId = ObtenerUsuarioAutenticado();
+            if (fisioterapeutaId == null) return Forbid();
+            var model = await _pacienteService.GetAgendaAsync(fisioterapeutaId.Value);
             return View(model);
         }
 
         public async Task<IActionResult> Pacientes(string busqueda, string filtro = "Todos")
         {
-            var model = await _pacienteService.GetPacientesAsync(busqueda, filtro);
+            var fisioterapeutaId = ObtenerUsuarioAutenticado();
+            if (fisioterapeutaId == null) return Forbid();
+            var model = await _pacienteService.GetPacientesAsync(fisioterapeutaId.Value, busqueda, filtro);
             return View(model);
         }
 
         public async Task<IActionResult> Ejercicios(string busqueda, string categoria = "Todos")
         {
-            var model = await _pacienteService.GetEjerciciosAsync(busqueda, categoria);
+            var fisioterapeutaId = ObtenerUsuarioAutenticado();
+            if (fisioterapeutaId == null) return Forbid();
+            var model = await _pacienteService.GetEjerciciosAsync(fisioterapeutaId.Value, busqueda, categoria);
             return View(model);
         }
 
         public async Task<IActionResult> Mensajes(int? pacienteId)
         {
-            var model = await _pacienteService.GetMensajesAsync(pacienteId);
+            var userId = ObtenerUsuarioAutenticado();
+            if (userId == null) return Forbid();
+
+            var model = await _pacienteService.GetMensajesAsync(userId.Value, pacienteId);
+            if (pacienteId.HasValue && model.ConversacionActiva == null) return Forbid();
+
+            var conversaciones = await _mensajeService.ListarConversacionesAsync(userId.Value);
+            model.Conversaciones = conversaciones.Select(c => new ChatConversationViewModel
+            {
+                PacienteId = _context.Pacientes.AsNoTracking().Where(p => p.UsuarioId == c.UsuarioId).Select(p => p.PacienteId).FirstOrDefault(),
+                PacienteNombre = c.Nombre,
+                Iniciales = c.Iniciales,
+                UltimoMensaje = c.UltimoMensaje,
+                UltimaHora = c.FechaUltimoMensaje.ToString("g"),
+                MensajesNoLeidos = c.NoLeidos
+            }).ToList();
+
+            if (pacienteId.HasValue)
+            {
+                var pacienteUsuarioId = await _context.Pacientes.AsNoTracking()
+                    .Where(p => p.PacienteId == pacienteId.Value)
+                    .Select(p => (int?)p.UsuarioId).FirstOrDefaultAsync();
+                if (pacienteUsuarioId == null || !await _mensajeService.PuedeConversarAsync(userId.Value, pacienteUsuarioId.Value)) return Forbid();
+                model.MensajesChat = (await _mensajeService.ObtenerMensajesAsync(userId.Value, pacienteUsuarioId.Value))
+                    .Select(m => new ChatMessageItemViewModel { MensajeId = m.MensajeId, EmisorNombre = m.RemitenteNombre, EsSaliente = m.RemitenteId == userId.Value, Contenido = m.Contenido, FechaHora = m.FechaEnvio, Hora = m.FechaEnvio.ToString("g") }).ToList();
+                await _mensajeService.MarcarLeidosAsync(userId.Value, pacienteUsuarioId.Value);
+            }
             return View(model);
         }
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public IActionResult GuardarMensaje(int pacienteId, string nuevoMensajeTexto)
+        public async Task<IActionResult> GuardarMensaje(int pacienteId, string nuevoMensajeTexto)
         {
-            TempData["Success"] = "Mensaje enviado correctamente.";
+            var userId = ObtenerUsuarioAutenticado();
+            if (userId == null) return Forbid();
+            var destinatarioId = await _context.Pacientes.AsNoTracking().Where(p => p.PacienteId == pacienteId).Select(p => (int?)p.UsuarioId).FirstOrDefaultAsync();
+            if (destinatarioId == null) return NotFound();
+            var result = await _mensajeService.EnviarAsync(userId.Value, destinatarioId.Value, nuevoMensajeTexto);
+            if (!result.Success) TempData["Error"] = result.Error;
+            else TempData["Success"] = "Mensaje enviado correctamente.";
             return RedirectToAction(nameof(Mensajes), new { pacienteId });
+        }
+
+        private int? ObtenerUsuarioAutenticado()
+        {
+            return int.TryParse(User.FindFirstValue(ClaimTypes.NameIdentifier), out var id) ? id : (int?)null;
         }
 
         public async Task<IActionResult> Configuracion()

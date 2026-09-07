@@ -37,6 +37,7 @@ namespace FisioSalud_Proyecto
             services.AddScoped<IAdminPanelService, AdminPanelService>();
             services.AddScoped<IPacienteService, PacienteService>();
             services.AddScoped<ICitaService, CitaService>();
+            services.AddScoped<IMensajeService, MensajeService>();
             services.AddScoped<IEmailService, EmailService>();
 
             services.AddAuthentication("CookieAuth")

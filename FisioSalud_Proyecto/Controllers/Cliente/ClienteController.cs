@@ -1,6 +1,8 @@
+using System.Linq;
 using System.Security.Claims;
 using System.Threading.Tasks;
 using FisioSalud_Proyecto.Helpers;
+using FisioSalud_Proyecto.Data;
 using FisioSalud_Proyecto.Models.Cliente;
 using FisioSalud_Proyecto.Services;
 using Microsoft.AspNetCore.Authorization;
@@ -13,11 +15,15 @@ namespace FisioSalud_Proyecto.Controllers.Cliente
     {
         private readonly ICitaService _citaService;
         private readonly IAuthService _authService;
+        private readonly IMensajeService _mensajeService;
+        private readonly FisioSaludDbContext _context;
 
-        public ClienteController(ICitaService citaService, IAuthService authService)
+        public ClienteController(ICitaService citaService, IAuthService authService, IMensajeService mensajeService, FisioSaludDbContext context)
         {
             _citaService = citaService;
             _authService = authService;
+            _mensajeService = mensajeService;
+            _context = context;
         }
 
         public async Task<IActionResult> Dashboard()
@@ -84,9 +90,38 @@ namespace FisioSalud_Proyecto.Controllers.Cliente
 
         public async Task<IActionResult> Mensajes(int? fisioterapeutaId)
         {
+            var usuarioId = ObtenerUsuarioAutenticado();
+            if (usuarioId == null) return Forbid();
             var model = await _citaService.GetMensajesAsync(GetIdentificacion(), GetCorreo(), User.Identity.Name, fisioterapeutaId);
+            var conversaciones = await _mensajeService.ListarConversacionesAsync(usuarioId.Value);
+            model.Conversaciones = conversaciones.Select(c => new ConversacionResumenViewModel
+            {
+                FisioterapeutaId = c.UsuarioId,
+                Nombre = c.Nombre,
+                Iniciales = c.Iniciales,
+                UltimaNota = c.UltimoMensaje,
+                UltimaFecha = c.FechaUltimoMensaje
+            }).ToList();
+            if (fisioterapeutaId.HasValue)
+            {
+                if (!await _mensajeService.PuedeConversarAsync(usuarioId.Value, fisioterapeutaId.Value)) return Forbid();
+                model.Mensajes = (await _mensajeService.ObtenerMensajesAsync(usuarioId.Value, fisioterapeutaId.Value))
+                    .Select(m => new MensajeClienteViewModel { RemitenteId = m.RemitenteId, RemitenteNombre = m.RemitenteNombre, Contenido = m.Contenido, FechaEnvio = m.FechaEnvio, EsSaliente = m.RemitenteId == usuarioId.Value }).ToList();
+                await _mensajeService.MarcarLeidosAsync(usuarioId.Value, fisioterapeutaId.Value);
+            }
             ViewData["Title"] = "Mensajes";
             return View(model);
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> EnviarMensaje(int fisioterapeutaId, string nuevoMensaje)
+        {
+            var usuarioId = ObtenerUsuarioAutenticado();
+            if (usuarioId == null) return Forbid();
+            var result = await _mensajeService.EnviarAsync(usuarioId.Value, fisioterapeutaId, nuevoMensaje);
+            TempData[result.Success ? "Success" : "Error"] = result.Success ? "Mensaje enviado correctamente." : result.Error;
+            return RedirectToAction(nameof(Mensajes), new { fisioterapeutaId });
         }
 
         public async Task<IActionResult> Perfil(string tab)
