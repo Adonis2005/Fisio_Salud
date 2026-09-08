@@ -9,9 +9,10 @@
     </div>
 
     <div class="fisio-user-badge">
-        <div class="user-avatar-circle">CG</div>
+        @{ var nombreUsuario = User.Identity?.Name ?? "Fisioterapeuta"; var partesNombre = nombreUsuario.Split(' ', StringSplitOptions.RemoveEmptyEntries); var inicialesUsuario = string.Join("", partesNombre.Take(2).Select(p => p[0])).ToUpper(); }
+        <div class="user-avatar-circle">@inicialesUsuario</div>
         <div class="user-info-text">
-            <div class="user-name">Dr. Carlos Gómez</div>
+            <div class="user-name">@nombreUsuario</div>
             <div class="user-status">
                 <span class="user-status-dot"></span> En consulta
             </div>
@@ -44,16 +45,17 @@
                 <span>Ejercicios</span>
             </a>
         </li>
+        <li class="fisio-nav-item"><a asp-controller="Fisioterapeuta" asp-action="Equipos" class="fisio-nav-link @(currentAction == "Equipos" ? "active" : "")"><i class="bi bi-speedometer2"></i><span>Caminadoras</span></a></li>
         <li class="fisio-nav-item">
             <a asp-controller="Fisioterapeuta" asp-action="Mensajes" class="fisio-nav-link @(currentAction == "Mensajes" ? "active" : "")">
                 <i class="bi bi-chat-dots-fill"></i>
                 <span>Mensajes</span>
-                <span class="fisio-nav-badge">2</span>
             </a>
         </li>
     </ul>
 
     <div class="sidebar-section-header mt-2">Sistema</div>
+    <a asp-controller="Planes" asp-action="Index" class="fisio-nav-link"><i class="bi bi-journal-medical"></i><span>Planes de tratamiento</span></a>
     <ul class="fisio-nav">
         <li class="fisio-nav-item">
             <a asp-controller="Fisioterapeuta" asp-action="Configuracion" class="fisio-nav-link @(currentAction == "Configuracion" ? "active" : "")">
@@ -64,21 +66,8 @@
     </ul>
 
     <div class="sidebar-tasks-box">
-        <div class="sidebar-tasks-title">
-            <i class="bi bi-list-task"></i> Tareas pendientes
-        </div>
-        <div class="sidebar-task-item">
-            <span class="task-dot red"></span>
-            <span>Revisar expediente de Pedro Jiménez</span>
-        </div>
-        <div class="sidebar-task-item">
-            <span class="task-dot orange"></span>
-            <span>Preparar rutina semanal para Luis M.</span>
-        </div>
-        <div class="sidebar-task-item">
-            <span class="task-dot amber"></span>
-            <span>Evaluar progreso de Carlos Ruiz</span>
-        </div>
+        <div class="sidebar-tasks-title"><i class="bi bi-shield-check"></i> Flujo clínico</div>
+        <div class="sidebar-task-item"><span class="task-dot amber"></span><span>La agenda y los expedientes muestran únicamente pacientes asignados.</span></div>
     </div>
 
     <form asp-controller="Auth" asp-action="Logout" method="post">

@@ -1,3 +1,11 @@
+@inject FisioSalud_Proyecto.Data.FisioSaludDbContext PanelDb
+@using Microsoft.EntityFrameworkCore
+@using System.Security.Claims
+@{
+    var panelUsuarioId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier));
+    var panelCitas = await PanelDb.Citas.AsNoTracking().Where(c => c.FisioterapeutaId == panelUsuarioId && c.Fecha == DateTime.Today).Select(c => c.Estado).ToListAsync();
+    var panelMensajes = await PanelDb.Mensajes.CountAsync(m => m.DestinatarioId == panelUsuarioId && !m.Leido);
+}
 <!DOCTYPE html>
 <html lang="es">
 <head>
@@ -25,23 +33,23 @@
                     </button>
                     <div class="fisio-page-header">
                         <h1 class="fisio-page-title">@(ViewData["Title"] ?? "Mi Panel de Trabajo")</h1>
-                        <p class="fisio-page-subtitle">Dr. Carlos Gómez &middot; Viernes 10 de julio, 2026</p>
+                        <p class="fisio-page-subtitle">@User.Identity.Name · @DateTime.Today.ToString("dd/MM/yyyy")</p>
                     </div>
                 </div>
 
                 <div class="fisio-navbar-actions">
-                    <button class="btn-icon-round" title="Buscar">
+                    <a asp-controller="Fisioterapeuta" asp-action="Pacientes" class="btn-icon-round" title="Buscar pacientes">
                         <i class="bi bi-search"></i>
-                    </button>
-                    <button class="btn-icon-round" title="Notificaciones">
+                    </a>
+                    <a asp-controller="Fisioterapeuta" asp-action="Mensajes" class="btn-icon-round" title="Mensajes sin leer: @panelMensajes">
                         <i class="bi bi-bell"></i>
-                        <span class="notification-badge"></span>
-                    </button>
+                        @if(panelMensajes > 0) { <span class="notification-badge">@panelMensajes</span> }
+                    </a>
                     <div class="citas-today-pill">
                         <span class="citas-today-dot"></span>
-                        <span>7 citas hoy &middot; 2 completadas</span>
+                        <span>@panelCitas.Count citas hoy · @panelCitas.Count(c => c == "ATENDIDA") completadas</span>
                     </div>
-                    <div class="nav-user-avatar" title="Perfil">CG</div>
+                    <a asp-controller="Ajustes" asp-action="Index" class="nav-user-avatar" title="Perfil">@string.Concat((User.Identity.Name ?? "").Split(' ').Where(s => s.Length > 0).Take(2).Select(s => s[0]))</a>
                 </div>
             </header>
 

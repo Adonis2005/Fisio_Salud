@@ -202,6 +202,8 @@ namespace FisioSalud_Proyecto.Models.Administrador
         public int UsosMes { get; set; }
         public int TerapeutasActivos { get; set; }
         public List<AdminPlanCardViewModel> Planes { get; set; } = new List<AdminPlanCardViewModel>();
+        public List<FisioSalud_Proyecto.Models.Entities.Ejercicio> Ejercicios { get; set; } = new List<FisioSalud_Proyecto.Models.Entities.Ejercicio>();
+        public List<FisioSalud_Proyecto.Models.Entities.Patologia> Patologias { get; set; } = new List<FisioSalud_Proyecto.Models.Entities.Patologia>();
     }
 
     public class AdminPlanCardViewModel
@@ -308,5 +310,58 @@ namespace FisioSalud_Proyecto.Models.Administrador
         public string Accion { get; set; }
         public string Controlador { get; set; }
         public int? Id { get; set; }
+    }
+
+    public class AdminCitasPageViewModel
+    {
+        public string Busqueda { get; set; }
+        public string Estado { get; set; }
+        public DateTime? FechaDesde { get; set; }
+        public DateTime? FechaHasta { get; set; }
+        public List<AdminCitaGestionViewModel> Citas { get; set; } = new List<AdminCitaGestionViewModel>();
+        public List<AdminEstadoEstadisticaViewModel> Estadisticas { get; set; } = new List<AdminEstadoEstadisticaViewModel>();
+    }
+
+    public class AdminCitaGestionViewModel
+    {
+        public int CitaId { get; set; }
+        public string PacienteNombre { get; set; }
+        public string PacienteIdentificacion { get; set; }
+        public string FisioterapeutaNombre { get; set; }
+        public string ServicioNombre { get; set; }
+        public DateTime Fecha { get; set; }
+        public TimeSpan HoraInicio { get; set; }
+        public string Estado { get; set; }
+    }
+
+    public class AdminEstadoEstadisticaViewModel
+    {
+        public string Etiqueta { get; set; }
+        public int Cantidad { get; set; }
+        public string Color { get; set; }
+    }
+
+    public class AdminFacturasPageViewModel
+    {
+        public string Busqueda { get; set; }
+        public string Estado { get; set; }
+        public DateTime? FechaDesde { get; set; }
+        public DateTime? FechaHasta { get; set; }
+        public decimal TotalCobrado { get; set; }
+        public decimal TotalPendiente { get; set; }
+        public decimal TotalCancelado { get; set; }
+        public List<AdminFacturaGestionViewModel> Facturas { get; set; } = new List<AdminFacturaGestionViewModel>();
+    }
+
+    public class AdminFacturaGestionViewModel
+    {
+        public int FacturaId { get; set; }
+        public string NumeroFactura { get; set; }
+        public string PacienteNombre { get; set; }
+        public string FisioterapeutaNombre { get; set; }
+        public decimal Monto { get; set; }
+        public DateTime Fecha { get; set; }
+        public string Estado { get; set; }
+        public string MetodoPago { get; set; }
     }
 }

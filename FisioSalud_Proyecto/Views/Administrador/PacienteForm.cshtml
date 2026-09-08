@@ -1,0 +1,3 @@
+@model FisioSalud_Proyecto.Models.Fisioterapeuta.PacienteFormViewModel
+@{ Layout = "_LayoutAdmin"; ViewData["EsAdministrador"] = true; }
+@await Html.PartialAsync("~/Views/Fisioterapeuta/PacienteForm.cshtml", Model)

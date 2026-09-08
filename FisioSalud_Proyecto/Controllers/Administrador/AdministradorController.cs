@@ -20,15 +20,18 @@ namespace FisioSalud_Proyecto.Controllers.Administrador
         private readonly IUsuarioService _usuarioService;
         private readonly IAdminPanelService _adminPanelService;
         private readonly IPacienteService _pacienteService;
+        private readonly IEquipoService _equipoService;
 
         public AdministradorController(
             IUsuarioService usuarioService,
             IAdminPanelService adminPanelService,
-            IPacienteService pacienteService)
+            IPacienteService pacienteService,
+            IEquipoService equipoService)
         {
             _usuarioService = usuarioService;
             _adminPanelService = adminPanelService;
             _pacienteService = pacienteService;
+            _equipoService = equipoService;
         }
 
         public override async Task OnActionExecutionAsync(ActionExecutingContext context, ActionExecutionDelegate next)
@@ -72,7 +75,8 @@ namespace FisioSalud_Proyecto.Controllers.Administrador
         public async Task<IActionResult> CrearPaciente()
         {
             ViewData["Title"] = "Nuevo paciente";
-            return View("PacienteForm", await _pacienteService.GetPacienteFormAsync(null));
+            ViewData["EsAdministrador"] = true;
+            return View("~/Views/Fisioterapeuta/PacienteForm.cshtml", await _pacienteService.GetPacienteFormAsync(null));
         }
 
         [HttpPost]
@@ -80,8 +84,12 @@ namespace FisioSalud_Proyecto.Controllers.Administrador
         public async Task<IActionResult> CrearPaciente(PacienteFormViewModel model)
         {
             ViewData["Title"] = "Nuevo paciente";
+            ViewData["EsAdministrador"] = true;
             if (!ModelState.IsValid)
+            {
+                model.FisioterapeutasDisponibles = (await _pacienteService.GetPacienteFormAsync(null)).FisioterapeutasDisponibles;
                 return View("PacienteForm", model);
+            }
 
             var result = await _pacienteService.CreateAsync(model);
             if (!result.Success)
@@ -100,6 +108,7 @@ namespace FisioSalud_Proyecto.Controllers.Administrador
             var model = await _pacienteService.GetPacienteFormAsync(id);
             if (model == null) return NotFound();
             ViewData["Title"] = "Editar paciente";
+            ViewData["EsAdministrador"] = true;
             return View("PacienteForm", model);
         }
 
@@ -108,8 +117,12 @@ namespace FisioSalud_Proyecto.Controllers.Administrador
         public async Task<IActionResult> EditarPaciente(PacienteFormViewModel model)
         {
             ViewData["Title"] = "Editar paciente";
+            ViewData["EsAdministrador"] = true;
             if (!ModelState.IsValid)
+            {
+                model.FisioterapeutasDisponibles = (await _pacienteService.GetPacienteFormAsync(model.PacienteId)).FisioterapeutasDisponibles;
                 return View("PacienteForm", model);
+            }
 
             var result = await _pacienteService.UpdateAsync(model);
             if (!result.Success)
@@ -131,13 +144,21 @@ namespace FisioSalud_Proyecto.Controllers.Administrador
         public async Task<IActionResult> Reportes()
         {
             ViewData["Title"] = "Generador de Reportes";
-            return View(await _adminPanelService.GetReportesAsync());
+            return View("ReportesOperativos", await _adminPanelService.GetReportesAsync());
         }
 
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> GenerarReporte(string tipo, DateTime fechaInicio, DateTime fechaFin, string formato, string[] metricas)
         {
+            if (fechaInicio == default || fechaFin < fechaInicio || (fechaFin-fechaInicio).TotalDays > 3660)
+            { TempData["Error"]="Selecciona un período válido de hasta diez años."; return RedirectToAction(nameof(Reportes)); }
+            if (formato == "excel" || formato == "imprimir")
+            {
+                var reporte = await _adminPanelService.GenerarReporteCsvAsync(tipo, fechaInicio, fechaFin, Array.Empty<string>());
+                if (formato == "excel") return File(ReporteExportador.Excel(reporte.Content), "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", System.IO.Path.ChangeExtension(reporte.FileName,"xlsx"));
+                return View("ReporteImprimible", ReporteExportador.LeerCsv(reporte.Content));
+            }
             if (string.Equals(formato, "csv", StringComparison.OrdinalIgnoreCase) || string.IsNullOrEmpty(formato))
             {
                 var file = await _adminPanelService.GenerarReporteCsvAsync(tipo, fechaInicio, fechaFin, metricas ?? Array.Empty<string>());
@@ -156,6 +177,7 @@ namespace FisioSalud_Proyecto.Controllers.Administrador
 
         public async Task<IActionResult> Configuracion(string seccion, string busqueda, int? rolId, bool? estado)
         {
+            if (seccion != "usuarios") return RedirectToAction("Index", "Ajustes");
             ViewData["Title"] = "Configuración del Sistema";
             var usuarioId = int.TryParse(User.FindFirstValue(ClaimTypes.NameIdentifier), out var id) ? id : 0;
             return View(await _adminPanelService.GetConfiguracionAsync(usuarioId, seccion, busqueda, rolId, estado));
@@ -176,6 +198,94 @@ namespace FisioSalud_Proyecto.Controllers.Administrador
         {
             ViewData["Title"] = "Servicios y Tarifas";
             return View(await _adminPanelService.GetServiciosAsync());
+        }
+
+        public async Task<IActionResult> Equipos()
+        {
+            ViewData["Title"] = "Equipos terapéuticos";
+            return View(await _equipoService.GetAsync());
+        }
+
+        [HttpPost, ValidateAntiForgeryToken]
+        public async Task<IActionResult> GuardarEquipo(FisioSalud_Proyecto.Models.Entities.EquipoTerapeutico model)
+        {
+            var result = await _equipoService.GuardarEquipoAsync(model);
+            TempData[result.Success ? "Success" : "Error"] = result.Success ? "Equipo guardado correctamente." : result.Error;
+            return RedirectToAction(nameof(Equipos));
+        }
+
+        [HttpPost, ValidateAntiForgeryToken]
+        public async Task<IActionResult> CambiarEstadoEquipo(int equipoId, string estado)
+        {
+            var result = await _equipoService.CambiarEstadoEquipoAsync(equipoId, estado);
+            TempData[result.Success ? "Success" : "Error"] = result.Success ? "Estado del equipo actualizado." : result.Error;
+            return RedirectToAction(nameof(Equipos));
+        }
+
+        [HttpPost, ValidateAntiForgeryToken]
+        public async Task<IActionResult> CancelarUsoEquipo(int usoEquipoId)
+        {
+            var result = await _equipoService.CambiarEstadoUsoAsync(usoEquipoId, 0, "CANCELADO", administrador: true);
+            TempData[result.Success ? "Success" : "Error"] = result.Success ? "Reserva del equipo cancelada." : result.Error;
+            return RedirectToAction(nameof(Equipos));
+        }
+
+        public async Task<IActionResult> Citas(string busqueda, string estado, DateTime? fechaDesde, DateTime? fechaHasta)
+        {
+            ViewData["Title"] = "Gestión de Citas";
+            return View(await _adminPanelService.GetCitasAsync(busqueda, estado, fechaDesde, fechaHasta));
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> CambiarEstadoCita(int citaId, string nuevoEstado, string observacion)
+        {
+            var result = await _adminPanelService.CambiarEstadoCitaAsync(citaId, nuevoEstado, observacion);
+            TempData[result.Success ? "Success" : "Error"] = result.Success ? "Estado de la cita actualizado." : result.Error;
+            return RedirectToAction(nameof(Citas));
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public Task<IActionResult> CancelarCitaAdmin(int citaId) =>
+            CambiarEstadoCita(citaId, CitaEstados.Cancelada, "Cancelada desde administración.");
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public Task<IActionResult> MarcarNoAsistio(int citaId) =>
+            CambiarEstadoCita(citaId, CitaEstados.NoAsistio, "Paciente marcado como no asistió.");
+
+        public async Task<IActionResult> Facturas(string busqueda, string estado, DateTime? fechaDesde, DateTime? fechaHasta)
+        {
+            ViewData["Title"] = "Facturación y Pagos";
+            return View(await _adminPanelService.GetFacturasAsync(busqueda, estado, fechaDesde, fechaHasta));
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> RegistrarPagoAdmin(int facturaId, string metodoPago, string referencia)
+        {
+            var result = await _adminPanelService.RegistrarPagoAdminAsync(facturaId, metodoPago, referencia);
+            TempData[result.Success ? "Success" : "Error"] = result.Success ? "Pago registrado correctamente." : result.Error;
+            return RedirectToAction(nameof(Facturas));
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> CancelarFactura(int facturaId)
+        {
+            var result = await _adminPanelService.CambiarEstadoFacturaAsync(facturaId, PagoEstados.Cancelado);
+            TempData[result.Success ? "Success" : "Error"] = result.Success ? "Factura cancelada." : result.Error;
+            return RedirectToAction(nameof(Facturas));
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> ReembolsarFactura(int facturaId)
+        {
+            var result = await _adminPanelService.CambiarEstadoFacturaAsync(facturaId, PagoEstados.Reembolsado);
+            TempData[result.Success ? "Success" : "Error"] = result.Success ? "Factura marcada como reembolsada." : result.Error;
+            return RedirectToAction(nameof(Facturas));
         }
 
         [HttpPost]
@@ -214,11 +324,29 @@ namespace FisioSalud_Proyecto.Controllers.Administrador
 
         [HttpPost]
         [ValidateAntiForgeryToken]
+        public async Task<IActionResult> ToggleEjercicioCatalogo(int ejercicioId)
+        {
+            var result = await _adminPanelService.ToggleEjercicioCatalogoAsync(ejercicioId);
+            TempData[result.Success ? "Success" : "Error"] = result.Success ? "Estado del ejercicio actualizado." : result.Error;
+            return RedirectToAction(nameof(Planes), new { tab = "ejercicios" });
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
         public async Task<IActionResult> GuardarPatologia(FisioSalud_Proyecto.Models.Entities.Patologia model)
         {
             var result = await _adminPanelService.SavePatologiaAsync(model);
             TempData[result.Success ? "Success" : "Error"] = result.Success ? "Patología guardada en catálogo." : result.Error;
             return RedirectToAction(nameof(Planes));
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> TogglePatologia(int patologiaId)
+        {
+            var result = await _adminPanelService.TogglePatologiaAsync(patologiaId);
+            TempData[result.Success ? "Success" : "Error"] = result.Success ? "Estado de la patología actualizado." : result.Error;
+            return RedirectToAction(nameof(Planes), new { tab = "tratamientos" });
         }
 
         [HttpGet]

@@ -1,0 +1,3 @@
+@model List<List<string>>
+@{Layout=null;}
+<!doctype html><html lang="es"><head><meta charset="utf-8"/><title>Reporte FisioSalud</title><style>body{font:14px Arial;margin:32px}table{border-collapse:collapse;width:100%}td{border:1px solid #ddd;padding:8px}button{padding:12px;margin-bottom:20px}@@media print{button,a{display:none}}</style></head><body><button onclick="window.print()">Imprimir / guardar como PDF</button> <a href="/Administrador/Reportes">Volver a reportes</a><table>@foreach(var row in Model){<tr>@foreach(var cell in row){<td>@cell</td>}</tr>}</table></body></html>

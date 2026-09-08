@@ -11,6 +11,7 @@ namespace FisioSalud_Proyecto.Data
         }
 
         public DbSet<Rol> Roles { get; set; }
+        public DbSet<Ajuste> AjustesSistema { get; set; }
         public DbSet<Usuario> Usuarios { get; set; }
         public DbSet<Paciente> Pacientes { get; set; }
         public DbSet<Cita> Citas { get; set; }
@@ -32,6 +33,9 @@ namespace FisioSalud_Proyecto.Data
         public DbSet<SesionTratamiento> SesionTratamientos { get; set; }
         public DbSet<EjercicioRealizado> EjerciciosRealizados { get; set; }
         public DbSet<DisponibilidadFisioterapeuta> DisponibilidadesFisioterapeuta { get; set; }
+        public DbSet<AsignacionPaciente> AsignacionesPaciente { get; set; }
+        public DbSet<EquipoTerapeutico> EquiposTerapeuticos { get; set; }
+        public DbSet<UsoEquipo> UsosEquipo { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -129,6 +133,23 @@ namespace FisioSalud_Proyecto.Data
 
             modelBuilder.Entity<DisponibilidadFisioterapeuta>(entity =>
                 entity.HasOne(e => e.Fisioterapeuta).WithMany().HasForeignKey(e => e.FisioterapeutaId).OnDelete(DeleteBehavior.Restrict));
+
+            modelBuilder.Entity<AsignacionPaciente>(entity =>
+            {
+                entity.HasIndex(e => new { e.PacienteId, e.FisioterapeutaId }).IsUnique();
+                entity.HasOne(e => e.Paciente).WithMany().HasForeignKey(e => e.PacienteId).OnDelete(DeleteBehavior.Cascade);
+                entity.HasOne(e => e.Fisioterapeuta).WithMany().HasForeignKey(e => e.FisioterapeutaId).OnDelete(DeleteBehavior.Restrict);
+            });
+
+            modelBuilder.Entity<EquipoTerapeutico>(entity => entity.HasIndex(e => e.Codigo).IsUnique());
+            modelBuilder.Entity<UsoEquipo>(entity =>
+            {
+                entity.Property(e => e.Fecha).HasColumnType("date");
+                entity.HasOne(e => e.Equipo).WithMany(x => x.Usos).HasForeignKey(e => e.EquipoId).OnDelete(DeleteBehavior.Restrict);
+                entity.HasOne(e => e.Paciente).WithMany().HasForeignKey(e => e.PacienteId).OnDelete(DeleteBehavior.Restrict);
+                entity.HasOne(e => e.Fisioterapeuta).WithMany().HasForeignKey(e => e.FisioterapeutaId).OnDelete(DeleteBehavior.Restrict);
+                entity.HasOne(e => e.Cita).WithMany().HasForeignKey(e => e.CitaId).OnDelete(DeleteBehavior.Restrict);
+            });
         }
     }
 }

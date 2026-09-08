@@ -8,6 +8,7 @@
 }
 
 <div class="flex gap-2 mb-4">
+    <a asp-controller="AgendaGestion" asp-action="Index" class="pill-btn">Reprogramar citas</a>
     <a asp-action="Citas" asp-route-vista="nueva" class="pill-btn @(Model.Vista != "lista" ? "active" : "")">+ Nueva cita</a>
     <a asp-action="Citas" asp-route-vista="lista" class="pill-btn @(Model.Vista == "lista" ? "active" : "")">Mis citas</a>
 </div>

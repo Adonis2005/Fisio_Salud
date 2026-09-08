@@ -27,7 +27,7 @@ namespace FisioSalud_Proyecto.Services
         Task<(bool Success, string Error)> UpdatePerfilAsync(string identificacion, string correo, PerfilFormViewModel model);
         Task<ConfiguracionPageViewModel> GetConfiguracionAsync(string identificacion, string correo, string nombreCliente);
         Task<FacturasPageViewModel> GetFacturasClienteAsync(string identificacion, string correo, string nombreCliente);
-        Task<(bool Success, string Error)> RegistrarPagoAsync(RegistrarPagoFormModel model);
+        Task<(bool Success, string Error)> RegistrarPagoAsync(string identificacion, string correo, RegistrarPagoFormModel model);
         Task<(bool Success, string Error)> MarcarCumplimientoEjercicioAsync(CumplimientoEjercicioFormModel model);
         Task<EvolucionPacienteViewModel> GetEvolucionPacienteAsync(int pacienteId);
         Task<(bool Success, string Error)> CancelarCitaAsync(int citaId, string identificacion, string correo);
@@ -126,7 +126,7 @@ namespace FisioSalud_Proyecto.Services
             var model = new CitasPageViewModel
             {
                 Vista = string.IsNullOrWhiteSpace(vista) ? "nueva" : vista,
-                Servicios = ReservarCitaViewModel.ServiciosDisponibles.ToList(),
+                Servicios = await _context.Servicios.AsNoTracking().Where(s => s.Estado).OrderBy(s => s.Nombre).Select(s => s.Nombre).ToListAsync(),
                 Formulario = new NuevaCitaFormViewModel
                 {
                     Fecha = (fecha ?? DateTime.Today).Date,
@@ -202,6 +202,8 @@ namespace FisioSalud_Proyecto.Services
 
         public async Task<(bool Success, string Error)> AgendarCitaAsync(string identificacion, string correo, NuevaCitaFormViewModel form)
         {
+            if (form == null || form.Mensaje?.Length > 1000) return (false, "Datos de cita inválidos.");
+            await using var transaction = await _context.Database.BeginTransactionAsync(System.Data.IsolationLevel.Serializable);
             var paciente = await FindPacienteAsync(identificacion, correo);
             if (paciente == null)
                 return (false, "No encontramos tu expediente de paciente. Contacta a recepción.");
@@ -214,6 +216,8 @@ namespace FisioSalud_Proyecto.Services
 
             if (string.IsNullOrWhiteSpace(form.Hora) || !TimeSpan.TryParse(form.Hora, out var horaInicio))
                 return (false, "Selecciona un horario disponible.");
+            if (horaInicio < TimeSpan.Zero || horaInicio >= TimeSpan.FromDays(1) || form.Fecha.Date.Add(horaInicio) <= DateTime.Now)
+                return (false, "Selecciona una fecha y hora futuras.");
 
             if (form.Fecha.Date < DateTime.Today)
                 return (false, "No puedes agendar una cita en una fecha pasada.");
@@ -231,36 +235,37 @@ namespace FisioSalud_Proyecto.Services
                 .Where(d => d.FisioterapeutaId == form.FisioterapeutaId.Value && d.DiaSemana == diaSemana && d.Estado)
                 .ToListAsync();
 
-            if (disponibilidades.Any())
-            {
-                bool dentroHorario = disponibilidades.Any(d => horaInicio >= d.HoraInicio && horaInicio < d.HoraFin);
-                if (!dentroHorario)
-                    return (false, "El especialista no atiende en el horario seleccionado.");
-            }
+            if (!disponibilidades.Any()) return (false, "El especialista no tiene disponibilidad configurada para ese día.");
+            bool dentroHorario = disponibilidades.Any(d => horaInicio >= d.HoraInicio && horaInicio.Add(TimeSpan.FromHours(1)) <= d.HoraFin);
+            if (!dentroHorario) return (false, "El especialista no atiende en el horario seleccionado.");
 
             // Validar que el fisioterapeuta no esté ocupado
-            var ocupadaFisio = await _context.Citas.AnyAsync(c =>
+            var horaFin = horaInicio.Add(TimeSpan.FromHours(1));
+            var citasFisio = await _context.Citas.Where(c =>
                 c.FisioterapeutaId == form.FisioterapeutaId
                 && c.Fecha == form.Fecha.Date
-                && c.HoraInicio == horaInicio
-                && c.Estado != CitaEstados.Cancelada);
+                && c.HoraInicio < horaFin
+                && c.Estado != CitaEstados.Cancelada).Select(c => new { c.HoraInicio, c.HoraFin }).ToListAsync();
+            var ocupadaFisio = citasFisio.Any(c => horaInicio < (c.HoraFin ?? c.HoraInicio.Add(TimeSpan.FromHours(1))));
 
             if (ocupadaFisio)
                 return (false, "El especialista ya tiene una cita agendada en ese horario. Elige otro.");
 
             // Validar que el paciente no tenga otra cita al mismo tiempo
-            var ocupadaPaciente = await _context.Citas.AnyAsync(c =>
+            var citasPaciente = await _context.Citas.Where(c =>
                 c.PacienteId == paciente.PacienteId
                 && c.Fecha == form.Fecha.Date
-                && c.HoraInicio == horaInicio
-                && c.Estado != CitaEstados.Cancelada);
+                && c.HoraInicio < horaFin
+                && c.Estado != CitaEstados.Cancelada).Select(c => new { c.HoraInicio, c.HoraFin }).ToListAsync();
+            var ocupadaPaciente = citasPaciente.Any(c => horaInicio < (c.HoraFin ?? c.HoraInicio.Add(TimeSpan.FromHours(1))));
 
             if (ocupadaPaciente)
                 return (false, "Ya tienes una cita agendada en esta misma fecha y hora.");
 
             // Obtener Servicio
-            var servicioObj = await _context.Servicios.FirstOrDefaultAsync(s => s.Nombre == form.Servicio && s.Estado)
-                               ?? await _context.Servicios.FirstOrDefaultAsync(s => s.Estado);
+            var servicioObj = await _context.Servicios.FirstOrDefaultAsync(s => s.Nombre == form.Servicio && s.Estado);
+            if (servicioObj == null)
+                return (false, "El servicio seleccionado no existe o está inactivo.");
 
             var nuevaCita = new Cita
             {
@@ -269,7 +274,7 @@ namespace FisioSalud_Proyecto.Services
                 ServicioId = servicioObj?.ServicioId,
                 Fecha = form.Fecha.Date,
                 HoraInicio = horaInicio,
-                HoraFin = horaInicio.Add(TimeSpan.FromHours(1)),
+                HoraFin = horaFin,
                 MotivoConsulta = form.Servicio.Trim(),
                 Observaciones = string.IsNullOrWhiteSpace(form.Mensaje) ? null : form.Mensaje.Trim(),
                 Estado = CitaEstados.PendientePago,
@@ -280,10 +285,10 @@ namespace FisioSalud_Proyecto.Services
             await _context.SaveChangesAsync();
 
             // Generar Factura en estado Pendiente
-            decimal montoFactura = servicioObj?.Precio ?? 35.00m;
+            decimal montoFactura = servicioObj.Precio;
             var nuevaFactura = new Factura
             {
-                NumeroFactura = "FAC-" + DateTime.Now.ToString("yyyyMMddHHmmss"),
+                NumeroFactura = "FAC-" + DateTime.Now.ToString("yyyyMMddHHmmssfff") + "-" + nuevaCita.CitaId,
                 PacienteId = paciente.PacienteId,
                 FisioterapeutaId = form.FisioterapeutaId.Value,
                 Monto = montoFactura,
@@ -309,54 +314,66 @@ namespace FisioSalud_Proyecto.Services
             });
 
             await _context.SaveChangesAsync();
+            await AsegurarAsignacionAsync(paciente.PacienteId, form.FisioterapeutaId.Value);
+            await transaction.CommitAsync();
             return (true, null);
         }
 
-        public async Task<(bool Success, string Error)> RegistrarPagoAsync(RegistrarPagoFormModel model)
+        public async Task<(bool Success, string Error)> RegistrarPagoAsync(string identificacion, string correo, RegistrarPagoFormModel model)
         {
+            await using var transaction = await _context.Database.BeginTransactionAsync(System.Data.IsolationLevel.Serializable);
             if (model == null || model.FacturaId <= 0)
                 return (false, "Factura no válida.");
 
+            var paciente = await FindPacienteAsync(identificacion, correo);
+            if (paciente == null) return (false, "No encontramos tu expediente de paciente.");
+
             var factura = await _context.Facturas
                 .Include(f => f.DetallesFactura)
-                .FirstOrDefaultAsync(f => f.FacturaId == model.FacturaId);
+                .FirstOrDefaultAsync(f => f.FacturaId == model.FacturaId && f.PacienteId == paciente.PacienteId);
 
             if (factura == null)
                 return (false, "Factura no encontrada.");
 
-            if (factura.Estado == PagoEstados.Pagado)
-                return (false, "La factura ya se encuentra pagada.");
+            if (factura.Estado != PagoEstados.Pendiente)
+                return (false, "Solo se pueden reportar pagos de facturas pendientes.");
+            if (await _context.Pagos.AnyAsync(p => p.FacturaId == factura.FacturaId && p.Estado == PagoEstados.Pendiente))
+                return (false, "Ya existe un comprobante en revisión para esta factura.");
+            if (model.Monto > 0 && model.Monto != factura.Monto)
+                return (false, "El monto del pago debe coincidir con el total de la factura.");
+            if (string.IsNullOrWhiteSpace(model.Referencia))
+                return (false, "Ingrese la referencia o comprobante del pago.");
 
+            if (model.Referencia.Length > 100 || !new[] { "Transferencia", "Tarjeta", "Efectivo" }.Contains(model.MetodoPago)) return (false, "Revisa el método y la referencia (máximo 100 caracteres).");
             var pago = new Pago
             {
                 FacturaId = factura.FacturaId,
                 MetodoPago = model.MetodoPago ?? "Transferencia",
                 Monto = model.Monto > 0 ? model.Monto : factura.Monto,
-                Estado = PagoEstados.Pagado,
+                Estado = PagoEstados.Pendiente,
                 Referencia = model.Referencia,
-                FechaPago = DateTime.Now,
+                FechaPago = null,
                 FechaRegistro = DateTime.Now
             };
 
             _context.Pagos.Add(pago);
-            factura.Estado = PagoEstados.Pagado;
-
-            // Confirmar citas asociadas a la factura
-            foreach (var detalle in factura.DetallesFactura)
-            {
-                if (detalle.CitaId.HasValue)
-                {
-                    var cita = await _context.Citas.FindAsync(detalle.CitaId.Value);
-                    if (cita != null && (cita.Estado == CitaEstados.PendientePago || cita.Estado == CitaEstados.Solicitada))
-                    {
-                        cita.Estado = CitaEstados.Confirmada;
-                        cita.FechaActualizacion = DateTime.Now;
-                    }
-                }
-            }
 
             await _context.SaveChangesAsync();
+            await transaction.CommitAsync();
             return (true, null);
+        }
+
+        private async Task AsegurarAsignacionAsync(int pacienteId, int fisioterapeutaId)
+        {
+            var asignacion = await _context.AsignacionesPaciente.FirstOrDefaultAsync(a => a.PacienteId == pacienteId && a.FisioterapeutaId == fisioterapeutaId);
+            if (asignacion == null)
+                _context.AsignacionesPaciente.Add(new AsignacionPaciente { PacienteId = pacienteId, FisioterapeutaId = fisioterapeutaId, Estado = true, FechaAsignacion = DateTime.Now });
+            else
+            {
+                asignacion.Estado = true;
+                asignacion.FechaFin = null;
+            }
+            await _context.SaveChangesAsync();
         }
 
         public async Task<(bool Success, string Error)> MarcarCumplimientoEjercicioAsync(CumplimientoEjercicioFormModel model)
@@ -371,7 +388,15 @@ namespace FisioSalud_Proyecto.Services
             if (asignacion == null)
                 return (false, "Ejercicio asignado no encontrado.");
 
-            int pacienteId = model.PacienteId > 0 ? model.PacienteId : asignacion.PlanTratamiento.PacienteId;
+            int pacienteId = model.PacienteId;
+            if (pacienteId != asignacion.PlanTratamiento.PacienteId)
+                return (false, "El ejercicio no pertenece al plan de este paciente.");
+            if (!asignacion.Estado || asignacion.PlanTratamiento.Estado != "ACTIVO")
+                return (false, "El ejercicio o plan ya no está activo.");
+            if (model.SeriesRealizadas <= 0 || model.RepeticionesRealizadas <= 0 || model.Dolor < 0 || model.Dolor > 10)
+                return (false, "Revisa series, repeticiones y dolor (0 a 10).");
+            if (await _context.EjerciciosRealizados.AnyAsync(e => e.TratamientoEjercicioId == model.TratamientoEjercicioId && e.PacienteId == pacienteId && e.FechaRealizacion >= DateTime.Today))
+                return (false, "Ya registraste este ejercicio hoy.");
 
             var registro = new EjercicioRealizado
             {
@@ -461,12 +486,20 @@ namespace FisioSalud_Proyecto.Services
             if (cita == null)
                 return (false, "Cita no encontrada.");
 
-            if (cita.Estado == CitaEstados.Atendida)
-                return (false, "No se puede cancelar una cita que ya fue atendida.");
+            if (cita.Estado == CitaEstados.Atendida || cita.Estado == CitaEstados.EnAtencion)
+                return (false, "No se puede cancelar una cita atendida o en atención.");
 
+            var factura = await _context.Facturas.Include(f => f.DetallesFactura)
+                .FirstOrDefaultAsync(f => f.DetallesFactura.Any(d => d.CitaId == citaId));
+            if (factura?.Estado == PagoEstados.Pagado)
+                return (false, "La cita está pagada. Solicite a administración el reembolso antes de cancelarla.");
+
+            await using var transaction = await _context.Database.BeginTransactionAsync();
             cita.Estado = CitaEstados.Cancelada;
             cita.FechaActualizacion = DateTime.Now;
+            if (factura?.Estado == PagoEstados.Pendiente) factura.Estado = PagoEstados.Cancelado;
             await _context.SaveChangesAsync();
+            await transaction.CommitAsync();
             return (true, null);
         }
 
@@ -538,6 +571,10 @@ namespace FisioSalud_Proyecto.Services
             model.CompletadasPorcentaje = citas.Count == 0 ? 0 : (int)Math.Round(100.0 * model.CitasAtendidas / citas.Count);
             model.EvolucionSemanal = ConstruirEvolucion(citas);
             model.CitasRecientes = citas.Take(8).ToList();
+            model.Planes = await _context.PlanesTratamiento.AsNoTracking().Where(p => p.PacienteId == ctx.Paciente.PacienteId).OrderByDescending(p => p.FechaCreacion).ToListAsync();
+            model.Rutina = await _context.TratamientoEjercicios.AsNoTracking().Include(t => t.Ejercicio).Include(t => t.PlanTratamiento)
+                .Where(t => t.Estado && t.PlanTratamiento.PacienteId == ctx.Paciente.PacienteId && t.PlanTratamiento.Estado == "ACTIVO" && t.Ejercicio.Estado).ToListAsync();
+            model.Evolucion = await GetEvolucionPacienteAsync(ctx.Paciente.PacienteId);
             model.FechaInicioTratamiento = FechaInicio(ctx.Paciente, citas);
             return model;
         }
@@ -689,7 +726,7 @@ namespace FisioSalud_Proyecto.Services
                 .OrderByDescending(f => f.Fecha)
                 .ToListAsync();
 
-            model.TotalPagado = facturas.Where(f => f.Estado == "PAGADA").Sum(f => f.Monto);
+            model.TotalPagado = facturas.Where(f => f.Estado == PagoEstados.Pagado).Sum(f => f.Monto);
             model.TotalPendiente = facturas.Where(f => f.Estado == "PENDIENTE" || f.Estado == "VENCIDA").Sum(f => f.Monto);
 
             model.Facturas = facturas.Select(f => new FacturaClienteItemViewModel
@@ -700,7 +737,7 @@ namespace FisioSalud_Proyecto.Services
                 Fisioterapeuta = f.Fisioterapeuta == null ? "—" : f.Fisioterapeuta.Nombres + " " + f.Fisioterapeuta.Apellidos,
                 Monto = f.Monto,
                 Estado = f.Estado,
-                EstadoClass = f.Estado == "PAGADA" ? "ok" : f.Estado == "VENCIDA" ? "warn" : "pending"
+                EstadoClass = f.Estado == PagoEstados.Pagado ? "ok" : f.Estado == "VENCIDA" ? "warn" : "pending"
             }).ToList();
 
             return model;

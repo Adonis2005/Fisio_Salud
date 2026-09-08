@@ -180,7 +180,7 @@
                                             <div class="small text-secondary">@ex.Observaciones</div>
                                         }
                                     </div>
-                                    <span class="badge bg-primary-subtle text-primary border px-3 py-1 rounded-pill">Asignado</span>
+                                    @if(ex.Estado) { <form asp-controller="Planes" asp-action="RetirarEjercicio" method="post"><input name="id" type="hidden" value="@ex.TratamientoEjercicioId"/><button class="btn btn-outline-danger btn-sm">Retirar de rutina</button></form> } else { <span>Retirado</span> }
                                 </div>
                             }
                         </div>
@@ -384,9 +384,14 @@
                         </div>
                     }
                     <div class="mb-3">
-                        <label class="form-label small fw-bold">Ejercicio ID (del catálogo)</label>
-                        <input type="number" name="EjercicioId" class="form-control form-control-sm" placeholder="Ingresa el ID del ejercicio" required min="1" />
-                        <div class="form-text">Ve al catálogo de ejercicios para consultar los IDs disponibles.</div>
+                        <label class="form-label small fw-bold">Ejercicio del catálogo</label>
+                        <select name="EjercicioId" class="form-select form-select-sm" required>
+                            <option value="">Selecciona un ejercicio</option>
+                            @foreach (var ejercicio in Model.EjerciciosDisponibles)
+                            {
+                                <option value="@ejercicio.EjercicioId">@ejercicio.Nombre</option>
+                            }
+                        </select>
                     </div>
                     <div class="row g-2 mb-3">
                         <div class="col-6">

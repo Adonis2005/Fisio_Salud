@@ -122,6 +122,9 @@ namespace FisioSalud_Proyecto.Models.Cliente
 
     public class ProgresoPageViewModel : ClientePageViewModel
     {
+        public List<FisioSalud_Proyecto.Models.Entities.TratamientoEjercicio> Rutina { get; set; } = new List<FisioSalud_Proyecto.Models.Entities.TratamientoEjercicio>();
+        public List<FisioSalud_Proyecto.Models.Entities.PlanTratamiento> Planes { get; set; } = new List<FisioSalud_Proyecto.Models.Entities.PlanTratamiento>();
+        public FisioSalud_Proyecto.Models.Clinical.EvolucionPacienteViewModel Evolucion { get; set; } = new FisioSalud_Proyecto.Models.Clinical.EvolucionPacienteViewModel();
         public int CitasAtendidas { get; set; }
         public int CitasProgramadas { get; set; }
         public int TotalCitas { get; set; }

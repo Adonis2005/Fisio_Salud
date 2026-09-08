@@ -32,7 +32,7 @@
 <div class="grid grid-cols-1 xl:grid-cols-3 gap-4">
     <section class="fs-card xl:col-span-2">
         <h3>Evolución de mi recuperación</h3>
-        <p class="text-sm text-terracotta">Conteo semanal tomado de Citas. Dolor, movilidad y fuerza del mockup no están en el esquema actual.</p>
+        <p class="text-sm text-terracotta">Asistencia semanal a las sesiones de tu tratamiento.</p>
         <div class="flex gap-4 text-xs mb-2">
             <span>Atendidas</span><span class="text-terracotta">Programadas</span>
         </div>
@@ -68,7 +68,7 @@
             <h3 class="mb-0">Mi Rutina de Ejercicios</h3>
             <p class="text-xs text-terracotta mb-0">Registra tu cumplimiento diario y nivel de dolor al realizar tus ejercicios.</p>
         </div>
-        <button type="button" class="btn btn-sm btn-primary rounded-pill px-3" data-bs-toggle="modal" data-bs-target="#modalMarcarCumplimiento">
+        <button type="button" class="btn btn-sm btn-primary rounded-pill px-3" data-bs-toggle="modal" data-bs-target="#modalMarcarCumplimiento" disabled="@(!Model.Rutina.Any())">
             <i class="bi bi-check-circle me-1"></i> Marcar Cumplimiento
         </button>
     </div>
@@ -95,20 +95,24 @@
     }
 </section>
 
+@await Html.PartialAsync("_EvolucionClinica", Model)
+
 <!-- Modal Marcar Cumplimiento -->
 <div class="modal fade" id="modalMarcarCumplimiento" tabindex="-1">
     <div class="modal-dialog modal-dialog-centered text-start">
         <div class="modal-content">
             <form asp-action="MarcarCumplimiento" method="post">
-                <input type="hidden" name="TratamientoEjercicioId" value="1" />
                 <div class="modal-header">
                     <h5 class="modal-title font-bold">Registrar Cumplimiento de Ejercicio</h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                 </div>
                 <div class="modal-body">
                     <div class="mb-3">
-                        <label class="form-label text-xs font-bold">ID / Ejercicio Asignado</label>
-                        <input type="number" name="TratamientoEjercicioId" class="form-control form-control-sm" value="1" required />
+                        <label class="form-label text-xs font-bold">Ejercicio de tu rutina</label>
+                        <select name="TratamientoEjercicioId" class="form-control" required>
+                            <option value="">Selecciona un ejercicio</option>
+                            @foreach(var ejercicio in Model.Rutina) { <option value="@ejercicio.TratamientoEjercicioId">@ejercicio.Ejercicio.Nombre — @ejercicio.PlanTratamiento.Nombre</option> }
+                        </select>
                     </div>
                     <div class="row g-2 mb-3">
                         <div class="col-6">

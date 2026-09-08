@@ -2,6 +2,18 @@
 -- FISIOSALUD - SCRIPT COMPLETO DE BASE DE DATOS SQL SERVER
 -- Fecha de generaciÃ³n: 2026-09-06 21:41:38
 -- ==========================================================
+-- RESTAURACION COMPLETA: reemplaza la base y todo su contenido.
+-- Ejecute solamente despues de generar una copia de seguridad.
+USE [master];
+GO
+IF DB_ID(N'FisioSalud') IS NOT NULL
+BEGIN
+    ALTER DATABASE [FisioSalud] SET SINGLE_USER WITH ROLLBACK IMMEDIATE;
+    DROP DATABASE [FisioSalud];
+END;
+GO
+CREATE DATABASE [FisioSalud];
+GO
 USE [FisioSalud];
 GO
 
@@ -504,5 +516,86 @@ IF NOT EXISTS (SELECT 1 FROM sys.foreign_keys WHERE name = 'FK_EjerciciosRealiza
 IF NOT EXISTS (SELECT 1 FROM sys.foreign_keys WHERE name = 'FK_Disponibilidades_Fisioterapeutas') ALTER TABLE dbo.[DisponibilidadesFisioterapeuta] ADD CONSTRAINT [FK_Disponibilidades_Fisioterapeutas] FOREIGN KEY ([FisioterapeutaId]) REFERENCES dbo.[Usuarios]([UsuarioId]);
 IF NOT EXISTS (SELECT 1 FROM sys.foreign_keys WHERE name = 'FK_DetallesFactura_Servicios') ALTER TABLE dbo.[DetallesFactura] ADD CONSTRAINT [FK_DetallesFactura_Servicios] FOREIGN KEY ([ServicioId]) REFERENCES dbo.[Servicios]([ServicioId]);
 IF NOT EXISTS (SELECT 1 FROM sys.foreign_keys WHERE name = 'FK_Citas_Servicios') ALTER TABLE dbo.[Citas] ADD CONSTRAINT [FK_Citas_Servicios] FOREIGN KEY ([ServicioId]) REFERENCES dbo.[Servicios]([ServicioId]);
+GO
+
+-- Relacion operativa entre pacientes y fisioterapeutas
+IF OBJECT_ID('dbo.[AsignacionesPaciente]', 'U') IS NULL
+BEGIN
+    CREATE TABLE dbo.[AsignacionesPaciente] (
+        [AsignacionPacienteId] int IDENTITY(1,1) NOT NULL CONSTRAINT [PK_AsignacionesPaciente] PRIMARY KEY,
+        [PacienteId] int NOT NULL,
+        [FisioterapeutaId] int NOT NULL,
+        [Estado] bit NOT NULL CONSTRAINT [DF_AsignacionesPaciente_Estado] DEFAULT ((1)),
+        [FechaAsignacion] datetime2 NOT NULL CONSTRAINT [DF_AsignacionesPaciente_Fecha] DEFAULT (sysdatetime()),
+        [FechaFin] datetime2 NULL,
+        CONSTRAINT [FK_AsignacionesPaciente_Pacientes] FOREIGN KEY ([PacienteId]) REFERENCES dbo.[Pacientes]([PacienteId]) ON DELETE CASCADE,
+        CONSTRAINT [FK_AsignacionesPaciente_Fisioterapeuta] FOREIGN KEY ([FisioterapeutaId]) REFERENCES dbo.[Usuarios]([UsuarioId]),
+        CONSTRAINT [UQ_AsignacionesPaciente] UNIQUE ([PacienteId], [FisioterapeutaId])
+    );
+    CREATE INDEX [IX_AsignacionesPaciente_FisioEstado] ON dbo.[AsignacionesPaciente]([FisioterapeutaId], [Estado]);
+END;
+GO
+
+INSERT INTO dbo.[AsignacionesPaciente] ([PacienteId], [FisioterapeutaId], [Estado], [FechaAsignacion])
+SELECT DISTINCT c.[PacienteId], c.[FisioterapeutaId], 1, SYSDATETIME()
+FROM dbo.[Citas] c
+WHERE c.[Estado] <> 'CANCELADA'
+  AND NOT EXISTS (SELECT 1 FROM dbo.[AsignacionesPaciente] a WHERE a.[PacienteId] = c.[PacienteId] AND a.[FisioterapeutaId] = c.[FisioterapeutaId]);
+GO
+
+-- Catalogos minimos para que una instalacion restaurada pueda operar
+IF NOT EXISTS (SELECT 1 FROM dbo.[Servicios])
+BEGIN
+    INSERT INTO dbo.[Servicios] ([Nombre], [Descripcion], [Precio], [Tipo], [Estado], [FechaRegistro]) VALUES
+    ('Evaluacion fisioterapeutica', 'Valoracion inicial y definicion del tratamiento.', 30.00, 'EVALUACION', 1, SYSDATETIME()),
+    ('Sesion de rehabilitacion', 'Sesion individual de fisioterapia.', 25.00, 'TERAPIA', 1, SYSDATETIME()),
+    ('Terapia en caminadora', 'Reeducacion de marcha y acondicionamiento supervisado.', 28.00, 'TERAPIA', 1, SYSDATETIME());
+END;
+IF NOT EXISTS (SELECT 1 FROM dbo.[Patologias])
+BEGIN
+    INSERT INTO dbo.[Patologias] ([Nombre], [Descripcion], [Estado], [FechaRegistro]) VALUES
+    ('Lumbalgia', 'Dolor localizado en la region lumbar.', 1, SYSDATETIME()),
+    ('Cervicalgia', 'Dolor y limitacion funcional cervical.', 1, SYSDATETIME()),
+    ('Tendinopatia de hombro', 'Afeccion de tendones del complejo del hombro.', 1, SYSDATETIME()),
+    ('Rehabilitacion de rodilla', 'Recuperacion funcional traumatica o posquirurgica.', 1, SYSDATETIME());
+END;
+IF NOT EXISTS (SELECT 1 FROM dbo.[Ejercicios])
+BEGIN
+    INSERT INTO dbo.[Ejercicios] ([Nombre], [Descripcion], [DuracionMinutos], [Recomendaciones], [Estado], [FechaRegistro]) VALUES
+    ('Puente lumbar', 'Fortalecimiento de gluteos y estabilizacion lumbar.', 10, 'Realizar sin arquear la espalda.', 1, SYSDATETIME()),
+    ('Movilidad cervical controlada', 'Movilidad suave de cuello en rangos sin dolor.', 8, 'Detener ante mareo o dolor irradiado.', 1, SYSDATETIME()),
+    ('Extension de rodilla', 'Fortalecimiento progresivo de cuadriceps.', 12, 'Mantener movimiento lento y controlado.', 1, SYSDATETIME()),
+    ('Marcha terapeutica', 'Reeducacion del patron de marcha en caminadora.', 15, 'Usar la velocidad indicada por el fisioterapeuta.', 1, SYSDATETIME());
+END;
+GO
+
+INSERT INTO dbo.[DisponibilidadesFisioterapeuta] ([FisioterapeutaId], [DiaSemana], [HoraInicio], [HoraFin], [Estado])
+SELECT u.[UsuarioId], dias.[DiaSemana], CAST('08:00' AS time), CAST('18:00' AS time), 1
+FROM dbo.[Usuarios] u
+INNER JOIN dbo.[Roles] r ON r.[RolId] = u.[RolId] AND r.[Nombre] = 'FISIOTERAPEUTA'
+CROSS JOIN (VALUES (1),(2),(3),(4),(5),(6)) dias([DiaSemana])
+WHERE u.[Estado] = 1
+  AND NOT EXISTS (SELECT 1 FROM dbo.[DisponibilidadesFisioterapeuta] d WHERE d.[FisioterapeutaId] = u.[UsuarioId] AND d.[DiaSemana] = dias.[DiaSemana]);
+GO
+
+IF OBJECT_ID('dbo.[EquiposTerapeuticos]', 'U') IS NULL
+BEGIN
+    CREATE TABLE dbo.[EquiposTerapeuticos] ([EquipoId] int IDENTITY(1,1) NOT NULL CONSTRAINT [PK_EquiposTerapeuticos] PRIMARY KEY, [Nombre] varchar(120) NOT NULL, [Codigo] varchar(30) NOT NULL CONSTRAINT [UQ_EquiposTerapeuticos_Codigo] UNIQUE, [Tipo] varchar(50) NOT NULL, [EstadoOperativo] varchar(20) NOT NULL DEFAULT ('DISPONIBLE'), [VelocidadMaxima] decimal(8,2) NULL, [InclinacionMaxima] decimal(8,2) NULL, [Estado] bit NOT NULL DEFAULT ((1)), [FechaRegistro] datetime2 NOT NULL DEFAULT (sysdatetime()));
+END;
+IF OBJECT_ID('dbo.[UsosEquipo]', 'U') IS NULL
+BEGIN
+    CREATE TABLE dbo.[UsosEquipo] ([UsoEquipoId] int IDENTITY(1,1) NOT NULL CONSTRAINT [PK_UsosEquipo] PRIMARY KEY, [EquipoId] int NOT NULL, [PacienteId] int NOT NULL, [FisioterapeutaId] int NOT NULL, [CitaId] int NULL, [Fecha] date NOT NULL, [HoraInicio] time NOT NULL, [HoraFin] time NOT NULL, [Velocidad] decimal(8,2) NULL, [Inclinacion] decimal(8,2) NULL, [Estado] varchar(20) NOT NULL DEFAULT ('PROGRAMADO'), [Indicaciones] varchar(1000) NULL, [Resultado] varchar(1000) NULL, [FechaRegistro] datetime2 NOT NULL DEFAULT (sysdatetime()), CONSTRAINT [CK_UsosEquipo_Horas] CHECK ([HoraFin] > [HoraInicio]), CONSTRAINT [FK_UsosEquipo_Equipo] FOREIGN KEY ([EquipoId]) REFERENCES dbo.[EquiposTerapeuticos]([EquipoId]), CONSTRAINT [FK_UsosEquipo_Paciente] FOREIGN KEY ([PacienteId]) REFERENCES dbo.[Pacientes]([PacienteId]), CONSTRAINT [FK_UsosEquipo_Fisio] FOREIGN KEY ([FisioterapeutaId]) REFERENCES dbo.[Usuarios]([UsuarioId]), CONSTRAINT [FK_UsosEquipo_Cita] FOREIGN KEY ([CitaId]) REFERENCES dbo.[Citas]([CitaId]));
+    CREATE INDEX [IX_UsosEquipo_Agenda] ON dbo.[UsosEquipo]([EquipoId], [Fecha], [HoraInicio], [HoraFin]);
+END;
+IF NOT EXISTS (SELECT 1 FROM dbo.[EquiposTerapeuticos])
+    INSERT INTO dbo.[EquiposTerapeuticos] ([Nombre], [Codigo], [Tipo], [EstadoOperativo], [VelocidadMaxima], [InclinacionMaxima], [Estado], [FechaRegistro]) VALUES ('Caminadora terapeutica 1', 'CINTA-01', 'CAMINADORA', 'DISPONIBLE', 16, 15, 1, SYSDATETIME());
+GO
+
+-- Toda ficha restaurada debe quedar bajo responsabilidad clinica.
+INSERT INTO dbo.[AsignacionesPaciente] ([PacienteId], [FisioterapeutaId], [Estado], [FechaAsignacion])
+SELECT p.[PacienteId], f.[UsuarioId], 1, SYSDATETIME()
+FROM dbo.[Pacientes] p
+CROSS APPLY (SELECT TOP 1 u.[UsuarioId] FROM dbo.[Usuarios] u INNER JOIN dbo.[Roles] r ON r.[RolId] = u.[RolId] WHERE u.[Estado] = 1 AND r.[Nombre] = 'FISIOTERAPEUTA' ORDER BY u.[UsuarioId]) f
+WHERE NOT EXISTS (SELECT 1 FROM dbo.[AsignacionesPaciente] a WHERE a.[PacienteId] = p.[PacienteId] AND a.[Estado] = 1);
 GO
 

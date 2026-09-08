@@ -5,6 +5,57 @@ using System.ComponentModel.DataAnnotations.Schema;
 
 namespace FisioSalud_Proyecto.Models.Entities
 {
+    [Table("AsignacionesPaciente")]
+    public class AsignacionPaciente
+    {
+        [Key] public int AsignacionPacienteId { get; set; }
+        public int PacienteId { get; set; }
+        public int FisioterapeutaId { get; set; }
+        public bool Estado { get; set; } = true;
+        public DateTime FechaAsignacion { get; set; }
+        public DateTime? FechaFin { get; set; }
+        public Paciente Paciente { get; set; }
+        public Usuario Fisioterapeuta { get; set; }
+    }
+
+    [Table("EquiposTerapeuticos")]
+    public class EquipoTerapeutico
+    {
+        [Key] public int EquipoId { get; set; }
+        [Required, MaxLength(120)] public string Nombre { get; set; }
+        [Required, MaxLength(30)] public string Codigo { get; set; }
+        [Required, MaxLength(50)] public string Tipo { get; set; }
+        [Required, MaxLength(20)] public string EstadoOperativo { get; set; } = "DISPONIBLE";
+        [Column(TypeName = "decimal(8,2)")] public decimal? VelocidadMaxima { get; set; }
+        [Column(TypeName = "decimal(8,2)")] public decimal? InclinacionMaxima { get; set; }
+        public bool Estado { get; set; } = true;
+        public DateTime FechaRegistro { get; set; }
+        public ICollection<UsoEquipo> Usos { get; set; } = new List<UsoEquipo>();
+    }
+
+    [Table("UsosEquipo")]
+    public class UsoEquipo
+    {
+        [Key] public int UsoEquipoId { get; set; }
+        public int EquipoId { get; set; }
+        public int PacienteId { get; set; }
+        public int FisioterapeutaId { get; set; }
+        public int? CitaId { get; set; }
+        public DateTime Fecha { get; set; }
+        public TimeSpan HoraInicio { get; set; }
+        public TimeSpan HoraFin { get; set; }
+        [Column(TypeName = "decimal(8,2)")] public decimal? Velocidad { get; set; }
+        [Column(TypeName = "decimal(8,2)")] public decimal? Inclinacion { get; set; }
+        [Required, MaxLength(20)] public string Estado { get; set; } = "PROGRAMADO";
+        [MaxLength(1000)] public string Indicaciones { get; set; }
+        [MaxLength(1000)] public string Resultado { get; set; }
+        public DateTime FechaRegistro { get; set; }
+        public EquipoTerapeutico Equipo { get; set; }
+        public Paciente Paciente { get; set; }
+        public Usuario Fisioterapeuta { get; set; }
+        public Cita Cita { get; set; }
+    }
+
     [Table("EvaluacionesIniciales")]
     public class EvaluacionInicial
     {

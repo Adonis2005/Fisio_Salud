@@ -1,0 +1,8 @@
+@model FisioSalud_Proyecto.Models.Administrador.AdminReportesPageViewModel
+@{Layout="_LayoutAdmin";ViewData["Title"]="Reportes";}
+<section class="fisio-card"><h2>Reportes del centro</h2><p>Consulta la actividad registrada durante el período seleccionado.</p>
+<form asp-action="GenerarReporte" method="post">
+<label>Tipo de reporte</label><select name="tipo" class="form-control mb-3"><option value="financiero">Facturación y cobros</option><option value="clinico">Atenciones y pacientes</option><option value="operacional">Agenda y personal</option><option value="cumplimiento">Cumplimiento de ejercicios</option></select>
+<div class="row"><div class="col-md-6"><label>Desde</label><input name="fechaInicio" type="date" value="@Model.FechaInicio.ToString("yyyy-MM-dd")" class="form-control mb-3" required/></div><div class="col-md-6"><label>Hasta</label><input name="fechaFin" type="date" value="@Model.FechaFin.ToString("yyyy-MM-dd")" class="form-control mb-3" required/></div></div>
+<label>Formato</label><select name="formato" class="form-control mb-3"><option value="csv">CSV</option><option value="excel">Excel (.xlsx)</option><option value="imprimir">Vista imprimible / guardar como PDF</option></select>
+<button class="btn btn-primary">Generar reporte</button></form></section>

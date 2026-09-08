@@ -63,7 +63,9 @@ namespace FisioSalud_Proyecto.Services
                   (usuarios[1].Rol == Roles.Cliente && usuarios[0].Rol == Roles.Fisioterapeuta)))
                 return false;
 
-            return await _context.Citas.AsNoTracking().AnyAsync(c =>
+            return await _context.AsignacionesPaciente.AnyAsync(a => a.Estado &&
+                ((a.Paciente.UsuarioId == usuarioId && a.FisioterapeutaId == otroUsuarioId) ||
+                 (a.Paciente.UsuarioId == otroUsuarioId && a.FisioterapeutaId == usuarioId))) || await _context.Citas.AsNoTracking().AnyAsync(c =>
                 c.Estado != "CANCELADA" &&
                 ((c.Paciente.UsuarioId == usuarioId && c.FisioterapeutaId == otroUsuarioId) ||
                  (c.Paciente.UsuarioId == otroUsuarioId && c.FisioterapeutaId == usuarioId)));
@@ -92,6 +94,12 @@ namespace FisioSalud_Proyecto.Services
                     NoLeidos = grupo.Count(m => m.DestinatarioId == usuarioId && !m.Leido)
                 });
             }
+            var contactos = await _context.Usuarios.AsNoTracking().Where(u => u.Estado && u.UsuarioId != usuarioId &&
+                (_context.AsignacionesPaciente.Any(a => a.Estado && ((a.FisioterapeutaId == usuarioId && a.Paciente.UsuarioId == u.UsuarioId) || (a.Paciente.UsuarioId == usuarioId && a.FisioterapeutaId == u.UsuarioId))) ||
+                 _context.Citas.Any(c => c.Estado != "CANCELADA" && ((c.FisioterapeutaId == usuarioId && c.Paciente.UsuarioId == u.UsuarioId) || (c.Paciente.UsuarioId == usuarioId && c.FisioterapeutaId == u.UsuarioId))))).ToListAsync();
+            foreach (var contacto in contactos)
+                if (!result.Any(r => r.UsuarioId == contacto.UsuarioId) && await PuedeConversarAsync(usuarioId, contacto.UsuarioId))
+                    result.Add(new MensajeResumen { UsuarioId = contacto.UsuarioId, Nombre = contacto.NombreCompleto, Iniciales = Iniciales(contacto.Nombres, contacto.Apellidos), UltimoMensaje = "Iniciar conversación" });
             return result.OrderByDescending(x => x.FechaUltimoMensaje).ToList();
         }
 

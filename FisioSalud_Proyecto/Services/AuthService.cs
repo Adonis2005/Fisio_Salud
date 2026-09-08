@@ -77,14 +77,16 @@ namespace FisioSalud_Proyecto.Services
                 FechaCreacion = DateTime.Now
             };
 
+            await using var transaction = await _context.Database.BeginTransactionAsync();
             _context.Usuarios.Add(usuario);
+            await _context.SaveChangesAsync();
 
             var pacienteExistente = await _context.Pacientes
                 .FirstOrDefaultAsync(p => p.Identificacion == model.Identificacion);
 
             if (pacienteExistente == null)
             {
-                _context.Pacientes.Add(new Paciente
+                pacienteExistente = new Paciente
                 {
                     Nombres = model.Nombres.Trim(),
                     Apellidos = model.Apellidos.Trim(),
@@ -94,11 +96,26 @@ namespace FisioSalud_Proyecto.Services
                     Telefono = model.Telefono?.Trim(),
                     Correo = model.Correo.Trim().ToLower(),
                     Estado = true,
-                    FechaRegistro = DateTime.Now
-                });
+                    FechaRegistro = DateTime.Now,
+                    UsuarioId = usuario.UsuarioId
+                };
+                _context.Pacientes.Add(pacienteExistente);
+            }
+            else
+            {
+                pacienteExistente.UsuarioId = usuario.UsuarioId;
+                pacienteExistente.Correo = usuario.Correo;
             }
 
             await _context.SaveChangesAsync();
+            var fisioterapeutaId = await _context.Usuarios.Include(u => u.Rol)
+                .Where(u => u.Estado && u.Rol.Nombre == Roles.Fisioterapeuta).OrderBy(u => u.UsuarioId).Select(u => (int?)u.UsuarioId).FirstOrDefaultAsync();
+            if (fisioterapeutaId.HasValue)
+            {
+                _context.AsignacionesPaciente.Add(new AsignacionPaciente { PacienteId = pacienteExistente.PacienteId, FisioterapeutaId = fisioterapeutaId.Value, Estado = true, FechaAsignacion = DateTime.Now });
+                await _context.SaveChangesAsync();
+            }
+            await transaction.CommitAsync();
             return (true, null);
         }
 

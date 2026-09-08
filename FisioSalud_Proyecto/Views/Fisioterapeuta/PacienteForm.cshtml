@@ -1,6 +1,6 @@
 @model PacienteFormViewModel
 @{
-    Layout = "_LayoutFisioterapeuta";
+    Layout = ViewData["EsAdministrador"] as bool? == true ? "_LayoutAdmin" : "_LayoutFisioterapeuta";
     bool esEdicion = Model.PacienteId.HasValue;
     ViewData["Title"] = esEdicion ? "Editar Paciente" : "Nuevo Paciente";
 }
@@ -63,6 +63,25 @@
                         <input asp-for="Telefono" class="form-control rounded-pill px-3" style="font-size: 0.85rem;" placeholder="Ej. 0991234567" />
                         <span asp-validation-for="Telefono" class="text-danger small"></span>
                     </div>
+
+                    @if (ViewData["EsAdministrador"] as bool? == true)
+                    {
+                        <div class="col-md-6">
+                            <label asp-for="FisioterapeutaId" class="form-label fw-bold"></label>
+                            <select asp-for="FisioterapeutaId" class="form-select rounded-pill px-3">
+                                <option value="">-- Seleccionar responsable --</option>
+                                @foreach (var fisioterapeuta in Model.FisioterapeutasDisponibles)
+                                {
+                                    <option value="@fisioterapeuta.UsuarioId">@fisioterapeuta.NombreCompleto</option>
+                                }
+                            </select>
+                            <span asp-validation-for="FisioterapeutaId" class="text-danger small"></span>
+                        </div>
+                    }
+                    else
+                    {
+                        <input type="hidden" asp-for="FisioterapeutaId" />
+                    }
 
                     <div class="col-md-12">
                         <label asp-for="Correo" class="form-label fw-bold" style="font-size: 0.8rem; color: var(--text-dark);"></label>

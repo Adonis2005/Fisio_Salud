@@ -103,6 +103,12 @@ namespace FisioSalud_Proyecto.Controllers.Cliente
                 UltimaNota = c.UltimoMensaje,
                 UltimaFecha = c.FechaUltimoMensaje
             }).ToList();
+            model.ConversacionActiva = model.Conversaciones.FirstOrDefault(c => c.FisioterapeutaId == fisioterapeutaId) ?? model.Conversaciones.FirstOrDefault();
+            if (model.ConversacionActiva != null)
+            {
+                model.ConversacionActiva.Seleccionada = true;
+                fisioterapeutaId = model.ConversacionActiva.FisioterapeutaId;
+            }
             if (fisioterapeutaId.HasValue)
             {
                 if (!await _mensajeService.PuedeConversarAsync(usuarioId.Value, fisioterapeutaId.Value)) return Forbid();
@@ -171,12 +177,7 @@ namespace FisioSalud_Proyecto.Controllers.Cliente
             return RedirectToAction(nameof(Perfil));
         }
 
-        public async Task<IActionResult> Configuracion()
-        {
-            var model = await _citaService.GetConfiguracionAsync(GetIdentificacion(), GetCorreo(), User.Identity.Name);
-            ViewData["Title"] = "Configuración";
-            return View(model);
-        }
+        public IActionResult Configuracion() => RedirectToAction("Index", "Ajustes");
 
         [HttpPost]
         [ValidateAntiForgeryToken]
@@ -207,14 +208,15 @@ namespace FisioSalud_Proyecto.Controllers.Cliente
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> RegistrarPago(RegistrarPagoFormModel model)
         {
-            var result = await _citaService.RegistrarPagoAsync(model);
+            if (!ModelState.IsValid) { TempData["Error"] = "Revisa el monto, método y referencia."; return RedirectToAction(nameof(Facturas)); }
+            var result = await _citaService.RegistrarPagoAsync(GetIdentificacion(), GetCorreo(), model);
             if (!result.Success)
             {
                 TempData["Error"] = result.Error;
             }
             else
             {
-                TempData["Success"] = "Pago registrado correctamente. La cita ha sido confirmada.";
+                TempData["Success"] = "Comprobante enviado. Administración debe verificar el ingreso para confirmar el pago y la cita.";
             }
             return RedirectToAction(nameof(Facturas));
         }
@@ -224,11 +226,10 @@ namespace FisioSalud_Proyecto.Controllers.Cliente
         public async Task<IActionResult> MarcarCumplimiento(CumplimientoEjercicioFormModel model)
         {
             var usuarioId = ObtenerUsuarioAutenticado();
-            if (usuarioId.HasValue)
-            {
-                var paciente = _context.Pacientes.FirstOrDefault(p => p.UsuarioId == usuarioId.Value);
-                if (paciente != null) model.PacienteId = paciente.PacienteId;
-            }
+            var paciente = _context.Pacientes.FirstOrDefault(p => p.UsuarioId == usuarioId);
+            if (!usuarioId.HasValue || paciente == null) return Forbid();
+            model.PacienteId = paciente.PacienteId;
+            if (!ModelState.IsValid) { TempData["Error"] = "Revisa los datos del ejercicio."; return RedirectToAction(nameof(Progreso)); }
 
             var result = await _citaService.MarcarCumplimientoEjercicioAsync(model);
             if (!result.Success)

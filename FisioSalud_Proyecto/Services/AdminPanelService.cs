@@ -27,14 +27,21 @@ namespace FisioSalud_Proyecto.Services
         Task<AdminAnaliticaPageViewModel> GetAnaliticaAsync(string periodo);
         Task<AdminConfiguracionPageViewModel> GetConfiguracionAsync(int usuarioId, string seccion, string busqueda, int? rolId, bool? estado);
         Task<AdminBusquedaPageViewModel> BuscarAsync(string q);
+        Task<AdminCitasPageViewModel> GetCitasAsync(string busqueda, string estado, DateTime? fechaDesde, DateTime? fechaHasta);
+        Task<(bool Success, string Error)> CambiarEstadoCitaAsync(int citaId, string nuevoEstado, string observacion);
+        Task<AdminFacturasPageViewModel> GetFacturasAsync(string busqueda, string estado, DateTime? fechaDesde, DateTime? fechaHasta);
+        Task<(bool Success, string Error)> RegistrarPagoAdminAsync(int facturaId, string metodoPago, string referencia);
+        Task<(bool Success, string Error)> CambiarEstadoFacturaAsync(int facturaId, string nuevoEstado);
         Task<List<Servicio>> GetServiciosAsync();
         Task<(bool Success, string Error)> SaveServicioAsync(ServicioFormViewModel model);
         Task<List<DisponibilidadFisioterapeuta>> GetDisponibilidadesAsync();
         Task<(bool Success, string Error)> SaveDisponibilidadAsync(DisponibilidadFormViewModel model);
         Task<List<Ejercicio>> GetEjerciciosCatalogoAsync();
         Task<(bool Success, string Error)> SaveEjercicioCatalogoAsync(Ejercicio model);
+        Task<(bool Success, string Error)> ToggleEjercicioCatalogoAsync(int ejercicioId);
         Task<List<Patologia>> GetPatologiasAsync();
         Task<(bool Success, string Error)> SavePatologiaAsync(Patologia model);
+        Task<(bool Success, string Error)> TogglePatologiaAsync(int patologiaId);
     }
 
     public class AdminPanelService : IAdminPanelService
@@ -377,13 +384,15 @@ namespace FisioSalud_Proyecto.Services
             var terapeutasActivos = await _context.Usuarios.CountAsync(u => u.Estado && u.Rol.Nombre == Roles.Fisioterapeuta);
 
             var planes = BuildPlanes(citas);
+            var ejercicios = await _context.Ejercicios.AsNoTracking().OrderBy(e => e.Nombre).ToListAsync();
+            var patologias = await _context.Patologias.AsNoTracking().OrderBy(p => p.Nombre).ToListAsync();
             if (tab == "tratamientos")
                 planes = planes.OrderByDescending(p => p.Usos).ToList();
 
             return new AdminPlanesPageViewModel
             {
                 Tab = tab,
-                TotalPlanes = planes.Count,
+                TotalPlanes = ejercicios.Count + patologias.Count,
                 UsosMes = citas.Count(c => c.Fecha >= inicioMes && !string.IsNullOrWhiteSpace(c.MotivoConsulta)),
                 TerapeutasActivos = terapeutasActivos,
                 Planes = planes.Select(p => new AdminPlanCardViewModel
@@ -393,7 +402,9 @@ namespace FisioSalud_Proyecto.Services
                     Usos = p.Usos,
                     Actualizado = p.Actualizado,
                     Icono = tab == "tratamientos" ? "bi-clipboard2-pulse" : "bi-file-earmark-text"
-                }).ToList()
+                }).ToList(),
+                Ejercicios = ejercicios,
+                Patologias = patologias
             };
         }
 
@@ -420,6 +431,22 @@ namespace FisioSalud_Proyecto.Services
 
         public async Task<(string FileName, string Content)> GenerarReporteCsvAsync(string tipo, DateTime inicio, DateTime fin, IEnumerable<string> metricas)
         {
+            if (tipo == "financiero")
+            {
+                var facturas = await _context.Facturas.AsNoTracking().Include(f => f.Paciente).Include(f => f.Fisioterapeuta).Where(f => f.Fecha >= inicio.Date && f.Fecha < fin.Date.AddDays(1)).OrderBy(f => f.Fecha).ToListAsync();
+                var reporte = new StringBuilder("Fecha,Factura,Paciente,Fisioterapeuta,Monto,Estado\r\n");
+                foreach(var f in facturas) reporte.AppendLine($"{f.Fecha:yyyy-MM-dd},{Csv(f.NumeroFactura)},{Csv(f.Paciente.NombreCompleto)},{Csv(f.Fisioterapeuta?.NombreCompleto)},{f.Monto.ToString(System.Globalization.CultureInfo.InvariantCulture)},{Csv(f.Estado)}");
+                reporte.AppendLine($"Total cobrado,,,,{facturas.Where(f=>f.Estado==PagoEstados.Pagado).Sum(f=>f.Monto).ToString(System.Globalization.CultureInfo.InvariantCulture)},");
+                reporte.AppendLine($"Total pendiente,,,,{facturas.Where(f=>f.Estado==PagoEstados.Pendiente).Sum(f=>f.Monto).ToString(System.Globalization.CultureInfo.InvariantCulture)},");
+                return ($"facturacion-{inicio:yyyyMMdd}-{fin:yyyyMMdd}.csv",reporte.ToString());
+            }
+            if (tipo == "cumplimiento")
+            {
+                var registros=await _context.EjerciciosRealizados.AsNoTracking().Include(e=>e.Paciente).Include(e=>e.TratamientoEjercicio).ThenInclude(t=>t.Ejercicio).Where(e=>e.FechaRealizacion>=inicio.Date && e.FechaRealizacion<fin.Date.AddDays(1)).OrderBy(e=>e.FechaRealizacion).ToListAsync();
+                var reporte=new StringBuilder("Fecha,Paciente,Ejercicio,Series,Repeticiones,Dolor,Comentarios\r\n");
+                foreach(var e in registros) reporte.AppendLine($"{e.FechaRealizacion:yyyy-MM-dd},{Csv(e.Paciente.NombreCompleto)},{Csv(e.TratamientoEjercicio.Ejercicio.Nombre)},{e.SeriesRealizadas},{e.RepeticionesRealizadas},{e.Dolor?.ToString(System.Globalization.CultureInfo.InvariantCulture)},{Csv(e.Comentarios)}");
+                return ($"cumplimiento-{inicio:yyyyMMdd}-{fin:yyyyMMdd}.csv",reporte.ToString());
+            }
             var citas = await _context.Citas
                 .Include(c => c.Paciente)
                 .Include(c => c.Fisioterapeuta)
@@ -489,12 +516,12 @@ namespace FisioSalud_Proyecto.Services
             var inicioMesAnt = inicioMes.AddMonths(-1);
 
             var facturasMes = facturas.Where(f => f.Fecha >= inicioMes).ToList();
-            var ingresosMes = facturasMes.Where(f => f.Estado == "PAGADA").Sum(f => f.Monto);
+            var ingresosMes = facturasMes.Where(f => f.Estado == PagoEstados.Pagado).Sum(f => f.Monto);
             var gastosMes = 0m;
             var facturasPendientesList = facturas.Where(f => f.Estado == "PENDIENTE" || f.Estado == "VENCIDA").ToList();
             var facturasPendientesMonto = facturasPendientesList.Sum(f => f.Monto);
 
-            var pagadasCount = facturas.Count(f => f.Estado == "PAGADA");
+            var pagadasCount = facturas.Count(f => f.Estado == PagoEstados.Pagado);
             var pendientesCount = facturas.Count(f => f.Estado == "PENDIENTE");
             var vencidasCount = facturas.Count(f => f.Estado == "VENCIDA");
 
@@ -507,7 +534,7 @@ namespace FisioSalud_Proyecto.Services
                 Fecha = f.Fecha.ToString("d MMM", Es),
                 Monto = f.Monto,
                 Estado = f.Estado,
-                EstadoClass = f.Estado == "PAGADA" ? "pagada" : f.Estado == "VENCIDA" ? "vencida" : "pendiente"
+                EstadoClass = f.Estado == PagoEstados.Pagado ? "pagada" : f.Estado == "VENCIDA" ? "vencida" : "pendiente"
             }).ToList();
 
             var citasMes = citas.Where(c => c.Fecha >= inicioMes).ToList();
@@ -629,6 +656,203 @@ namespace FisioSalud_Proyecto.Services
             }
 
             return model;
+        }
+
+        public async Task<AdminCitasPageViewModel> GetCitasAsync(string busqueda, string estado, DateTime? fechaDesde, DateTime? fechaHasta)
+        {
+            var query = _context.Citas.AsNoTracking()
+                .Include(c => c.Paciente)
+                .Include(c => c.Fisioterapeuta)
+                .Include(c => c.Servicio)
+                .AsQueryable();
+
+            if (!string.IsNullOrWhiteSpace(busqueda))
+            {
+                var term = busqueda.Trim();
+                query = query.Where(c => c.Paciente.Nombres.Contains(term) ||
+                                         c.Paciente.Apellidos.Contains(term) ||
+                                         c.Paciente.Identificacion.Contains(term));
+            }
+            if (!string.IsNullOrWhiteSpace(estado))
+                query = query.Where(c => c.Estado == estado.Trim().ToUpperInvariant());
+            if (fechaDesde.HasValue)
+                query = query.Where(c => c.Fecha >= fechaDesde.Value.Date);
+            if (fechaHasta.HasValue)
+                query = query.Where(c => c.Fecha < fechaHasta.Value.Date.AddDays(1));
+
+            var citas = await query.OrderByDescending(c => c.Fecha).ThenBy(c => c.HoraInicio).ToListAsync();
+            var conteos = await _context.Citas.AsNoTracking()
+                .GroupBy(c => c.Estado)
+                .Select(g => new { Estado = g.Key, Cantidad = g.Count() })
+                .ToDictionaryAsync(x => x.Estado, x => x.Cantidad);
+
+            int Count(string key) => conteos.TryGetValue(key, out var value) ? value : 0;
+            return new AdminCitasPageViewModel
+            {
+                Busqueda = busqueda,
+                Estado = estado,
+                FechaDesde = fechaDesde,
+                FechaHasta = fechaHasta,
+                Citas = citas.Select(c => new AdminCitaGestionViewModel
+                {
+                    CitaId = c.CitaId,
+                    PacienteNombre = c.Paciente?.NombreCompleto ?? "Paciente",
+                    PacienteIdentificacion = c.Paciente?.Identificacion,
+                    FisioterapeutaNombre = c.Fisioterapeuta?.NombreCompleto ?? "Sin asignar",
+                    ServicioNombre = c.Servicio?.Nombre,
+                    Fecha = c.Fecha,
+                    HoraInicio = c.HoraInicio,
+                    Estado = c.Estado
+                }).ToList(),
+                Estadisticas = new List<AdminEstadoEstadisticaViewModel>
+                {
+                    new AdminEstadoEstadisticaViewModel { Etiqueta = "Solicitadas", Cantidad = Count(CitaEstados.Solicitada), Color = "warning" },
+                    new AdminEstadoEstadisticaViewModel { Etiqueta = "Confirmadas", Cantidad = Count(CitaEstados.Confirmada), Color = "info" },
+                    new AdminEstadoEstadisticaViewModel { Etiqueta = "Atendidas", Cantidad = Count(CitaEstados.Atendida), Color = "success" },
+                    new AdminEstadoEstadisticaViewModel { Etiqueta = "Canceladas", Cantidad = Count(CitaEstados.Cancelada), Color = "danger" },
+                    new AdminEstadoEstadisticaViewModel { Etiqueta = "No asistieron", Cantidad = Count(CitaEstados.NoAsistio), Color = "secondary" }
+                }
+            };
+        }
+
+        public async Task<(bool Success, string Error)> CambiarEstadoCitaAsync(int citaId, string nuevoEstado, string observacion)
+        {
+            var estados = new[] { CitaEstados.Solicitada, CitaEstados.PendientePago, CitaEstados.Confirmada, CitaEstados.EnAtencion, CitaEstados.Atendida, CitaEstados.Cancelada, CitaEstados.NoAsistio };
+            nuevoEstado = (nuevoEstado ?? string.Empty).Trim().ToUpperInvariant();
+            if (!estados.Contains(nuevoEstado)) return (false, "El estado de la cita no es válido.");
+
+            var cita = await _context.Citas.FindAsync(citaId);
+            if (cita == null) return (false, "Cita no encontrada.");
+            var transiciones = new Dictionary<string, string[]>
+            {
+                [CitaEstados.Solicitada] = new[] { CitaEstados.PendientePago, CitaEstados.Confirmada, CitaEstados.Cancelada },
+                [CitaEstados.PendientePago] = new[] { CitaEstados.Confirmada, CitaEstados.Cancelada },
+                [CitaEstados.Confirmada] = new[] { CitaEstados.EnAtencion, CitaEstados.Cancelada, CitaEstados.NoAsistio },
+                [CitaEstados.EnAtencion] = new[] { CitaEstados.Atendida },
+                [CitaEstados.Atendida] = Array.Empty<string>(), [CitaEstados.Cancelada] = Array.Empty<string>(), [CitaEstados.NoAsistio] = Array.Empty<string>()
+            };
+            if (cita.Estado != nuevoEstado && (!transiciones.TryGetValue(cita.Estado, out var permitidos) || !permitidos.Contains(nuevoEstado)))
+                return (false, $"No se permite cambiar una cita de {CitaEstados.Etiqueta(cita.Estado)} a {CitaEstados.Etiqueta(nuevoEstado)}.");
+            var factura = await _context.Facturas.Include(f => f.DetallesFactura).FirstOrDefaultAsync(f => f.DetallesFactura.Any(d => d.CitaId == citaId));
+            if (nuevoEstado == CitaEstados.Confirmada && factura != null && factura.Estado != PagoEstados.Pagado)
+                return (false, "La factura debe estar pagada antes de confirmar la cita.");
+            if (nuevoEstado == CitaEstados.Cancelada && factura?.Estado == PagoEstados.Pagado)
+                return (false, "Reembolse la factura antes de cancelar la cita.");
+            cita.Estado = nuevoEstado;
+            cita.FechaActualizacion = DateTime.Now;
+            if (!string.IsNullOrWhiteSpace(observacion))
+                cita.Observaciones = string.IsNullOrWhiteSpace(cita.Observaciones)
+                    ? observacion.Trim()
+                    : cita.Observaciones + Environment.NewLine + observacion.Trim();
+            await _context.SaveChangesAsync();
+            return (true, null);
+        }
+
+        public async Task<AdminFacturasPageViewModel> GetFacturasAsync(string busqueda, string estado, DateTime? fechaDesde, DateTime? fechaHasta)
+        {
+            var query = _context.Facturas.AsNoTracking()
+                .Include(f => f.Paciente)
+                .Include(f => f.Fisioterapeuta)
+                .Include(f => f.Pagos)
+                .AsQueryable();
+
+            if (!string.IsNullOrWhiteSpace(busqueda))
+            {
+                var term = busqueda.Trim();
+                query = query.Where(f => f.NumeroFactura.Contains(term) || f.Paciente.Nombres.Contains(term) || f.Paciente.Apellidos.Contains(term));
+            }
+            if (!string.IsNullOrWhiteSpace(estado)) query = query.Where(f => f.Estado == estado.Trim().ToUpperInvariant());
+            if (fechaDesde.HasValue) query = query.Where(f => f.Fecha >= fechaDesde.Value.Date);
+            if (fechaHasta.HasValue) query = query.Where(f => f.Fecha < fechaHasta.Value.Date.AddDays(1));
+
+            var facturas = await query.OrderByDescending(f => f.Fecha).ThenByDescending(f => f.FacturaId).ToListAsync();
+            var todas = await _context.Facturas.AsNoTracking().ToListAsync();
+            return new AdminFacturasPageViewModel
+            {
+                Busqueda = busqueda,
+                Estado = estado,
+                FechaDesde = fechaDesde,
+                FechaHasta = fechaHasta,
+                TotalCobrado = todas.Where(f => f.Estado == PagoEstados.Pagado).Sum(f => f.Monto),
+                TotalPendiente = todas.Where(f => f.Estado == PagoEstados.Pendiente).Sum(f => f.Monto),
+                TotalCancelado = todas.Where(f => f.Estado == PagoEstados.Cancelado || f.Estado == PagoEstados.Reembolsado).Sum(f => f.Monto),
+                Facturas = facturas.Select(f => new AdminFacturaGestionViewModel
+                {
+                    FacturaId = f.FacturaId,
+                    NumeroFactura = f.NumeroFactura,
+                    PacienteNombre = f.Paciente?.NombreCompleto ?? "Paciente",
+                    FisioterapeutaNombre = f.Fisioterapeuta?.NombreCompleto,
+                    Monto = f.Monto,
+                    Fecha = f.Fecha,
+                    Estado = f.Estado,
+                    MetodoPago = f.Pagos.OrderByDescending(p => p.FechaRegistro).Select(p => p.MetodoPago).FirstOrDefault()
+                }).ToList()
+            };
+        }
+
+        public async Task<(bool Success, string Error)> RegistrarPagoAdminAsync(int facturaId, string metodoPago, string referencia)
+        {
+            await using var transaction = await _context.Database.BeginTransactionAsync(System.Data.IsolationLevel.Serializable);
+            if (referencia?.Length > 100 || metodoPago?.Length > 30) return (false, "Método o referencia demasiado largos.");
+            var factura = await _context.Facturas.Include(f => f.DetallesFactura).FirstOrDefaultAsync(f => f.FacturaId == facturaId);
+            if (factura == null) return (false, "Factura no encontrada.");
+            if (factura.Estado != PagoEstados.Pendiente) return (false, "Solo se pueden pagar facturas pendientes.");
+
+            var pendiente = await _context.Pagos.FirstOrDefaultAsync(p => p.FacturaId == facturaId && p.Estado == PagoEstados.Pendiente);
+            if (pendiente != null)
+            {
+                pendiente.Estado = PagoEstados.Pagado;
+                pendiente.FechaPago = DateTime.Now;
+            }
+            else _context.Pagos.Add(new Pago
+            {
+                FacturaId = facturaId,
+                MetodoPago = string.IsNullOrWhiteSpace(metodoPago) ? "EFECTIVO" : metodoPago.Trim().ToUpperInvariant(),
+                Monto = factura.Monto,
+                Estado = PagoEstados.Pagado,
+                Referencia = referencia?.Trim(),
+                FechaPago = DateTime.Now,
+                FechaRegistro = DateTime.Now
+            });
+            factura.Estado = PagoEstados.Pagado;
+
+            var citaIds = factura.DetallesFactura.Where(d => d.CitaId.HasValue).Select(d => d.CitaId.Value).ToList();
+            var citas = await _context.Citas.Where(c => citaIds.Contains(c.CitaId)).ToListAsync();
+            foreach (var cita in citas.Where(c => c.Estado == CitaEstados.Solicitada || c.Estado == CitaEstados.PendientePago))
+            {
+                cita.Estado = CitaEstados.Confirmada;
+                cita.FechaActualizacion = DateTime.Now;
+            }
+            await _context.SaveChangesAsync();
+            await transaction.CommitAsync();
+            return (true, null);
+        }
+
+        public async Task<(bool Success, string Error)> CambiarEstadoFacturaAsync(int facturaId, string nuevoEstado)
+        {
+            nuevoEstado = (nuevoEstado ?? string.Empty).Trim().ToUpperInvariant();
+            if (nuevoEstado != PagoEstados.Cancelado && nuevoEstado != PagoEstados.Reembolsado)
+                return (false, "El estado solicitado no es válido.");
+
+            var factura = await _context.Facturas.Include(f => f.Pagos).Include(f => f.DetallesFactura).FirstOrDefaultAsync(f => f.FacturaId == facturaId);
+            if (factura == null) return (false, "Factura no encontrada.");
+            if (nuevoEstado == PagoEstados.Cancelado && factura.Estado != PagoEstados.Pendiente)
+                return (false, "Solo se pueden cancelar facturas pendientes.");
+            if (nuevoEstado == PagoEstados.Reembolsado && factura.Estado != PagoEstados.Pagado)
+                return (false, "Solo se pueden reembolsar facturas pagadas.");
+
+            factura.Estado = nuevoEstado;
+            if (nuevoEstado == PagoEstados.Reembolsado)
+                foreach (var pago in factura.Pagos.Where(p => p.Estado == PagoEstados.Pagado)) pago.Estado = PagoEstados.Reembolsado;
+            var citaIds = factura.DetallesFactura.Where(d => d.CitaId.HasValue).Select(d => d.CitaId.Value).ToList();
+            var citas = await _context.Citas.Where(c => citaIds.Contains(c.CitaId)).ToListAsync();
+            foreach (var cita in citas.Where(c => c.Estado != CitaEstados.Atendida && c.Estado != CitaEstados.EnAtencion))
+            {
+                cita.Estado = CitaEstados.Cancelada;
+                cita.FechaActualizacion = DateTime.Now;
+            }
+            await _context.SaveChangesAsync();
+            return (true, null);
         }
 
         private IQueryable<Usuario> TerapeutasQuery()
@@ -930,6 +1154,12 @@ namespace FisioSalud_Proyecto.Services
 
         public async Task<(bool Success, string Error)> SaveServicioAsync(ServicioFormViewModel model)
         {
+            if (model != null && !string.IsNullOrWhiteSpace(model.Nombre))
+            {
+                var nombreServicio = model.Nombre.Trim();
+                if (await _context.Servicios.AnyAsync(s => s.Nombre == nombreServicio && (!model.ServicioId.HasValue || s.ServicioId != model.ServicioId.Value)))
+                    return (false, "Ya existe un servicio con ese nombre.");
+            }
             if (model == null || string.IsNullOrWhiteSpace(model.Nombre) || model.Precio <= 0)
                 return (false, "Nombre y precio válido son requeridos.");
 
@@ -973,6 +1203,16 @@ namespace FisioSalud_Proyecto.Services
 
         public async Task<(bool Success, string Error)> SaveDisponibilidadAsync(DisponibilidadFormViewModel model)
         {
+            if (model != null)
+            {
+                var fisioValido = await _context.Usuarios.Include(u => u.Rol).AnyAsync(u => u.UsuarioId == model.FisioterapeutaId && u.Estado && u.Rol.Nombre == Roles.Fisioterapeuta);
+                if (!fisioValido) return (false, "El fisioterapeuta seleccionado no está activo.");
+                var seTraslapa = await _context.DisponibilidadesFisioterapeuta.AnyAsync(d =>
+                    d.FisioterapeutaId == model.FisioterapeutaId && d.DiaSemana == model.DiaSemana && d.Estado &&
+                    (!model.DisponibilidadId.HasValue || d.DisponibilidadId != model.DisponibilidadId.Value) &&
+                    d.HoraInicio < model.HoraFin && model.HoraInicio < d.HoraFin);
+                if (seTraslapa) return (false, "El horario se traslapa con otra disponibilidad activa.");
+            }
             if (model == null || model.FisioterapeutaId <= 0 || model.DiaSemana < 1 || model.DiaSemana > 7)
                 return (false, "Fisioterapeuta y día de la semana (1-7) son requeridos.");
 
@@ -1013,6 +1253,8 @@ namespace FisioSalud_Proyecto.Services
 
         public async Task<(bool Success, string Error)> SaveEjercicioCatalogoAsync(Ejercicio model)
         {
+            if (model != null && !string.IsNullOrWhiteSpace(model.Nombre) && await _context.Ejercicios.AnyAsync(e => e.Nombre == model.Nombre.Trim() && e.EjercicioId != model.EjercicioId))
+                return (false, "Ya existe un ejercicio con ese nombre.");
             if (model == null || string.IsNullOrWhiteSpace(model.Nombre))
                 return (false, "El nombre del ejercicio es obligatorio.");
 
@@ -1039,6 +1281,15 @@ namespace FisioSalud_Proyecto.Services
             return (true, null);
         }
 
+        public async Task<(bool Success, string Error)> ToggleEjercicioCatalogoAsync(int ejercicioId)
+        {
+            var ejercicio = await _context.Ejercicios.FindAsync(ejercicioId);
+            if (ejercicio == null) return (false, "Ejercicio no encontrado.");
+            ejercicio.Estado = !ejercicio.Estado;
+            await _context.SaveChangesAsync();
+            return (true, null);
+        }
+
         public async Task<List<Patologia>> GetPatologiasAsync()
         {
             return await _context.Patologias.AsNoTracking().OrderBy(p => p.Nombre).ToListAsync();
@@ -1046,6 +1297,8 @@ namespace FisioSalud_Proyecto.Services
 
         public async Task<(bool Success, string Error)> SavePatologiaAsync(Patologia model)
         {
+            if (model != null && !string.IsNullOrWhiteSpace(model.Nombre) && await _context.Patologias.AnyAsync(p => p.Nombre == model.Nombre.Trim() && p.PatologiaId != model.PatologiaId))
+                return (false, "Ya existe una patología con ese nombre.");
             if (model == null || string.IsNullOrWhiteSpace(model.Nombre))
                 return (false, "El nombre de la patología es obligatorio.");
 
@@ -1069,10 +1322,20 @@ namespace FisioSalud_Proyecto.Services
             return (true, null);
         }
 
+        public async Task<(bool Success, string Error)> TogglePatologiaAsync(int patologiaId)
+        {
+            var patologia = await _context.Patologias.FindAsync(patologiaId);
+            if (patologia == null) return (false, "Patología no encontrada.");
+            patologia.Estado = !patologia.Estado;
+            await _context.SaveChangesAsync();
+            return (true, null);
+        }
+
         private static string Csv(string value)
         {
             if (string.IsNullOrEmpty(value)) return "";
-            if (value.Contains(",") || value.Contains("\""))
+            if (value.TrimStart().Length > 0 && "=+-@".Contains(value.TrimStart()[0])) value = "'" + value;
+            if (value.Contains(",") || value.Contains("\"") || value.Contains("\r") || value.Contains("\n"))
                 return "\"" + value.Replace("\"", "\"\"") + "\"";
             return value;
         }

@@ -7,6 +7,30 @@
 <!-- Top Header Controls & Categories -->
 <div class="d-flex align-items-center justify-content-between flex-wrap gap-3 mb-4">
     <h2 class="fw-bold m-0" style="font-size: 1.15rem; color: var(--text-dark);">Biblioteca de Ejercicios</h2>
+    <button type="button" class="btn-fisio-primary" data-bs-toggle="modal" data-bs-target="#crearEjercicio">
+        <i class="bi bi-plus-lg"></i> Crear ejercicio
+    </button>
+</div>
+
+<div class="modal fade" id="crearEjercicio" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <form asp-action="CrearEjercicio" method="post">
+                <div class="modal-header"><h5 class="modal-title fw-bold">Nuevo ejercicio terapéutico</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+                <div class="modal-body">
+                    <label class="form-label small fw-bold">Nombre</label>
+                    <input name="nombre" class="form-control mb-3" maxlength="150" required />
+                    <label class="form-label small fw-bold">Descripción clínica</label>
+                    <textarea name="descripcion" class="form-control mb-3" rows="3" maxlength="1000"></textarea>
+                    <label class="form-label small fw-bold">Duración estimada (minutos)</label>
+                    <input name="duracionMinutos" type="number" min="1" max="240" class="form-control mb-3" />
+                    <label class="form-label small fw-bold">Recomendaciones y precauciones</label>
+                    <textarea name="recomendaciones" class="form-control" rows="3" maxlength="1000"></textarea>
+                </div>
+                <div class="modal-footer"><button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancelar</button><button type="submit" class="btn btn-primary">Guardar ejercicio</button></div>
+            </form>
+        </div>
+    </div>
 </div>
 
 <!-- Search Input & Category Pills -->
@@ -89,8 +113,52 @@
                     </div>
 
                     <div class="exercise-card-footer">
-                        <button class="btn-fisio-light flex-grow-1 justify-content-center">Editar</button>
-                        <button class="btn-fisio-primary flex-grow-1 justify-content-center">Asignar</button>
+                        <button type="button" class="btn-fisio-light flex-grow-1 justify-content-center" data-bs-toggle="modal" data-bs-target="#detalleEjercicio_@ex.EjercicioId">Ver detalle</button>
+                        <button type="button" class="btn-fisio-primary flex-grow-1 justify-content-center" data-bs-toggle="modal" data-bs-target="#asignarEjercicio_@ex.EjercicioId" @(Model.PlanesDisponibles.Any() ? null : "disabled")>Asignar</button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="modal fade" id="detalleEjercicio_@ex.EjercicioId" tabindex="-1">
+                <div class="modal-dialog modal-dialog-centered">
+                    <div class="modal-content">
+                        <div class="modal-header"><h5 class="modal-title fw-bold">@ex.Nombre</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+                        <div class="modal-body">
+                            <div class="badge bg-light text-dark border mb-3">@ex.Categoria · @ex.Dosificacion</div>
+                            <p class="mb-3">@(string.IsNullOrWhiteSpace(ex.Descripcion) ? "Sin descripción registrada." : ex.Descripcion)</p>
+                            <h6 class="fw-bold">Recomendaciones</h6>
+                            <p class="text-muted mb-0">@(string.IsNullOrWhiteSpace(ex.Recomendaciones) ? "Sin recomendaciones adicionales." : ex.Recomendaciones)</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="modal fade" id="asignarEjercicio_@ex.EjercicioId" tabindex="-1">
+                <div class="modal-dialog modal-dialog-centered">
+                    <div class="modal-content">
+                        <form asp-action="AsignarEjercicio" method="post">
+                            <input type="hidden" name="EjercicioId" value="@ex.EjercicioId" />
+                            <div class="modal-header"><h5 class="modal-title fw-bold">Asignar @ex.Nombre</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+                            <div class="modal-body">
+                                <label class="form-label small fw-bold">Paciente y plan activo</label>
+                                <select name="PlanTratamientoId" class="form-select mb-3" required>
+                                    <option value="">Selecciona un plan</option>
+                                    @foreach (var plan in Model.PlanesDisponibles)
+                                    {
+                                        <option value="@plan.PlanTratamientoId">@plan.Etiqueta</option>
+                                    }
+                                </select>
+                                <div class="row g-2 mb-3">
+                                    <div class="col"><label class="form-label small fw-bold">Series</label><input type="number" name="Series" value="3" min="1" class="form-control" /></div>
+                                    <div class="col"><label class="form-label small fw-bold">Repeticiones</label><input type="number" name="Repeticiones" value="12" min="1" class="form-control" /></div>
+                                </div>
+                                <label class="form-label small fw-bold">Frecuencia</label>
+                                <input type="text" name="Frecuencia" value="3 veces por semana" class="form-control mb-3" required />
+                                <label class="form-label small fw-bold">Indicaciones</label>
+                                <textarea name="Observaciones" class="form-control" rows="2">@ex.Recomendaciones</textarea>
+                            </div>
+                            <div class="modal-footer"><button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancelar</button><button type="submit" class="btn btn-primary">Asignar ejercicio</button></div>
+                        </form>
                     </div>
                 </div>
             </div>

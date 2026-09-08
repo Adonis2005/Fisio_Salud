@@ -25,6 +25,7 @@ namespace FisioSalud_Proyecto.Models.Fisioterapeuta
         public string SesionesTexto { get; set; } = "0/12";
         public string ProximaCitaTexto { get; set; } = "Hoy 10:15";
         public int NivelDolor { get; set; } = 4;
+        public bool TieneMedicion { get; set; }
         public string UltimaSesionTexto { get; set; } = "Hoy";
         public DateTime FechaRegistro { get; set; }
 
@@ -32,6 +33,7 @@ namespace FisioSalud_Proyecto.Models.Fisioterapeuta
         public List<FisioSalud_Proyecto.Models.Entities.Diagnostico> DiagnosticosLista { get; set; } = new List<FisioSalud_Proyecto.Models.Entities.Diagnostico>();
         public List<FisioSalud_Proyecto.Models.Entities.PlanTratamiento> PlanesTratamiento { get; set; } = new List<FisioSalud_Proyecto.Models.Entities.PlanTratamiento>();
         public List<FisioSalud_Proyecto.Models.Entities.TratamientoEjercicio> EjerciciosAsignados { get; set; } = new List<FisioSalud_Proyecto.Models.Entities.TratamientoEjercicio>();
+        public List<FisioSalud_Proyecto.Models.Entities.Ejercicio> EjerciciosDisponibles { get; set; } = new List<FisioSalud_Proyecto.Models.Entities.Ejercicio>();
         public List<FisioSalud_Proyecto.Models.Entities.SesionRehabilitacion> SesionesLista { get; set; } = new List<FisioSalud_Proyecto.Models.Entities.SesionRehabilitacion>();
         public List<FisioSalud_Proyecto.Models.Entities.Cita> CitasLista { get; set; } = new List<FisioSalud_Proyecto.Models.Entities.Cita>();
     }
@@ -79,6 +81,12 @@ namespace FisioSalud_Proyecto.Models.Fisioterapeuta
 
         [Display(Name = "Estado activo")]
         public bool Estado { get; set; } = true;
+
+        [Required(ErrorMessage = "Seleccione un fisioterapeuta responsable.")]
+        [Display(Name = "Fisioterapeuta responsable")]
+        public int? FisioterapeutaId { get; set; }
+
+        public List<FisioSalud_Proyecto.Models.Entities.Usuario> FisioterapeutasDisponibles { get; set; } = new List<FisioSalud_Proyecto.Models.Entities.Usuario>();
     }
 
     public class PacienteFilterViewModel
@@ -103,6 +111,7 @@ namespace FisioSalud_Proyecto.Models.Fisioterapeuta
 
     public class FisioDashboardViewModel
     {
+        public List<EjercicioCardViewModel> Biblioteca { get; set; } = new List<EjercicioCardViewModel>();
         public int TotalPacientes { get; set; }
         public int PacientesActivos { get; set; }
         public int CitasHoy { get; set; }
@@ -120,6 +129,7 @@ namespace FisioSalud_Proyecto.Models.Fisioterapeuta
     public class CitaCalendarBlockViewModel
     {
         public int CitaId { get; set; }
+        public string Estado { get; set; }
         public string PacienteNombre { get; set; }
         public string Iniciales { get; set; }
         public string Diagnostico { get; set; }
@@ -133,9 +143,37 @@ namespace FisioSalud_Proyecto.Models.Fisioterapeuta
 
     public class FisioAgendaViewModel
     {
-        public string RangoFechas { get; set; } = "7–12 Julio 2026";
-        public DateTime FechaReferencia { get; set; } = new DateTime(2026, 7, 10);
+        public string RangoFechas { get; set; }
+        public DateTime FechaReferencia { get; set; }
+        public DateTime SemanaAnterior => FechaReferencia.AddDays(-7);
+        public DateTime SemanaSiguiente => FechaReferencia.AddDays(7);
         public List<CitaCalendarBlockViewModel> CitasBloque { get; set; } = new List<CitaCalendarBlockViewModel>();
+        public List<FisioSalud_Proyecto.Models.Entities.Paciente> PacientesDisponibles { get; set; } = new List<FisioSalud_Proyecto.Models.Entities.Paciente>();
+        public List<FisioSalud_Proyecto.Models.Entities.Servicio> ServiciosDisponibles { get; set; } = new List<FisioSalud_Proyecto.Models.Entities.Servicio>();
+    }
+
+    public class FisioNuevaCitaFormViewModel
+    {
+        [Range(1, int.MaxValue, ErrorMessage = "Seleccione un paciente.")]
+        public int PacienteId { get; set; }
+
+        [Range(1, int.MaxValue, ErrorMessage = "Seleccione un servicio.")]
+        public int ServicioId { get; set; }
+
+        [Required, DataType(DataType.Date)]
+        public DateTime Fecha { get; set; } = DateTime.Today;
+
+        [Required]
+        public TimeSpan HoraInicio { get; set; }
+
+        [Range(15, 240)]
+        public int DuracionMinutos { get; set; } = 60;
+
+        [MaxLength(500)]
+        public string MotivoConsulta { get; set; }
+
+        [MaxLength(1000)]
+        public string Observaciones { get; set; }
     }
 
     public class EjercicioCardViewModel
@@ -150,6 +188,15 @@ namespace FisioSalud_Proyecto.Models.Fisioterapeuta
         public int ProgresoPorcentaje { get; set; }
         public string TagHeaderClass { get; set; } // blue, green, purple, yellow, pink, cyan
         public string IconClass { get; set; }
+        public string Descripcion { get; set; }
+        public string Recomendaciones { get; set; }
+    }
+
+    public class PlanAsignacionViewModel
+    {
+        public int PlanTratamientoId { get; set; }
+        public int PacienteId { get; set; }
+        public string Etiqueta { get; set; }
     }
 
     public class FisioEjerciciosViewModel
@@ -161,6 +208,7 @@ namespace FisioSalud_Proyecto.Models.Fisioterapeuta
         public int CategoriasCount { get; set; }
         public int NuevosEsteMes { get; set; }
         public List<EjercicioCardViewModel> Ejercicios { get; set; } = new List<EjercicioCardViewModel>();
+        public List<PlanAsignacionViewModel> PlanesDisponibles { get; set; } = new List<PlanAsignacionViewModel>();
     }
 
     public class ChatMessageItemViewModel

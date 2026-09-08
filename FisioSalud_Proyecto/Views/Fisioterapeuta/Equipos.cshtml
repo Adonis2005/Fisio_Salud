@@ -1,0 +1,40 @@
+@model FisioSalud_Proyecto.Models.Clinical.EquiposPageViewModel
+@{
+    Layout = "_LayoutFisioterapeuta";
+    ViewData["Title"] = "Caminadoras y equipos";
+}
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div><h2 class="fw-bold fs-4 mb-1">Caminadoras y equipos terapéuticos</h2><p class="text-muted mb-0">Programa parámetros, evita cruces y registra el resultado de cada uso.</p></div>
+    <button class="btn-fisio-primary" data-bs-toggle="modal" data-bs-target="#programarUso" @(Model.Equipos.Any(e => e.Estado && e.EstadoOperativo == "DISPONIBLE") && Model.Pacientes.Any() ? null : "disabled")><i class="bi bi-calendar-plus"></i> Programar uso</button>
+</div>
+
+<div class="row g-3 mb-4">
+@foreach (var equipo in Model.Equipos)
+{
+    <div class="col-md-4"><div class="fisio-card h-100"><div class="d-flex justify-content-between"><h5 class="fw-bold">@equipo.Nombre</h5><span class="status-badge @(equipo.EstadoOperativo == "DISPONIBLE" ? "activo" : "riesgo")">@equipo.EstadoOperativo</span></div><div class="text-muted small">@equipo.Codigo · @equipo.Tipo</div><hr/><div class="small">Velocidad máx.: <strong>@(equipo.VelocidadMaxima?.ToString("0.##") ?? "-") km/h</strong></div><div class="small">Inclinación máx.: <strong>@(equipo.InclinacionMaxima?.ToString("0.##") ?? "-")%</strong></div></div></div>
+}
+</div>
+
+<div class="fisio-card">
+    <h5 class="fw-bold mb-3">Programaciones recientes</h5>
+    <div class="table-responsive"><table class="table align-middle"><thead><tr><th>Fecha/hora</th><th>Equipo</th><th>Paciente</th><th>Parámetros</th><th>Estado</th><th>Acciones</th></tr></thead><tbody>
+    @foreach (var uso in Model.Usos)
+    {
+        <tr><td>@uso.Fecha.ToString("dd/MM/yyyy")<br/><small>@uso.HoraInicio.ToString(@"hh\:mm") - @uso.HoraFin.ToString(@"hh\:mm")</small></td><td>@uso.Equipo?.Nombre</td><td>@uso.Paciente?.NombreCompleto</td><td>@(uso.Velocidad?.ToString("0.##") ?? "-") km/h · @(uso.Inclinacion?.ToString("0.##") ?? "-")%</td><td><span class="status-badge @(uso.Estado == "FINALIZADO" ? "activo" : "pendiente")">@uso.Estado</span></td><td>
+            @if (uso.Estado == "PROGRAMADO") { <form asp-action="CambiarEstadoUsoEquipo" method="post" class="d-inline"><input type="hidden" name="usoEquipoId" value="@uso.UsoEquipoId"/><input type="hidden" name="estado" value="EN_USO"/><button class="btn btn-sm btn-success">Iniciar</button></form> <form asp-action="CambiarEstadoUsoEquipo" method="post" class="d-inline"><input type="hidden" name="usoEquipoId" value="@uso.UsoEquipoId"/><input type="hidden" name="estado" value="CANCELADO"/><button class="btn btn-sm btn-outline-danger">Cancelar</button></form> }
+            @if (uso.Estado == "EN_USO") { <button class="btn btn-sm btn-primary" data-bs-toggle="modal" data-bs-target="#finalizar_@uso.UsoEquipoId">Finalizar</button> }
+        </td></tr>
+        <div class="modal fade" id="finalizar_@uso.UsoEquipoId" tabindex="-1"><div class="modal-dialog modal-dialog-centered"><div class="modal-content"><form asp-action="CambiarEstadoUsoEquipo" method="post"><input type="hidden" name="usoEquipoId" value="@uso.UsoEquipoId"/><input type="hidden" name="estado" value="FINALIZADO"/><div class="modal-header"><h5>Finalizar uso</h5></div><div class="modal-body"><label class="form-label">Resultado y tolerancia del paciente</label><textarea name="resultado" class="form-control" rows="4" required></textarea></div><div class="modal-footer"><button type="button" class="btn btn-light" data-bs-dismiss="modal">Volver</button><button class="btn btn-primary">Finalizar</button></div></form></div></div></div>
+    }
+    @if (!Model.Usos.Any()) { <tr><td colspan="6" class="text-center text-muted py-4">Aún no hay usos programados.</td></tr> }
+    </tbody></table></div>
+</div>
+
+<div class="modal fade" id="programarUso" tabindex="-1"><div class="modal-dialog modal-dialog-centered"><div class="modal-content"><form asp-action="ProgramarUsoEquipo" method="post"><div class="modal-header"><h5 class="fw-bold">Programar caminadora</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div><div class="modal-body">
+    <label class="form-label">Equipo disponible</label><select name="EquipoId" class="form-select mb-3" required>@foreach(var e in Model.Equipos.Where(e => e.Estado && e.EstadoOperativo == "DISPONIBLE")){<option value="@e.EquipoId">@e.Nombre (@e.Codigo)</option>}</select>
+    <label class="form-label">Paciente</label><select name="PacienteId" class="form-select mb-3" required><option value="">Seleccionar</option>@foreach(var p in Model.Pacientes){<option value="@p.PacienteId">@p.NombreCompleto</option>}</select>
+    <div class="row g-2 mb-3"><div class="col"><label class="form-label">Fecha</label><input type="date" name="Fecha" value="@DateTime.Today.ToString("yyyy-MM-dd")" class="form-control" required/></div><div class="col"><label class="form-label">Inicio</label><input type="time" name="HoraInicio" class="form-control" required/></div><div class="col"><label class="form-label">Fin</label><input type="time" name="HoraFin" class="form-control" required/></div></div>
+    <div class="row g-2 mb-3"><div class="col"><label class="form-label">Velocidad km/h</label><input type="number" step="0.1" min="0.1" name="Velocidad" class="form-control"/></div><div class="col"><label class="form-label">Inclinación %</label><input type="number" step="0.1" min="0" name="Inclinacion" class="form-control"/></div></div>
+    <label class="form-label">Indicaciones</label><textarea name="Indicaciones" class="form-control" rows="3"></textarea>
+</div><div class="modal-footer"><button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancelar</button><button class="btn btn-primary">Programar</button></div></form></div></div></div>

@@ -4,6 +4,7 @@
     ViewData["Title"] = "Mis Facturas y Cobros";
 }
 
+<div class="fs-card mb-4"><p>Reporta aquí el pago realizado por transferencia o en recepción. Administración comprobará el ingreso antes de confirmar tu cita. No se cargan tarjetas desde esta pantalla.</p><a asp-controller="Cobros" asp-action="Index" class="btn btn-outline-primary">Ver estado de mis comprobantes</a></div>
 <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
     <div class="fs-card">
         <div class="text-sm text-terracotta">Total pagado</div>
@@ -99,7 +100,7 @@
                                                     </div>
                                                     <div class="modal-footer">
                                                         <button type="button" class="btn btn-sm btn-light" data-bs-dismiss="modal">Cancelar</button>
-                                                        <button type="submit" class="btn btn-sm btn-success">Confirmar Pago</button>
+                                                        <button type="submit" class="btn btn-sm btn-success">Enviar comprobante a revisión</button>
                                                     </div>
                                                 </form>
                                             </div>

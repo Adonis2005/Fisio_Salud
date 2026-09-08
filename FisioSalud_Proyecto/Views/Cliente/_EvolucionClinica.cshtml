@@ -1,0 +1,20 @@
+@model ProgresoPageViewModel
+<section class="fs-card mt-4">
+    <h3>Mis planes y ejercicios</h3>
+    @if (!Model.Planes.Any()) { <p>Tu fisioterapeuta todavía no ha indicado un plan.</p> }
+    @foreach(var plan in Model.Planes) {
+        <article class="border-bottom py-3"><h4>@plan.Nombre <small>@plan.Estado</small></h4><p>@plan.Objetivos</p><small>Inicio: @plan.FechaInicio.ToString("dd/MM/yyyy") · Duración: @plan.DuracionEstimada semanas</small></article>
+    }
+    @foreach(var ejercicio in Model.Rutina) {
+        <article class="border-bottom py-3"><strong>@ejercicio.Ejercicio.Nombre</strong><p>@ejercicio.Ejercicio.Descripcion</p><p>@ejercicio.Series series · @ejercicio.Repeticiones repeticiones · @ejercicio.Frecuencia</p><p>@ejercicio.Observaciones</p></article>
+    }
+</section>
+<section class="fs-card mt-4">
+    <h3>Evolución clínica registrada</h3>
+    <p>Dolor inicial: @(Model.Evolucion.DolorInicial?.ToString("0.#") ?? "Sin evaluar") · Dolor actual: @(Model.Evolucion.DolorActual?.ToString("0.#") ?? "Sin evaluar")</p>
+    <div class="table-responsive"><table class="table"><thead><tr><th>Sesión</th><th>Fecha</th><th>Dolor /10</th><th>Movilidad %</th><th>Fuerza %</th><th>Recuperación %</th></tr></thead><tbody>
+    @foreach(var s in Model.Evolucion.Sesiones) { <tr><td>@s.NumeroSesion</td><td>@s.Fecha.ToString("dd/MM/yyyy")</td><td>@s.Dolor</td><td>@s.Movilidad</td><td>@s.Fuerza</td><td>@s.Recuperacion</td></tr> }
+    </tbody></table></div>
+    <h4>Mi cumplimiento</h4>
+    @foreach(var e in Model.Evolucion.EjerciciosCumplidos.Take(20)) { <p>@e.Fecha.ToString("dd/MM/yyyy") · @e.EjercicioNombre · @e.Series × @e.Repeticiones · Dolor: @e.Dolor</p> }
+</section>

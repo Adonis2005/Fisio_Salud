@@ -36,6 +36,7 @@ namespace FisioSalud_Proyecto
             services.AddScoped<IUsuarioService, UsuarioService>();
             services.AddScoped<IAdminPanelService, AdminPanelService>();
             services.AddScoped<IPacienteService, PacienteService>();
+            services.AddScoped<IEquipoService, EquipoService>();
             services.AddScoped<ICitaService, CitaService>();
             services.AddScoped<IMensajeService, MensajeService>();
             services.AddScoped<IEmailService, EmailService>();
@@ -58,7 +59,7 @@ namespace FisioSalud_Proyecto
                 options.AddPolicy("Cliente", policy => policy.RequireRole(Roles.Cliente));
             });
 
-            services.AddControllersWithViews();
+            services.AddControllersWithViews(options => options.ModelBinderProviders.Insert(0, new DecimalModelBinderProvider()));
             services.AddSession();
         }
 

@@ -10,6 +10,7 @@
         <p class="text-muted small m-0">Gestiona los ejercicios terapéuticos, patologías y protocolos de atención.</p>
     </div>
     <div class="d-flex gap-2">
+        <a asp-controller="Planes" asp-action="Index" class="btn btn-primary">Planes de pacientes</a>
         <button type="button" class="btn btn-outline-primary rounded-pill px-3" data-bs-toggle="modal" data-bs-target="#modalNuevoEjercicioCat">
             <i class="bi bi-plus-circle me-1"></i> Nuevo Ejercicio
         </button>
@@ -66,7 +67,67 @@
         </a>
     </div>
 
-    @if (Model.Planes.Any())
+    @if (Model.Tab == "ejercicios" && Model.Ejercicios.Any())
+    {
+        <div class="plan-grid">
+            @foreach (var e in Model.Ejercicios)
+            {
+                <div class="plan-card">
+                    <div class="plan-icon"><i class="bi bi-activity"></i></div>
+                    <div class="fw-bold mb-1">@e.Nombre</div>
+                    <div class="text-muted mb-2 small">@(string.IsNullOrWhiteSpace(e.Descripcion) ? "Sin descripción" : e.Descripcion)</div>
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <span class="small">@(e.DuracionMinutos.HasValue ? $"{e.DuracionMinutos} min" : "Sin duración")</span>
+                        <span class="badge bg-@(e.Estado ? "success" : "secondary")">@(e.Estado ? "Activo" : "Inactivo")</span>
+                    </div>
+                    <div class="d-flex gap-2">
+                        <button type="button" class="btn btn-sm btn-outline-primary flex-grow-1" data-bs-toggle="modal" data-bs-target="#editarEjercicio_@e.EjercicioId">Editar</button>
+                        <form asp-action="ToggleEjercicioCatalogo" method="post">
+                            <input type="hidden" name="ejercicioId" value="@e.EjercicioId" />
+                            <button type="submit" class="btn btn-sm btn-outline-@(e.Estado ? "danger" : "success")">@(e.Estado ? "Desactivar" : "Activar")</button>
+                        </form>
+                    </div>
+                </div>
+                <div class="modal fade" id="editarEjercicio_@e.EjercicioId" tabindex="-1">
+                    <div class="modal-dialog modal-dialog-centered"><div class="modal-content">
+                        <form asp-action="GuardarEjercicioCatalogo" method="post">
+                            <input type="hidden" name="EjercicioId" value="@e.EjercicioId" />
+                            <input type="hidden" name="Estado" value="@e.Estado.ToString().ToLowerInvariant()" />
+                            <div class="modal-header"><h5 class="modal-title fw-bold">Editar ejercicio</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+                            <div class="modal-body">
+                                <label class="form-label small fw-bold">Nombre</label><input name="Nombre" value="@e.Nombre" class="form-control mb-3" required />
+                                <label class="form-label small fw-bold">Descripción</label><textarea name="Descripcion" class="form-control mb-3" rows="3">@e.Descripcion</textarea>
+                                <label class="form-label small fw-bold">Duración (min)</label><input type="number" min="1" name="DuracionMinutos" value="@e.DuracionMinutos" class="form-control mb-3" />
+                                <label class="form-label small fw-bold">Recomendaciones</label><textarea name="Recomendaciones" class="form-control" rows="2">@e.Recomendaciones</textarea>
+                            </div>
+                            <div class="modal-footer"><button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancelar</button><button type="submit" class="btn btn-primary">Guardar</button></div>
+                        </form>
+                    </div></div>
+                </div>
+            }
+        </div>
+    }
+    else if (Model.Tab == "tratamientos" && Model.Patologias.Any())
+    {
+        <div class="plan-grid">
+            @foreach (var p in Model.Patologias)
+            {
+                <div class="plan-card">
+                    <div class="plan-icon"><i class="bi bi-file-medical"></i></div>
+                    <div class="fw-bold mb-1">@p.Nombre</div>
+                    <div class="text-muted mb-3 small">@(string.IsNullOrWhiteSpace(p.Descripcion) ? "Sin descripción" : p.Descripcion)</div>
+                    <div class="d-flex justify-content-between align-items-center">
+                        <span class="badge bg-@(p.Estado ? "success" : "secondary")">@(p.Estado ? "Activa" : "Inactiva")</span>
+                        <form asp-action="TogglePatologia" method="post">
+                            <input type="hidden" name="patologiaId" value="@p.PatologiaId" />
+                            <button type="submit" class="btn btn-sm btn-outline-@(p.Estado ? "danger" : "success")">@(p.Estado ? "Desactivar" : "Activar")</button>
+                        </form>
+                    </div>
+                </div>
+            }
+        </div>
+    }
+    else if (Model.Tab == "_resumen" && Model.Planes.Any())
     {
         <div class="plan-grid">
             @foreach (var p in Model.Planes)
@@ -89,7 +150,7 @@
             }
         </div>
     }
-    else
+    else if ((Model.Tab == "ejercicios" && !Model.Ejercicios.Any()) || (Model.Tab == "tratamientos" && !Model.Patologias.Any()))
     {
         <div class="empty-state py-5">
             <i class="bi bi-journal-medical d-block fs-1 mb-3 opacity-30"></i>

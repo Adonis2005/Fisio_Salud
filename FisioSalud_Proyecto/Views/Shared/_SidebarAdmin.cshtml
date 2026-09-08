@@ -72,6 +72,7 @@
                 <span>Disponibilidad</span>
             </a>
         </li>
+        <li class="fisio-nav-item"><a asp-controller="Administrador" asp-action="Equipos" class="fisio-nav-link @(IsActive("Equipos", "GuardarEquipo") ? "active" : "")"><i class="bi bi-speedometer2"></i><span>Equipos</span></a></li>
         <li class="fisio-nav-item">
             <a asp-controller="Administrador" asp-action="Citas" class="fisio-nav-link @(IsActive("Citas") ? "active" : "")">
                 <i class="bi bi-calendar-check-fill"></i>

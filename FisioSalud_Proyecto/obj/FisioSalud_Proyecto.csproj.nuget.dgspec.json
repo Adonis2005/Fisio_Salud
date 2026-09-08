@@ -1,20 +1,20 @@
 {
   "format": 1,
   "restore": {
-    "C:\\Users\\Espinoza\\source\\repos\\FisioSalud_Proyecto\\FisioSalud_Proyecto\\FisioSalud_Proyecto.csproj": {}
+    "C:\\Users\\espinoza\\Source\\Repos\\Fisio_Salud\\FisioSalud_Proyecto\\FisioSalud_Proyecto.csproj": {}
   },
   "projects": {
-    "C:\\Users\\Espinoza\\source\\repos\\FisioSalud_Proyecto\\FisioSalud_Proyecto\\FisioSalud_Proyecto.csproj": {
+    "C:\\Users\\espinoza\\Source\\Repos\\Fisio_Salud\\FisioSalud_Proyecto\\FisioSalud_Proyecto.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "C:\\Users\\Espinoza\\source\\repos\\FisioSalud_Proyecto\\FisioSalud_Proyecto\\FisioSalud_Proyecto.csproj",
+        "projectUniqueName": "C:\\Users\\espinoza\\Source\\Repos\\Fisio_Salud\\FisioSalud_Proyecto\\FisioSalud_Proyecto.csproj",
         "projectName": "FisioSalud_Proyecto",
-        "projectPath": "C:\\Users\\Espinoza\\source\\repos\\FisioSalud_Proyecto\\FisioSalud_Proyecto\\FisioSalud_Proyecto.csproj",
-        "packagesPath": "C:\\Users\\Espinoza\\.nuget\\packages\\",
-        "outputPath": "C:\\Users\\Espinoza\\source\\repos\\FisioSalud_Proyecto\\FisioSalud_Proyecto\\obj\\",
+        "projectPath": "C:\\Users\\espinoza\\Source\\Repos\\Fisio_Salud\\FisioSalud_Proyecto\\FisioSalud_Proyecto.csproj",
+        "packagesPath": "C:\\Users\\espinoza\\.nuget\\packages\\",
+        "outputPath": "C:\\Users\\espinoza\\Source\\Repos\\Fisio_Salud\\FisioSalud_Proyecto\\obj\\",
         "projectStyle": "PackageReference",
         "configFilePaths": [
-          "C:\\Users\\Espinoza\\AppData\\Roaming\\NuGet\\NuGet.Config",
+          "C:\\Users\\espinoza\\AppData\\Roaming\\NuGet\\NuGet.Config",
           "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.Offline.config"
         ],
         "originalTargetFrameworks": [

@@ -18,12 +18,14 @@ namespace FisioSalud_Proyecto.Controllers.Fisioterapeuta
         private readonly IPacienteService _pacienteService;
         private readonly FisioSaludDbContext _context;
         private readonly IMensajeService _mensajeService;
+        private readonly IEquipoService _equipoService;
 
-        public FisioterapeutaController(IPacienteService pacienteService, FisioSaludDbContext context, IMensajeService mensajeService)
+        public FisioterapeutaController(IPacienteService pacienteService, FisioSaludDbContext context, IMensajeService mensajeService, IEquipoService equipoService)
         {
             _pacienteService = pacienteService;
             _context = context;
             _mensajeService = mensajeService;
+            _equipoService = equipoService;
         }
 
         public async Task<IActionResult> Dashboard()
@@ -34,11 +36,11 @@ namespace FisioSalud_Proyecto.Controllers.Fisioterapeuta
             return View(model);
         }
 
-        public async Task<IActionResult> Agenda()
+        public async Task<IActionResult> Agenda(System.DateTime? semana)
         {
             var fisioterapeutaId = ObtenerUsuarioAutenticado();
             if (fisioterapeutaId == null) return Forbid();
-            var model = await _pacienteService.GetAgendaAsync(fisioterapeutaId.Value);
+            var model = await _pacienteService.GetAgendaAsync(fisioterapeutaId.Value, semana);
             return View(model);
         }
 
@@ -56,6 +58,68 @@ namespace FisioSalud_Proyecto.Controllers.Fisioterapeuta
             if (fisioterapeutaId == null) return Forbid();
             var model = await _pacienteService.GetEjerciciosAsync(fisioterapeutaId.Value, busqueda, categoria);
             return View(model);
+        }
+
+        public async Task<IActionResult> Equipos()
+        {
+            var fisioterapeutaId = ObtenerUsuarioAutenticado();
+            if (fisioterapeutaId == null) return Forbid();
+            return View(await _equipoService.GetAsync(fisioterapeutaId.Value));
+        }
+
+        [HttpPost, ValidateAntiForgeryToken]
+        public async Task<IActionResult> ProgramarUsoEquipo(ProgramarUsoEquipoFormModel model)
+        {
+            if (!ModelState.IsValid) { TempData["Error"] = "Revisa las fechas, horarios y valores numéricos del equipo."; return RedirectToAction(nameof(Equipos)); }
+            var fisioterapeutaId = ObtenerUsuarioAutenticado();
+            if (fisioterapeutaId == null) return Forbid();
+            var result = await _equipoService.ProgramarAsync(model, fisioterapeutaId.Value);
+            TempData[result.Success ? "Success" : "Error"] = result.Success ? "Uso de caminadora programado." : result.Error;
+            return RedirectToAction(nameof(Equipos));
+        }
+
+        [HttpPost, ValidateAntiForgeryToken]
+        public async Task<IActionResult> CambiarEstadoUsoEquipo(int usoEquipoId, string estado, string resultado)
+        {
+            var fisioterapeutaId = ObtenerUsuarioAutenticado();
+            if (fisioterapeutaId == null) return Forbid();
+            var cambio = await _equipoService.CambiarEstadoUsoAsync(usoEquipoId, fisioterapeutaId.Value, estado, resultado);
+            TempData[cambio.Success ? "Success" : "Error"] = cambio.Success ? "Uso del equipo actualizado." : cambio.Error;
+            return RedirectToAction(nameof(Equipos));
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> CrearEjercicio(string nombre, string descripcion, int? duracionMinutos, string recomendaciones)
+        {
+            if (string.IsNullOrWhiteSpace(nombre))
+            {
+                TempData["Error"] = "El nombre del ejercicio es obligatorio.";
+                return RedirectToAction(nameof(Ejercicios));
+            }
+            var nombreNormalizado = nombre.Trim();
+            if (await _context.Ejercicios.AnyAsync(e => e.Nombre == nombreNormalizado))
+            {
+                TempData["Error"] = "Ya existe un ejercicio con ese nombre.";
+                return RedirectToAction(nameof(Ejercicios));
+            }
+            if (duracionMinutos.HasValue && (duracionMinutos < 1 || duracionMinutos > 240))
+            {
+                TempData["Error"] = "La duración debe estar entre 1 y 240 minutos.";
+                return RedirectToAction(nameof(Ejercicios));
+            }
+            _context.Ejercicios.Add(new FisioSalud_Proyecto.Models.Entities.Ejercicio
+            {
+                Nombre = nombreNormalizado,
+                Descripcion = descripcion?.Trim(),
+                DuracionMinutos = duracionMinutos,
+                Recomendaciones = recomendaciones?.Trim(),
+                Estado = true,
+                FechaRegistro = System.DateTime.Now
+            });
+            await _context.SaveChangesAsync();
+            TempData["Success"] = "Ejercicio creado y disponible para asignar.";
+            return RedirectToAction(nameof(Ejercicios));
         }
 
         public async Task<IActionResult> Mensajes(int? pacienteId)
@@ -109,24 +173,9 @@ namespace FisioSalud_Proyecto.Controllers.Fisioterapeuta
             return int.TryParse(User.FindFirstValue(ClaimTypes.NameIdentifier), out var id) ? id : (int?)null;
         }
 
-        public async Task<IActionResult> Configuracion()
+        public IActionResult Configuracion()
         {
-            var userIdStr = User.FindFirstValue(ClaimTypes.NameIdentifier);
-            var model = new FisioConfiguracionViewModel();
-
-            if (int.TryParse(userIdStr, out int userId))
-            {
-                var usuario = await _context.Usuarios.FindAsync(userId);
-                if (usuario != null)
-                {
-                    model.Nombres = usuario.Nombres;
-                    model.Apellidos = usuario.Apellidos;
-                    model.Correo = usuario.Correo;
-                    model.Telefono = usuario.Telefono;
-                }
-            }
-
-            return View(model);
+            return RedirectToAction("Index", "Ajustes");
         }
 
         [HttpPost]
@@ -154,7 +203,7 @@ namespace FisioSalud_Proyecto.Controllers.Fisioterapeuta
         [HttpGet]
         public async Task<IActionResult> CrearPaciente()
         {
-            var model = await _pacienteService.GetPacienteFormAsync(null);
+            var model = await _pacienteService.GetPacienteFormAsync(null, ObtenerUsuarioAutenticado());
             return View("PacienteForm", model);
         }
 
@@ -162,10 +211,16 @@ namespace FisioSalud_Proyecto.Controllers.Fisioterapeuta
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> CrearPaciente(PacienteFormViewModel model)
         {
+            var fisioterapeutaId = ObtenerUsuarioAutenticado();
+            if (fisioterapeutaId == null) return Forbid();
+            model.FisioterapeutaId = fisioterapeutaId;
             if (!ModelState.IsValid)
+            {
+                model.FisioterapeutasDisponibles = (await _pacienteService.GetPacienteFormAsync(null, fisioterapeutaId)).FisioterapeutasDisponibles;
                 return View("PacienteForm", model);
+            }
 
-            var result = await _pacienteService.CreateAsync(model);
+            var result = await _pacienteService.CreateAsync(model, fisioterapeutaId);
             if (!result.Success)
             {
                 ModelState.AddModelError(string.Empty, result.Error);
@@ -180,8 +235,8 @@ namespace FisioSalud_Proyecto.Controllers.Fisioterapeuta
         public async Task<IActionResult> EditarPaciente(int id)
         {
             var fisioterapeutaId = ObtenerUsuarioAutenticado();
-            if (fisioterapeutaId == null || !await _context.Citas.AsNoTracking().AnyAsync(c => c.PacienteId == id && c.FisioterapeutaId == fisioterapeutaId.Value && c.Estado != "CANCELADA")) return Forbid();
-            var model = await _pacienteService.GetPacienteFormAsync(id);
+            if (fisioterapeutaId == null || !await _pacienteService.TieneAccesoPacienteAsync(id, fisioterapeutaId.Value)) return Forbid();
+            var model = await _pacienteService.GetPacienteFormAsync(id, fisioterapeutaId);
             if (model == null) return NotFound();
             return View("PacienteForm", model);
         }
@@ -191,7 +246,8 @@ namespace FisioSalud_Proyecto.Controllers.Fisioterapeuta
         public async Task<IActionResult> EditarPaciente(PacienteFormViewModel model)
         {
             var fisioterapeutaId = ObtenerUsuarioAutenticado();
-            if (fisioterapeutaId == null || !await _context.Citas.AsNoTracking().AnyAsync(c => c.PacienteId == model.PacienteId && c.FisioterapeutaId == fisioterapeutaId.Value && c.Estado != "CANCELADA")) return Forbid();
+            if (fisioterapeutaId == null || !model.PacienteId.HasValue || !await _pacienteService.TieneAccesoPacienteAsync(model.PacienteId.Value, fisioterapeutaId.Value)) return Forbid();
+            model.FisioterapeutaId = fisioterapeutaId;
             if (!ModelState.IsValid)
                 return View("PacienteForm", model);
 
@@ -211,6 +267,7 @@ namespace FisioSalud_Proyecto.Controllers.Fisioterapeuta
         {
             var fisioterapeutaId = ObtenerUsuarioAutenticado();
             if (fisioterapeutaId == null) return Forbid();
+            if (!await _pacienteService.TieneAccesoPacienteAsync(id, fisioterapeutaId.Value)) return Forbid();
             var model = await _pacienteService.GetPacienteDetalleAsync(id);
             if (model == null) return NotFound();
             return View(model);
@@ -230,6 +287,30 @@ namespace FisioSalud_Proyecto.Controllers.Fisioterapeuta
             var cita = await _context.Citas.FindAsync(citaId);
             if (cita != null) return RedirectToAction(nameof(VerPaciente), new { id = cita.PacienteId });
             return RedirectToAction(nameof(Agenda));
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> CancelarCita(int citaId, System.DateTime? semana)
+        {
+            var fisioterapeutaId = ObtenerUsuarioAutenticado();
+            if (fisioterapeutaId == null) return Forbid();
+            var result = await _pacienteService.CancelarCitaAsync(citaId, fisioterapeutaId.Value);
+            TempData[result.Success ? "Success" : "Error"] = result.Success ? "Cita cancelada correctamente." : result.Error;
+            return RedirectToAction(nameof(Agenda), new { semana });
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> AgendarCita(FisioNuevaCitaFormViewModel model)
+        {
+            var fisioterapeutaId = ObtenerUsuarioAutenticado();
+            if (fisioterapeutaId == null) return Forbid();
+            var result = await _pacienteService.AgendarCitaAsync(model, fisioterapeutaId.Value);
+            TempData[result.Success ? "Success" : "Error"] = result.Success
+                ? "Cita agendada y factura pendiente generada correctamente."
+                : result.Error;
+            return RedirectToAction(nameof(Agenda), new { semana = model.Fecha.ToString("yyyy-MM-dd") });
         }
 
         [HttpPost]
@@ -277,7 +358,9 @@ namespace FisioSalud_Proyecto.Controllers.Fisioterapeuta
 
             var result = await _pacienteService.AsignarEjercicioAsync(model, fisioterapeutaId.Value);
             TempData[result.Success ? "Success" : "Error"] = result.Success ? "Ejercicio asignado al plan." : result.Error;
-            return RedirectToAction(nameof(VerPaciente), new { id = pacienteId });
+            return pacienteId > 0
+                ? RedirectToAction(nameof(VerPaciente), new { id = pacienteId })
+                : RedirectToAction(nameof(Ejercicios));
         }
 
         [HttpPost]

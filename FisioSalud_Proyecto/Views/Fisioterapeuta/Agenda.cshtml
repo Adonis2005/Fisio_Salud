@@ -5,12 +5,19 @@
 }
 
 <!-- Top Header Controls -->
+<a asp-controller="AgendaGestion" asp-action="Index" class="btn btn-outline-primary mb-3">Reprogramar citas</a>
 <div class="d-flex align-items-center justify-content-between flex-wrap gap-3 mb-4">
     <div class="d-flex align-items-center gap-3">
         <h2 class="fw-bold m-0" style="font-size: 1.15rem; color: var(--text-dark);">Agenda Semanal</h2>
         <span class="badge bg-white text-primary border px-3 py-2 rounded-pill fw-bold text-capitalize" style="font-size: 0.8rem;">
             @Model.RangoFechas
         </span>
+    </div>
+    <div class="d-flex gap-2">
+        <button type="button" class="btn btn-sm btn-primary rounded-pill px-3" data-bs-toggle="modal" data-bs-target="#modalAgendarCita" @(Model.PacientesDisponibles.Any() && Model.ServiciosDisponibles.Any() ? null : "disabled")><i class="bi bi-plus-lg me-1"></i>Nueva cita</button>
+        <a asp-action="Agenda" asp-route-semana="@Model.SemanaAnterior.ToString("yyyy-MM-dd")" class="btn btn-sm btn-outline-primary rounded-pill" title="Semana anterior"><i class="bi bi-chevron-left"></i></a>
+        <a asp-action="Agenda" class="btn btn-sm btn-light border rounded-pill px-3">Hoy</a>
+        <a asp-action="Agenda" asp-route-semana="@Model.SemanaSiguiente.ToString("yyyy-MM-dd")" class="btn btn-sm btn-outline-primary rounded-pill" title="Semana siguiente"><i class="bi bi-chevron-right"></i></a>
     </div>
 </div>
 
@@ -43,12 +50,26 @@
                                 <div class="appt-title fw-bold">@citaEnSlot.PacienteNombre</div>
                                 <div class="appt-desc text-muted small">@citaEnSlot.Diagnostico</div>
                                 <div class="appt-desc small">@citaEnSlot.Duracion &middot; @citaEnSlot.HoraInicio</div>
+                                <div class="small fw-bold mt-1">@CitaEstados.Etiqueta(citaEnSlot.Estado)</div>
+                                @if (citaEnSlot.Estado == CitaEstados.Confirmada)
+                                {
                                 <form asp-action="IniciarAtencion" method="post" class="mt-2">
                                     <input type="hidden" name="citaId" value="@citaEnSlot.CitaId" />
                                     <button type="submit" class="btn btn-sm btn-primary w-100 rounded-pill py-1" style="font-size:0.75rem;">
                                         <i class="bi bi-play-circle-fill me-1"></i> Iniciar atención
                                     </button>
                                 </form>
+                                }
+                                @if (citaEnSlot.Estado != CitaEstados.Cancelada && citaEnSlot.Estado != CitaEstados.Atendida)
+                                {
+                                    <form asp-action="CancelarCita" method="post" class="mt-1">
+                                        <input type="hidden" name="citaId" value="@citaEnSlot.CitaId" />
+                                        <input type="hidden" name="semana" value="@Model.FechaReferencia.ToString("yyyy-MM-dd")" />
+                                        <button type="submit" class="btn btn-sm btn-outline-danger w-100 rounded-pill py-1" style="font-size:0.75rem;" onclick="return confirm('¿Cancelar esta cita?');">
+                                            <i class="bi bi-x-circle me-1"></i> Cancelar
+                                        </button>
+                                    </form>
+                                }
                             </div>
                         }
                     </div>
@@ -57,7 +78,45 @@
         </div>
     </div>
 }
-else
+
+<div class="modal fade" id="modalAgendarCita" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <form asp-action="AgendarCita" method="post">
+                <div class="modal-header"><h5 class="modal-title fw-bold">Agendar nueva cita</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+                <div class="modal-body">
+                    <label class="form-label small fw-bold">Paciente</label>
+                    <select name="PacienteId" class="form-select mb-3" required>
+                        <option value="">Selecciona un paciente</option>
+                        @foreach (var paciente in Model.PacientesDisponibles)
+                        {
+                            <option value="@paciente.PacienteId">@paciente.NombreCompleto — @paciente.Identificacion</option>
+                        }
+                    </select>
+                    <label class="form-label small fw-bold">Servicio</label>
+                    <select name="ServicioId" class="form-select mb-3" required>
+                        <option value="">Selecciona un servicio</option>
+                        @foreach (var servicio in Model.ServiciosDisponibles)
+                        {
+                            <option value="@servicio.ServicioId">@servicio.Nombre — @servicio.Precio.ToString("C2")</option>
+                        }
+                    </select>
+                    <div class="row g-2 mb-3">
+                        <div class="col-7"><label class="form-label small fw-bold">Fecha</label><input type="date" name="Fecha" min="@DateTime.Today.ToString("yyyy-MM-dd")" value="@DateTime.Today.AddDays(1).ToString("yyyy-MM-dd")" class="form-control" required /></div>
+                        <div class="col-5"><label class="form-label small fw-bold">Hora</label><input type="time" name="HoraInicio" value="09:00" class="form-control" required /></div>
+                    </div>
+                    <label class="form-label small fw-bold">Duración</label>
+                    <select name="DuracionMinutos" class="form-select mb-3"><option value="30">30 minutos</option><option value="45">45 minutos</option><option value="60" selected>60 minutos</option><option value="90">90 minutos</option></select>
+                    <label class="form-label small fw-bold">Motivo de consulta</label><input name="MotivoConsulta" class="form-control mb-3" maxlength="500" />
+                    <label class="form-label small fw-bold">Observaciones</label><textarea name="Observaciones" class="form-control" rows="2" maxlength="1000"></textarea>
+                    <div class="alert alert-info small mt-3 mb-0">La cita quedará pendiente de pago y se generará su factura automáticamente.</div>
+                </div>
+                <div class="modal-footer"><button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancelar</button><button type="submit" class="btn btn-primary">Agendar cita</button></div>
+            </form>
+        </div>
+    </div>
+</div>
+@if (Model.CitasBloque == null || !Model.CitasBloque.Any())
 {
     <div class="fisio-card text-center py-5">
         <i class="bi bi-calendar-x d-block display-4 text-muted mb-3 opacity-50"></i>

@@ -1,0 +1,12 @@
+@model List<FisioSalud_Proyecto.Models.Entities.Pago>
+@{ var esAdmin = User.IsInRole("Administrador"); Layout = esAdmin ? "_LayoutAdmin" : "_Layout"; ViewData["Title"] = "Comprobantes de pago"; }
+<div class="container py-4"><h2>Comprobantes de pago</h2><a href="@(esAdmin ? "/Administrador/Facturas" : "/Cliente/Facturas")">Volver a facturas</a>
+<p>Se registra y concilia el pago realizado por otro medio. Esta pantalla no carga tarjetas ni realiza transferencias bancarias.</p>
+@if (TempData["Success"] != null) { <div class="alert alert-success">@TempData["Success"]</div> }
+@if (TempData["Error"] != null) { <div class="alert alert-danger">@TempData["Error"]</div> }
+@if (!Model.Any()) { <p>No hay comprobantes registrados.</p> }
+@foreach (var pago in Model) {
+<article class="card p-3 mb-3"><h5>@pago.Factura.NumeroFactura · @pago.Monto.ToString("C2")</h5><p>@pago.Factura.Paciente.NombreCompleto · @pago.MetodoPago · Referencia: @pago.Referencia</p><p>@pago.FechaRegistro.ToString("dd/MM/yyyy HH:mm") · @(pago.Estado == "PENDIENTE" ? "En revisión" : pago.Estado == "CANCELADO" ? "Rechazado / cancelado" : pago.Estado)</p>
+@if (esAdmin && pago.Estado == "PENDIENTE") { <p>Verifica el ingreso en caja o en el banco antes de aprobar.</p><form asp-action="Verificar" method="post"><input type="hidden" name="pagoId" value="@pago.PagoId"/><button name="aprobar" value="true" class="btn btn-success">Ingreso verificado: aprobar</button> <button name="aprobar" value="false" class="btn btn-outline-danger">Rechazar</button></form> }
+</article>
+}</div>

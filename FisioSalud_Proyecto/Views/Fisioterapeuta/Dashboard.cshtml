@@ -103,8 +103,7 @@
                 @if (Model.PacientesActivosLista != null && Model.PacientesActivosLista.Any())
                 {
                     <div class="d-flex align-items-center gap-2 mb-2 text-muted" style="font-size: 0.75rem;">
-                        <input type="checkbox" class="form-check-input mt-0" id="t1" />
-                        <label for="t1">Revisar historial de @Model.PacientesActivosLista.First().NombreCompleto</label>
+                        <a asp-action="VerPaciente" asp-route-id="@Model.PacientesActivosLista.First().PacienteId">Revisar historial de @Model.PacientesActivosLista.First().NombreCompleto</a>
                     </div>
                 }
                 else
@@ -160,7 +159,7 @@
                                             <div class="progress-track">
                                                 <div class="progress-fill cyan" style="width: @(p.ProgresoPorcentaje)%"></div>
                                             </div>
-                                            <span class="progress-text">@(p.ProgresoPorcentaje)%</span>
+                                            <span class="progress-text">@(p.TieneMedicion ? p.ProgresoPorcentaje + "%" : "Sin medir")</span>
                                         </div>
                                     </td>
                                     <td>@p.SesionesTexto</td>
@@ -168,7 +167,7 @@
                                     <td>
                                         <div class="pain-score-indicator">
                                             <span class="pain-bar @(p.NivelDolor <= 4 ? "low" : p.NivelDolor <= 6 ? "mid" : "high")"></span>
-                                            <span>@p.NivelDolor</span>
+                                            <span>@(p.TieneMedicion ? p.NivelDolor.ToString() : "Sin medir")</span>
                                         </div>
                                     </td>
                                     <td>
@@ -242,7 +241,8 @@
             <div class="d-flex flex-column gap-2">
                 <div class="text-center py-3 text-muted">
                     <i class="bi bi-activity d-block fs-3 mb-1 opacity-50"></i>
-                    <span style="font-size: 0.78rem;">No hay ejercicios registrados.</span>
+                    @if (!Model.Biblioteca.Any()) { <span>No hay ejercicios registrados.</span> }
+                    @foreach (var ejercicio in Model.Biblioteca) { <a class="d-block mb-2" asp-action="Ejercicios" asp-route-busqueda="@ejercicio.Nombre">@ejercicio.Nombre · @ejercicio.Dosificacion</a> }
                 </div>
             </div>
         </div>
