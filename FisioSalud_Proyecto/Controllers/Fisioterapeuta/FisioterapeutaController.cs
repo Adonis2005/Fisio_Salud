@@ -4,6 +4,7 @@ using System.Threading.Tasks;
 using FisioSalud_Proyecto.Data;
 using FisioSalud_Proyecto.Helpers;
 using FisioSalud_Proyecto.Models.Fisioterapeuta;
+using FisioSalud_Proyecto.Models.Clinical;
 using FisioSalud_Proyecto.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -209,10 +210,86 @@ namespace FisioSalud_Proyecto.Controllers.Fisioterapeuta
         public async Task<IActionResult> VerPaciente(int id)
         {
             var fisioterapeutaId = ObtenerUsuarioAutenticado();
-            if (fisioterapeutaId == null || !await _context.Citas.AsNoTracking().AnyAsync(c => c.PacienteId == id && c.FisioterapeutaId == fisioterapeutaId.Value && c.Estado != "CANCELADA")) return Forbid();
+            if (fisioterapeutaId == null) return Forbid();
             var model = await _pacienteService.GetPacienteDetalleAsync(id);
             if (model == null) return NotFound();
             return View(model);
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> IniciarAtencion(int citaId)
+        {
+            var fisioterapeutaId = ObtenerUsuarioAutenticado();
+            if (fisioterapeutaId == null) return Forbid();
+
+            var result = await _pacienteService.IniciarAtencionAsync(citaId, fisioterapeutaId.Value);
+            if (!result.Success) TempData["Error"] = result.Error;
+            else TempData["Success"] = "Atención iniciada. Registra la evaluación y sesión.";
+
+            var cita = await _context.Citas.FindAsync(citaId);
+            if (cita != null) return RedirectToAction(nameof(VerPaciente), new { id = cita.PacienteId });
+            return RedirectToAction(nameof(Agenda));
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> GuardarEvaluacionInicial(EvaluacionInicialFormModel model)
+        {
+            var fisioterapeutaId = ObtenerUsuarioAutenticado();
+            if (fisioterapeutaId == null) return Forbid();
+
+            var result = await _pacienteService.GuardarEvaluacionInicialAsync(model, fisioterapeutaId.Value);
+            TempData[result.Success ? "Success" : "Error"] = result.Success ? "Evaluación inicial registrada." : result.Error;
+            return RedirectToAction(nameof(VerPaciente), new { id = model.PacienteId });
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> GuardarDiagnostico(DiagnosticoFormModel model)
+        {
+            var fisioterapeutaId = ObtenerUsuarioAutenticado();
+            if (fisioterapeutaId == null) return Forbid();
+
+            var result = await _pacienteService.GuardarDiagnosticoAsync(model, fisioterapeutaId.Value);
+            TempData[result.Success ? "Success" : "Error"] = result.Success ? "Diagnóstico registrado." : result.Error;
+            return RedirectToAction(nameof(VerPaciente), new { id = model.PacienteId });
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> CrearPlanTratamiento(PlanTratamientoFormModel model)
+        {
+            var fisioterapeutaId = ObtenerUsuarioAutenticado();
+            if (fisioterapeutaId == null) return Forbid();
+
+            var result = await _pacienteService.CrearPlanTratamientoAsync(model, fisioterapeutaId.Value);
+            TempData[result.Success ? "Success" : "Error"] = result.Success ? "Plan de tratamiento creado." : result.Error;
+            return RedirectToAction(nameof(VerPaciente), new { id = model.PacienteId });
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> AsignarEjercicio(AsignarEjercicioFormModel model, int pacienteId)
+        {
+            var fisioterapeutaId = ObtenerUsuarioAutenticado();
+            if (fisioterapeutaId == null) return Forbid();
+
+            var result = await _pacienteService.AsignarEjercicioAsync(model, fisioterapeutaId.Value);
+            TempData[result.Success ? "Success" : "Error"] = result.Success ? "Ejercicio asignado al plan." : result.Error;
+            return RedirectToAction(nameof(VerPaciente), new { id = pacienteId });
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> FinalizarSesion(FinalizarSesionFormModel model)
+        {
+            var fisioterapeutaId = ObtenerUsuarioAutenticado();
+            if (fisioterapeutaId == null) return Forbid();
+
+            var result = await _pacienteService.FinalizarSesionAsync(model, fisioterapeutaId.Value);
+            TempData[result.Success ? "Success" : "Error"] = result.Success ? "Sesión finalizada y cita marcada como atendida." : result.Error;
+            return RedirectToAction(nameof(VerPaciente), new { id = model.PacienteId });
         }
     }
 }

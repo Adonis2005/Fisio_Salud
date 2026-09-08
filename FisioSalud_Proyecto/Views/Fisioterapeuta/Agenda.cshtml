@@ -39,10 +39,16 @@
                     <div class="agenda-grid-cell">
                         @if (citaEnSlot != null)
                         {
-                            <div class="appointment-card-block @citaEnSlot.ColorClass">
-                                <div class="appt-title">@citaEnSlot.PacienteNombre</div>
-                                <div class="appt-desc">@citaEnSlot.Diagnostico</div>
-                                <div class="appt-desc">@citaEnSlot.Duracion &middot; @citaEnSlot.HoraInicio</div>
+                            <div class="appointment-card-block @citaEnSlot.ColorClass p-2 shadow-sm rounded-3">
+                                <div class="appt-title fw-bold">@citaEnSlot.PacienteNombre</div>
+                                <div class="appt-desc text-muted small">@citaEnSlot.Diagnostico</div>
+                                <div class="appt-desc small">@citaEnSlot.Duracion &middot; @citaEnSlot.HoraInicio</div>
+                                <form asp-action="IniciarAtencion" method="post" class="mt-2">
+                                    <input type="hidden" name="citaId" value="@citaEnSlot.CitaId" />
+                                    <button type="submit" class="btn btn-sm btn-primary w-100 rounded-pill py-1" style="font-size:0.75rem;">
+                                        <i class="bi bi-play-circle-fill me-1"></i> Iniciar atención
+                                    </button>
+                                </form>
                             </div>
                         }
                     </div>

@@ -5,6 +5,7 @@ using System.Text;
 using System.Threading.Tasks;
 using FisioSalud_Proyecto.Helpers;
 using FisioSalud_Proyecto.Models.Administrador;
+using FisioSalud_Proyecto.Models.Clinical;
 using FisioSalud_Proyecto.Models.Fisioterapeuta;
 using FisioSalud_Proyecto.Services;
 using Microsoft.AspNetCore.Authorization;
@@ -166,9 +167,58 @@ namespace FisioSalud_Proyecto.Controllers.Administrador
             return View(await _adminPanelService.BuscarAsync(q));
         }
 
-        public async Task<IActionResult> Usuarios(string busqueda, int? rolId, bool? estado)
+        public IActionResult Usuarios(string busqueda, int? rolId, bool? estado)
         {
             return RedirectToAction(nameof(Configuracion), new { seccion = "usuarios", busqueda, rolId, estado });
+        }
+
+        public async Task<IActionResult> Servicios()
+        {
+            ViewData["Title"] = "Servicios y Tarifas";
+            return View(await _adminPanelService.GetServiciosAsync());
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> GuardarServicio(ServicioFormViewModel model)
+        {
+            var result = await _adminPanelService.SaveServicioAsync(model);
+            TempData[result.Success ? "Success" : "Error"] = result.Success ? "Servicio guardado correctamente." : result.Error;
+            return RedirectToAction(nameof(Servicios));
+        }
+
+        public async Task<IActionResult> Disponibilidad()
+        {
+            ViewData["Title"] = "Horarios y Disponibilidad de Terapeutas";
+            ViewBag.Terapeutas = await _usuarioService.GetUsuariosPorRolAsync(Roles.Fisioterapeuta);
+            return View(await _adminPanelService.GetDisponibilidadesAsync());
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> GuardarDisponibilidad(DisponibilidadFormViewModel model)
+        {
+            var result = await _adminPanelService.SaveDisponibilidadAsync(model);
+            TempData[result.Success ? "Success" : "Error"] = result.Success ? "Horario de disponibilidad actualizado." : result.Error;
+            return RedirectToAction(nameof(Disponibilidad));
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> GuardarEjercicioCatalogo(FisioSalud_Proyecto.Models.Entities.Ejercicio model)
+        {
+            var result = await _adminPanelService.SaveEjercicioCatalogoAsync(model);
+            TempData[result.Success ? "Success" : "Error"] = result.Success ? "Ejercicio guardado en catálogo." : result.Error;
+            return RedirectToAction(nameof(Planes));
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> GuardarPatologia(FisioSalud_Proyecto.Models.Entities.Patologia model)
+        {
+            var result = await _adminPanelService.SavePatologiaAsync(model);
+            TempData[result.Success ? "Success" : "Error"] = result.Success ? "Patología guardada en catálogo." : result.Error;
+            return RedirectToAction(nameof(Planes));
         }
 
         [HttpGet]

@@ -4,6 +4,21 @@
     ViewData["Title"] = "Planes y Biblioteca";
 }
 
+<div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
+    <div>
+        <h2 class="fw-bold fs-4 text-dark m-0">Biblioteca y Catálogo Clínico</h2>
+        <p class="text-muted small m-0">Gestiona los ejercicios terapéuticos, patologías y protocolos de atención.</p>
+    </div>
+    <div class="d-flex gap-2">
+        <button type="button" class="btn btn-outline-primary rounded-pill px-3" data-bs-toggle="modal" data-bs-target="#modalNuevoEjercicioCat">
+            <i class="bi bi-plus-circle me-1"></i> Nuevo Ejercicio
+        </button>
+        <button type="button" class="btn btn-outline-info rounded-pill px-3" data-bs-toggle="modal" data-bs-target="#modalNuevaPatologiaCat">
+            <i class="bi bi-file-medical me-1"></i> Nueva Patología
+        </button>
+    </div>
+</div>
+
 <!-- KPI Cards -->
 <div class="admin-kpi-grid mb-4">
     <div class="kpi-card">
@@ -33,9 +48,9 @@
     <div class="kpi-card">
         <div class="kpi-icon-box yellow"><i class="bi bi-activity"></i></div>
         <div>
-            <div class="kpi-number">—</div>
-            <div class="kpi-title">Ejercicios en BD</div>
-            <div class="kpi-sub yellow">Módulo próximamente</div>
+            <div class="kpi-number">Activos</div>
+            <div class="kpi-title">Módulo de Catálogo</div>
+            <div class="kpi-sub yellow">Ejercicios & Patologías</div>
         </div>
     </div>
 </div>
@@ -78,13 +93,88 @@
     {
         <div class="empty-state py-5">
             <i class="bi bi-journal-medical d-block fs-1 mb-3 opacity-30"></i>
-            <p class="fw-semibold mb-1">La biblioteca está vacía.</p>
+            <p class="fw-semibold mb-1">La biblioteca está activa.</p>
             <p class="text-muted mb-3" style="font-size:0.85rem;">
-                Los protocolos y tratamientos aparecen aquí cuando los fisioterapeutas registren motivos de consulta en las citas.
+                Utiliza los botones superiores para incorporar nuevos ejercicios y patologías al catálogo clínico general.
             </p>
-            <a asp-action="Dashboard" class="btn-fisio-primary d-inline-flex align-items-center gap-1" style="font-size:0.82rem;">
-                <i class="bi bi-grid-1x2-fill"></i> Volver al dashboard
-            </a>
         </div>
     }
 </div>
+
+<!-- Modal Nuevo Ejercicio -->
+<div class="modal fade" id="modalNuevoEjercicioCat" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <form asp-action="GuardarEjercicioCatalogo" method="post">
+                <div class="modal-header">
+                    <h5 class="modal-title fw-bold">Nuevo Ejercicio Terapéutico</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label small fw-bold">Nombre del Ejercicio</label>
+                        <input type="text" name="Nombre" class="form-control" placeholder="ej. Estiramiento Isquiotibial" required />
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label small fw-bold">Descripción</label>
+                        <textarea name="Descripcion" class="form-control" rows="2" placeholder="Técnica de ejecución..."></textarea>
+                    </div>
+                    <div class="row g-2 mb-3">
+                        <div class="col-6">
+                            <label class="form-label small fw-bold">Duración estimada (min)</label>
+                            <input type="number" name="DuracionMinutos" class="form-control" value="15" />
+                        </div>
+                        <div class="col-6">
+                            <label class="form-label small fw-bold">Estado</label>
+                            <select name="Estado" class="form-select">
+                                <option value="true">Activo</option>
+                                <option value="false">Inactivo</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label small fw-bold">Recomendaciones / Indicaciones</label>
+                        <textarea name="Recomendaciones" class="form-control" rows="2" placeholder="Mantener la espalda recta..."></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-sm btn-light" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-sm btn-primary">Guardar Ejercicio</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Nueva Patología -->
+<div class="modal fade" id="modalNuevaPatologiaCat" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <form asp-action="GuardarPatologia" method="post">
+                <div class="modal-header">
+                    <h5 class="modal-title fw-bold">Nueva Patología Clínica</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label small fw-bold">Nombre de la Patología</label>
+                        <input type="text" name="Nombre" class="form-control" placeholder="ej. Tendinitis rotuliana" required />
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label small fw-bold">Descripción</label>
+                        <textarea name="Descripcion" class="form-control" rows="3" placeholder="Síntomas y características clínicas..."></textarea>
+                    </div>
+                    <div class="form-check form-switch">
+                        <input class="form-check-input" type="checkbox" name="Estado" value="true" id="pat_new" checked />
+                        <label class="form-check-label small fw-bold" for="pat_new">Patología Activa</label>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-sm btn-light" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-sm btn-info text-white">Guardar Patología</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+

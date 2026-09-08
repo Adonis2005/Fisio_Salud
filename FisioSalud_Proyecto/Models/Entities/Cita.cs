@@ -14,6 +14,8 @@ namespace FisioSalud_Proyecto.Models.Entities
 
         public int FisioterapeutaId { get; set; }
 
+        public int? ServicioId { get; set; }
+
         [Required]
         public DateTime Fecha { get; set; }
 
@@ -40,5 +42,8 @@ namespace FisioSalud_Proyecto.Models.Entities
 
         [ForeignKey(nameof(FisioterapeutaId))]
         public Usuario Fisioterapeuta { get; set; }
+
+        [ForeignKey(nameof(ServicioId))]
+        public Servicio Servicio { get; set; }
     }
 }

@@ -31,17 +31,29 @@
                             <th class="pb-3">Especialista</th>
                             <th class="pb-3">Servicio</th>
                             <th class="pb-3">Estado</th>
+                            <th class="pb-3 text-center">Acción</th>
                         </tr>
                     </thead>
                     <tbody>
                     @foreach (var c in Model.Citas)
                     {
                         <tr class="border-t border-espresso/5">
-                            <td class="py-3">@c.Fecha.ToString("dd/MM/yyyy")</td>
+                            <td class="py-3 font-semibold">@c.Fecha.ToString("dd/MM/yyyy")</td>
                             <td>@c.HoraInicio.ToString(@"hh\:mm")</td>
                             <td>@c.Fisioterapeuta</td>
                             <td>@(c.MotivoConsulta ?? "-")</td>
                             <td><span class="badge-soft @CitaEstados.Css(c.Estado)">@CitaEstados.Etiqueta(c.Estado)</span></td>
+                            <td class="text-center">
+                                @if (c.Estado != CitaEstados.Atendida && c.Estado != CitaEstados.Cancelada)
+                                {
+                                    <form asp-action="CancelarCita" method="post" class="inline" onsubmit="return confirm('¿Estás seguro de cancelar esta cita?');">
+                                        <input type="hidden" name="citaId" value="@c.CitaId" />
+                                        <button type="submit" class="btn btn-xs btn-outline-danger py-1 px-2 text-xs rounded-pill">
+                                            Cancelar
+                                        </button>
+                                    </form>
+                                }
+                            </td>
                         </tr>
                     }
                     </tbody>

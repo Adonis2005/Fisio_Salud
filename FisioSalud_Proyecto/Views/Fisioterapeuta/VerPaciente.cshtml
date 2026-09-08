@@ -79,50 +79,116 @@
                 </li>
             </ul>
 
+            @{
+                var planActivo = Model.PlanesTratamiento?.FirstOrDefault(p => p.Estado == "ACTIVO") ?? Model.PlanesTratamiento?.FirstOrDefault();
+                var citaEnAtencion = Model.CitasLista?.FirstOrDefault(c => c.Estado == FisioSalud_Proyecto.Helpers.CitaEstados.EnAtencion);
+                var diagnosticoReciente = Model.DiagnosticosLista?.FirstOrDefault();
+            }
+            <div class="d-flex gap-2 flex-wrap mb-4">
+                <button type="button" class="btn btn-sm btn-outline-primary rounded-pill px-3" data-bs-toggle="modal" data-bs-target="#modalEvaluacion">
+                    <i class="bi bi-file-earmark-medical me-1"></i> Evaluación Inicial
+                </button>
+                <button type="button" class="btn btn-sm btn-outline-info rounded-pill px-3" data-bs-toggle="modal" data-bs-target="#modalDiagnostico">
+                    <i class="bi bi-stethoscope me-1"></i> Registrar Diagnóstico
+                </button>
+                <button type="button" class="btn btn-sm btn-outline-warning rounded-pill px-3" data-bs-toggle="modal" data-bs-target="#modalPlanTratamiento">
+                    <i class="bi bi-journal-plus me-1"></i> Plan de Tratamiento
+                </button>
+                <button type="button" class="btn btn-sm btn-outline-success rounded-pill px-3" data-bs-toggle="modal" data-bs-target="#modalAsignarEjercicio"
+                        @(planActivo == null ? "disabled title=\"Crea primero un plan de tratamiento\"" : "")>
+                    <i class="bi bi-activity me-1"></i> Asignar Ejercicios
+                </button>
+                <button type="button" class="btn btn-sm btn-success rounded-pill px-3" data-bs-toggle="modal" data-bs-target="#modalFinalizarSesion"
+                        @(citaEnAtencion == null || planActivo == null ? "disabled title=\"Debe iniciar la atención y tener un plan activo\"" : "")>
+                    <i class="bi bi-check-circle-fill me-1"></i> Finalizar Sesión
+                </button>
+            </div>
+
             <div class="tab-content" id="expedienteTabContent">
                 <!-- Tab 1: Evolución -->
                 <div class="tab-pane fade show active" id="evolucion" role="tabpanel">
                     <div class="d-flex justify-content-between align-items-center mb-3">
-                        <h5 class="fw-bold m-0" style="font-size: 0.9rem;">Notas de Sesión</h5>
-                        <button class="btn-fisio-primary py-1 px-3" style="font-size: 0.78rem;">+ Nueva Nota</button>
+                        <h5 class="fw-bold m-0" style="font-size: 0.9rem;">Notas y Registro de Evolución</h5>
                     </div>
 
-                    <div class="timeline border-start border-2 ps-3 ms-2">
-                        <div class="mb-4 position-relative">
-                            <div class="position-absolute" style="left: -23px; top: 0; width: 12px; height: 12px; background: #0096e6; border-radius: 50%;"></div>
-                            <div class="fw-bold" style="font-size: 0.83rem;">Sesión 5 - @Model.UltimaSesionTexto</div>
-                            <p class="text-muted mb-1" style="font-size: 0.78rem;">Paciente refiere disminución significativa del dolor en escala 4/10. Excelente respuesta a movilidad pasiva.</p>
+                    @if (Model.SesionesLista.Any() || Model.Evaluaciones.Any())
+                    {
+                        <div class="timeline border-start border-2 ps-3 ms-2">
+                            @foreach (var s in Model.SesionesLista)
+                            {
+                                var seg = s.Seguimientos.FirstOrDefault();
+                                <div class="mb-4 position-relative">
+                                    <div class="position-absolute" style="left: -23px; top: 0; width: 12px; height: 12px; background: #0096e6; border-radius: 50%;"></div>
+                                    <div class="fw-bold" style="font-size: 0.83rem;">Sesión @s.NumeroSesion - @s.FechaSesion.ToString("dd/MM/yyyy")</div>
+                                    <p class="text-dark mb-1" style="font-size: 0.78rem;"><strong>Actividades:</strong> @s.ActividadesRealizadas</p>
+                                    @if (seg != null)
+                                    {
+                                        <div class="d-flex gap-3 text-muted" style="font-size: 0.75rem;">
+                                            <span><strong>Dolor:</strong> @(seg.NivelDolor?.ToString("0.#") ?? "-")/10</span>
+                                            <span><strong>Movilidad:</strong> @(seg.MovilidadArticular?.ToString("0.#") ?? "-")%</span>
+                                            <span><strong>Recuperación:</strong> @(seg.GradoRecuperacion?.ToString("0.#") ?? "-")%</span>
+                                        </div>
+                                    }
+                                    @if (!string.IsNullOrEmpty(s.Observaciones))
+                                    {
+                                        <p class="text-muted mb-0 small italic">@s.Observaciones</p>
+                                    }
+                                </div>
+                            }
+
+                            @foreach (var ev in Model.Evaluaciones)
+                            {
+                                <div class="mb-4 position-relative">
+                                    <div class="position-absolute" style="left: -23px; top: 0; width: 12px; height: 12px; background: #10b981; border-radius: 50%;"></div>
+                                    <div class="fw-bold text-success" style="font-size: 0.83rem;">Evaluación Inicial - @ev.FechaEvaluacion.ToString("dd/MM/yyyy")</div>
+                                    <p class="text-dark mb-1" style="font-size: 0.78rem;"><strong>Motivo:</strong> @ev.MotivoConsulta</p>
+                                    @if (!string.IsNullOrEmpty(ev.Antecedentes))
+                                    {
+                                        <p class="text-muted mb-1 small"><strong>Antecedentes:</strong> @ev.Antecedentes</p>
+                                    }
+                                    <span class="badge bg-light text-dark border">Dolor Inicial: @(ev.DolorInicial?.ToString("0.#") ?? "-")/10</span>
+                                </div>
+                            }
                         </div>
-                        <div class="mb-3 position-relative">
-                            <div class="position-absolute" style="left: -23px; top: 0; width: 12px; height: 12px; background: #94a3b8; border-radius: 50%;"></div>
-                            <div class="fw-bold" style="font-size: 0.83rem;">Sesión 4 - Hace 4 días</div>
-                            <p class="text-muted mb-0" style="font-size: 0.78rem;">Aplicación de ultrasonido terapéutico y estiramiento asistido.</p>
-                        </div>
-                    </div>
+                    }
+                    else
+                    {
+                        <p class="text-muted small">No hay evaluaciones ni sesiones registradas aún. Utiliza los botones superiores para registrar la primera evaluación.</p>
+                    }
                 </div>
 
                 <!-- Tab 2: Ejercicios -->
                 <div class="tab-pane fade" id="ejerciciosTabContent" role="tabpanel">
                     <div class="d-flex justify-content-between align-items-center mb-3">
                         <h5 class="fw-bold m-0" style="font-size: 0.9rem;">Ejercicios Asignados</h5>
-                        <a asp-action="Ejercicios" class="btn-fisio-primary py-1 px-3" style="font-size: 0.78rem;">+ Asignar Ejercicio</a>
+                        <button type="button" class="btn btn-sm btn-primary rounded-pill px-3" data-bs-toggle="modal" data-bs-target="#modalAsignarEjercicio">
+                            + Asignar Ejercicio
+                        </button>
                     </div>
-                    <div class="list-group list-group-flush">
-                        <div class="list-group-item d-flex justify-content-between align-items-center py-3">
-                            <div>
-                                <div class="fw-bold" style="font-size: 0.85rem;">Extensión lumbar</div>
-                                <div class="text-muted" style="font-size: 0.75rem;">3 series x 15 repeticiones &middot; Diario</div>
-                            </div>
-                            <span class="status-badge activo">Cumplido 80%</span>
+
+                    @if (Model.EjerciciosAsignados.Any())
+                    {
+                        <div class="list-group list-group-flush">
+                            @foreach (var ex in Model.EjerciciosAsignados)
+                            {
+                                <div class="list-group-item d-flex justify-content-between align-items-center py-3">
+                                    <div>
+                                        <div class="fw-bold text-dark" style="font-size: 0.85rem;">@(ex.Ejercicio != null ? ex.Ejercicio.Nombre : $"Ejercicio #{ex.EjercicioId}")</div>
+                                        <div class="text-muted" style="font-size: 0.75rem;">@ex.Series series x @ex.Repeticiones repeticiones &middot; @ex.Frecuencia</div>
+                                        @if (!string.IsNullOrEmpty(ex.Observaciones))
+                                        {
+                                            <div class="small text-secondary">@ex.Observaciones</div>
+                                        }
+                                    </div>
+                                    <span class="badge bg-primary-subtle text-primary border px-3 py-1 rounded-pill">Asignado</span>
+                                </div>
+                            }
                         </div>
-                        <div class="list-group-item d-flex justify-content-between align-items-center py-3">
-                            <div>
-                                <div class="fw-bold" style="font-size: 0.85rem;">Puente de glúteos</div>
-                                <div class="text-muted" style="font-size: 0.75rem;">3 series x 20 repeticiones &middot; 3 veces por semana</div>
-                            </div>
-                            <span class="status-badge activo">Cumplido 100%</span>
-                        </div>
-                    </div>
+                    }
+                    else
+                    {
+                        <p class="text-muted small">El paciente no tiene ejercicios asignados en su rutina actual.</p>
+                    }
                 </div>
 
                 <!-- Tab 3: Citas -->
@@ -131,34 +197,296 @@
                         <h5 class="fw-bold m-0" style="font-size: 0.9rem;">Citas Registradas</h5>
                         <a asp-action="Agenda" class="btn-fisio-primary py-1 px-3" style="font-size: 0.78rem;">+ Agendar Cita</a>
                     </div>
-                    <div class="table-responsive">
-                        <table class="table table-hover align-middle" style="font-size: 0.82rem;">
-                            <thead>
-                                <tr>
-                                    <th>Fecha</th>
-                                    <th>Hora</th>
-                                    <th>Motivo</th>
-                                    <th>Estado</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                <tr>
-                                    <td>Hoy</td>
-                                    <td>10:15 AM</td>
-                                    <td>Evaluación periódica</td>
-                                    <td><span class="status-badge en-curso">En curso</span></td>
-                                </tr>
-                                <tr>
-                                    <td>14/07/2026</td>
-                                    <td>11:00 AM</td>
-                                    <td>Sesión de seguimiento</td>
-                                    <td><span class="status-badge pendiente">Programada</span></td>
-                                </tr>
-                            </tbody>
-                        </table>
-                    </div>
+
+                    @if (Model.CitasLista.Any())
+                    {
+                        <div class="table-responsive">
+                            <table class="table table-hover align-middle" style="font-size: 0.82rem;">
+                                <thead>
+                                    <tr>
+                                        <th>Fecha</th>
+                                        <th>Hora</th>
+                                        <th>Servicio / Motivo</th>
+                                        <th>Estado</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach (var c in Model.CitasLista)
+                                    {
+                                        <tr>
+                                            <td class="fw-bold">@c.Fecha.ToString("dd/MM/yyyy")</td>
+                                            <td>@c.HoraInicio.ToString(@"hh\:mm")</td>
+                                            <td>@(c.Servicio != null ? c.Servicio.Nombre : c.MotivoConsulta)</td>
+                                            <td>
+                                                <span class="badge bg-@FisioSalud_Proyecto.Helpers.CitaEstados.Css(c.Estado) px-2 py-1 rounded-pill">
+                                                    @FisioSalud_Proyecto.Helpers.CitaEstados.Etiqueta(c.Estado)
+                                                </span>
+                                            </td>
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+                        </div>
+                    }
+                    else
+                    {
+                        <p class="text-muted small">No hay citas registradas para este paciente.</p>
+                    }
                 </div>
             </div>
         </div>
     </div>
 </div>
+
+<!-- Modal Evaluación Inicial -->
+<div class="modal fade" id="modalEvaluacion" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <form asp-action="GuardarEvaluacionInicial" method="post">
+                <input type="hidden" name="PacienteId" value="@Model.PacienteId" />
+                <div class="modal-header">
+                    <h5 class="modal-title fw-bold">Registrar Evaluación Inicial</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label small fw-bold">Motivo de consulta</label>
+                        <input type="text" name="MotivoConsulta" class="form-control form-control-sm" required placeholder="ej. Dolor lumbar agudo" />
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label small fw-bold">Antecedentes médicos</label>
+                        <textarea name="Antecedentes" class="form-control form-control-sm" rows="2" placeholder="Lesiones previas, cirugías..."></textarea>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label small fw-bold">Nivel de dolor inicial (0 - 10)</label>
+                        <input type="number" name="DolorInicial" min="0" max="10" class="form-control form-control-sm" value="5" />
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label small fw-bold">Evaluación física y postura</label>
+                        <textarea name="EvaluacionFisica" class="form-control form-control-sm" rows="2" placeholder="Rangos de movimiento, palpación..."></textarea>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label small fw-bold">Observaciones</label>
+                        <textarea name="Observaciones" class="form-control form-control-sm" rows="2"></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-sm btn-light" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-sm btn-primary">Guardar Evaluación</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Diagnóstico -->
+<div class="modal fade" id="modalDiagnostico" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <form asp-action="GuardarDiagnostico" method="post">
+                <input type="hidden" name="PacienteId" value="@Model.PacienteId" />
+                <div class="modal-header">
+                    <h5 class="modal-title fw-bold">Registrar Diagnóstico Clínico</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label small fw-bold">Diagnóstico</label>
+                        <textarea name="DiagnosticoTexto" class="form-control form-control-sm" rows="3" required placeholder="ej. Cervicalgia mecánica por tensión postural"></textarea>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label small fw-bold">Evaluación Funcional</label>
+                        <textarea name="EvaluacionFuncional" class="form-control form-control-sm" rows="2" placeholder="Restricción de rotación lateral..."></textarea>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label small fw-bold">Observaciones</label>
+                        <textarea name="Observaciones" class="form-control form-control-sm" rows="2"></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-sm btn-light" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-sm btn-info text-white">Guardar Diagnóstico</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Plan de Tratamiento -->
+<div class="modal fade" id="modalPlanTratamiento" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <form asp-controller="Fisioterapeuta" asp-action="CrearPlanTratamiento" method="post">
+                @Html.AntiForgeryToken()
+                <input type="hidden" name="PacienteId" value="@Model.PacienteId" />
+                <input type="hidden" name="DiagnosticoId" value="@(diagnosticoReciente?.DiagnosticoId ?? 0)" />
+                <div class="modal-header">
+                    <h5 class="modal-title fw-bold">Crear Plan de Tratamiento</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    @if (diagnosticoReciente == null)
+                    {
+                        <div class="alert alert-warning small">⚠️ Registra un diagnóstico primero antes de crear un plan de tratamiento.</div>
+                    }
+                    <div class="mb-3">
+                        <label class="form-label small fw-bold">Nombre del Plan</label>
+                        <input type="text" name="Nombre" class="form-control form-control-sm" required placeholder="ej. Plan de Rehabilitación Lumbar" />
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label small fw-bold">Objetivos Terapéuticos</label>
+                        <textarea name="Objetivos" class="form-control form-control-sm" rows="2" required placeholder="Reducir el dolor, mejorar movilidad..."></textarea>
+                    </div>
+                    <div class="row g-2 mb-3">
+                        <div class="col-6">
+                            <label class="form-label small fw-bold">Duración estimada (semanas)</label>
+                            <input type="number" name="DuracionEstimada" class="form-control form-control-sm" value="8" min="1" />
+                        </div>
+                        <div class="col-6">
+                            <label class="form-label small fw-bold">Fecha de inicio</label>
+                            <input type="date" name="FechaInicio" class="form-control form-control-sm" value="@DateTime.Today.ToString("yyyy-MM-dd")" required />
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label small fw-bold">Observaciones</label>
+                        <textarea name="Observaciones" class="form-control form-control-sm" rows="2"></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-sm btn-light" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-sm btn-warning text-dark fw-bold"
+                            @(diagnosticoReciente == null ? "disabled" : "")>
+                        <i class="bi bi-journal-plus me-1"></i> Crear Plan
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Asignar Ejercicio -->
+<div class="modal fade" id="modalAsignarEjercicio" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <form asp-controller="Fisioterapeuta" asp-action="AsignarEjercicio" method="post">
+                @Html.AntiForgeryToken()
+                <input type="hidden" name="pacienteId" value="@Model.PacienteId" />
+                <input type="hidden" name="PlanTratamientoId" value="@(planActivo?.PlanTratamientoId ?? 0)" />
+                <div class="modal-header">
+                    <h5 class="modal-title fw-bold">Asignar Ejercicio a Rutina</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    @if (planActivo != null)
+                    {
+                        <div class="alert alert-info small py-2 mb-3">
+                            <i class="bi bi-info-circle me-1"></i> Plan activo: <strong>@planActivo.Nombre</strong>
+                        </div>
+                    }
+                    <div class="mb-3">
+                        <label class="form-label small fw-bold">Ejercicio ID (del catálogo)</label>
+                        <input type="number" name="EjercicioId" class="form-control form-control-sm" placeholder="Ingresa el ID del ejercicio" required min="1" />
+                        <div class="form-text">Ve al catálogo de ejercicios para consultar los IDs disponibles.</div>
+                    </div>
+                    <div class="row g-2 mb-3">
+                        <div class="col-6">
+                            <label class="form-label small fw-bold">Series</label>
+                            <input type="number" name="Series" class="form-control form-control-sm" value="3" min="1" />
+                        </div>
+                        <div class="col-6">
+                            <label class="form-label small fw-bold">Repeticiones</label>
+                            <input type="number" name="Repeticiones" class="form-control form-control-sm" value="12" min="1" />
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label small fw-bold">Frecuencia</label>
+                        <select name="Frecuencia" class="form-select form-select-sm">
+                            <option value="Diaria">Diaria</option>
+                            <option value="3 veces por semana" selected>3 veces por semana</option>
+                            <option value="2 veces por semana">2 veces por semana</option>
+                            <option value="1 vez por semana">1 vez por semana</option>
+                            <option value="Día por medio">Día por medio</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label small fw-bold">Indicaciones</label>
+                        <textarea name="Observaciones" class="form-control form-control-sm" rows="2" placeholder="Mantener postura derecha, no sobrepasar umbral de dolor..."></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-sm btn-light" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-sm btn-success">Asignar Ejercicio</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Finalizar Sesión -->
+<div class="modal fade" id="modalFinalizarSesion" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+        <div class="modal-content">
+            <form asp-controller="Fisioterapeuta" asp-action="FinalizarSesion" method="post">
+                @Html.AntiForgeryToken()
+                <input type="hidden" name="PacienteId" value="@Model.PacienteId" />
+                <input type="hidden" name="CitaId" value="@(citaEnAtencion?.CitaId ?? 0)" />
+                <input type="hidden" name="PlanTratamientoId" value="@(planActivo?.PlanTratamientoId ?? 0)" />
+                <div class="modal-header">
+                    <h5 class="modal-title fw-bold">
+                        <i class="bi bi-check-circle-fill text-success me-2"></i>Finalizar Sesión de Rehabilitación
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    @if (citaEnAtencion != null)
+                    {
+                        <div class="alert alert-success small py-2 mb-3">
+                            <i class="bi bi-calendar-check me-1"></i> Cita en atención: <strong>@citaEnAtencion.Fecha.ToString("dd/MM/yyyy")</strong>
+                            @if (planActivo != null)
+                            {
+                                <span> · Plan: <strong>@planActivo.Nombre</strong></span>
+                            }
+                        </div>
+                    }
+                    <div class="mb-3">
+                        <label class="form-label small fw-bold">Actividades Realizadas <span class="text-danger">*</span></label>
+                        <textarea name="ActividadesRealizadas" class="form-control form-control-sm" rows="3" required placeholder="Terapia manual, ultrasonido, estiramiento pasivo, crioterapia..."></textarea>
+                    </div>
+                    <div class="row g-2 mb-3">
+                        <div class="col-md-3 col-6">
+                            <label class="form-label small fw-bold">Dolor post (0-10)</label>
+                            <input type="number" name="NivelDolor" min="0" max="10" class="form-control form-control-sm" value="3" />
+                        </div>
+                        <div class="col-md-3 col-6">
+                            <label class="form-label small fw-bold">Movilidad (%)</label>
+                            <input type="number" name="MovilidadArticular" min="0" max="100" class="form-control form-control-sm" value="70" />
+                        </div>
+                        <div class="col-md-3 col-6">
+                            <label class="form-label small fw-bold">Fuerza (%)</label>
+                            <input type="number" name="FuerzaMuscular" min="0" max="100" class="form-control form-control-sm" value="65" />
+                        </div>
+                        <div class="col-md-3 col-6">
+                            <label class="form-label small fw-bold">Recuperación (%)</label>
+                            <input type="number" name="GradoRecuperacion" min="0" max="100" class="form-control form-control-sm" value="70" />
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label small fw-bold">Resultados alcanzados</label>
+                        <input type="text" name="Resultados" class="form-control form-control-sm" placeholder="ej. Mejoró rotación lateral 20 grados" />
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label small fw-bold">Observaciones y Recomendaciones</label>
+                        <textarea name="Observaciones" class="form-control form-control-sm" rows="2" placeholder="Aplicar compresas frías 15 min, reposo relativo..."></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-sm btn-light" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-sm btn-success fw-bold">
+                        <i class="bi bi-check-circle me-1"></i> Finalizar Sesión y Marcar Atendida
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+

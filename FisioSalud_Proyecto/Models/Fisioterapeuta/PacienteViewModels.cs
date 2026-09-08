@@ -27,6 +27,13 @@ namespace FisioSalud_Proyecto.Models.Fisioterapeuta
         public int NivelDolor { get; set; } = 4;
         public string UltimaSesionTexto { get; set; } = "Hoy";
         public DateTime FechaRegistro { get; set; }
+
+        public List<FisioSalud_Proyecto.Models.Entities.EvaluacionInicial> Evaluaciones { get; set; } = new List<FisioSalud_Proyecto.Models.Entities.EvaluacionInicial>();
+        public List<FisioSalud_Proyecto.Models.Entities.Diagnostico> DiagnosticosLista { get; set; } = new List<FisioSalud_Proyecto.Models.Entities.Diagnostico>();
+        public List<FisioSalud_Proyecto.Models.Entities.PlanTratamiento> PlanesTratamiento { get; set; } = new List<FisioSalud_Proyecto.Models.Entities.PlanTratamiento>();
+        public List<FisioSalud_Proyecto.Models.Entities.TratamientoEjercicio> EjerciciosAsignados { get; set; } = new List<FisioSalud_Proyecto.Models.Entities.TratamientoEjercicio>();
+        public List<FisioSalud_Proyecto.Models.Entities.SesionRehabilitacion> SesionesLista { get; set; } = new List<FisioSalud_Proyecto.Models.Entities.SesionRehabilitacion>();
+        public List<FisioSalud_Proyecto.Models.Entities.Cita> CitasLista { get; set; } = new List<FisioSalud_Proyecto.Models.Entities.Cita>();
     }
 
     public class PacienteFormViewModel

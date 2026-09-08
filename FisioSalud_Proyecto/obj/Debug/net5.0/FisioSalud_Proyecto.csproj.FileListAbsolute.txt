@@ -115,3 +115,7 @@ C:\Users\Espinoza\source\repos\FisioSalud_Proyecto\FisioSalud_Proyecto\obj\Debug
 C:\Users\Espinoza\source\repos\FisioSalud_Proyecto\FisioSalud_Proyecto\obj\Debug\net5.0\Razor\Views\Administrador\Buscar.cshtml.g.cs
 C:\Users\Espinoza\source\repos\FisioSalud_Proyecto\FisioSalud_Proyecto\obj\Debug\net5.0\Razor\Views\Administrador\Configuracion.cshtml.g.cs
 C:\Users\Espinoza\source\repos\FisioSalud_Proyecto\FisioSalud_Proyecto\obj\Debug\net5.0\Razor\Views\Cliente\Facturas.cshtml.g.cs
+C:\Users\Espinoza\source\repos\FisioSalud_Proyecto\FisioSalud_Proyecto\obj\Debug\net5.0\Razor\Views\Administrador\Disponibilidad.cshtml.g.cs
+C:\Users\Espinoza\source\repos\FisioSalud_Proyecto\FisioSalud_Proyecto\obj\Debug\net5.0\Razor\Views\Administrador\Servicios.cshtml.g.cs
+C:\Users\Espinoza\source\repos\FisioSalud_Proyecto\FisioSalud_Proyecto\obj\Debug\net5.0\Razor\Views\Administrador\Citas.cshtml.g.cs
+C:\Users\Espinoza\source\repos\FisioSalud_Proyecto\FisioSalud_Proyecto\obj\Debug\net5.0\Razor\Views\Administrador\Facturas.cshtml.g.cs

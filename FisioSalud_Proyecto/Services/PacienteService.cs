@@ -7,6 +7,9 @@ using FisioSalud_Proyecto.Models.Entities;
 using FisioSalud_Proyecto.Models.Fisioterapeuta;
 using Microsoft.EntityFrameworkCore;
 
+using FisioSalud_Proyecto.Models.Clinical;
+using FisioSalud_Proyecto.Helpers;
+
 namespace FisioSalud_Proyecto.Services
 {
     public interface IPacienteService
@@ -20,6 +23,12 @@ namespace FisioSalud_Proyecto.Services
         Task<PacienteListViewModel> GetPacienteDetalleAsync(int id);
         Task<(bool Success, string Error)> CreateAsync(PacienteFormViewModel model);
         Task<(bool Success, string Error)> UpdateAsync(PacienteFormViewModel model);
+        Task<(bool Success, string Error)> IniciarAtencionAsync(int citaId, int fisioterapeutaId);
+        Task<(bool Success, string Error)> GuardarEvaluacionInicialAsync(EvaluacionInicialFormModel model, int fisioterapeutaId);
+        Task<(bool Success, string Error)> GuardarDiagnosticoAsync(DiagnosticoFormModel model, int fisioterapeutaId);
+        Task<(bool Success, string Error)> CrearPlanTratamientoAsync(PlanTratamientoFormModel model, int fisioterapeutaId);
+        Task<(bool Success, string Error)> AsignarEjercicioAsync(AsignarEjercicioFormModel model, int fisioterapeutaId);
+        Task<(bool Success, string Error)> FinalizarSesionAsync(FinalizarSesionFormModel model, int fisioterapeutaId);
     }
 
     public class PacienteService : IPacienteService
@@ -246,7 +255,65 @@ namespace FisioSalud_Proyecto.Services
         {
             var paciente = await _context.Pacientes.AsNoTracking().FirstOrDefaultAsync(p => p.PacienteId == id);
             if (paciente == null) return null;
-            return MapToList(paciente);
+
+            var vm = MapToList(paciente);
+
+            vm.Evaluaciones = await _context.EvaluacionesIniciales.AsNoTracking()
+                .Where(e => e.PacienteId == id)
+                .OrderByDescending(e => e.FechaEvaluacion)
+                .ToListAsync();
+
+            vm.DiagnosticosLista = await _context.Diagnosticos.AsNoTracking()
+                .Where(d => d.PacienteId == id)
+                .OrderByDescending(d => d.FechaDiagnostico)
+                .ToListAsync();
+
+            vm.PlanesTratamiento = await _context.PlanesTratamiento.AsNoTracking()
+                .Where(p => p.PacienteId == id)
+                .OrderByDescending(p => p.FechaCreacion)
+                .ToListAsync();
+
+            var planIds = vm.PlanesTratamiento.Select(p => p.PlanTratamientoId).ToList();
+
+            vm.EjerciciosAsignados = await _context.TratamientoEjercicios
+                .Include(te => te.Ejercicio)
+                .Where(te => planIds.Contains(te.PlanTratamientoId))
+                .AsNoTracking()
+                .ToListAsync();
+
+            vm.SesionesLista = await _context.SesionesRehabilitacion
+                .Include(s => s.Seguimientos)
+                .Where(s => planIds.Contains(s.PlanTratamientoId))
+                .OrderByDescending(s => s.FechaSesion)
+                .AsNoTracking()
+                .ToListAsync();
+
+            vm.CitasLista = await _context.Citas
+                .Include(c => c.Servicio)
+                .Where(c => c.PacienteId == id)
+                .OrderByDescending(c => c.Fecha)
+                .ThenByDescending(c => c.HoraInicio)
+                .AsNoTracking()
+                .ToListAsync();
+
+            var diagReciente = vm.DiagnosticosLista.FirstOrDefault();
+            if (diagReciente != null) vm.Diagnostico = diagReciente.DiagnosticoTexto;
+
+            var ultSeguimiento = vm.SesionesLista.SelectMany(s => s.Seguimientos).OrderByDescending(s => s.FechaRegistro).FirstOrDefault();
+            var evalInicial = vm.Evaluaciones.OrderBy(e => e.FechaEvaluacion).FirstOrDefault();
+
+            if (ultSeguimiento?.NivelDolor.HasValue == true)
+                vm.NivelDolor = (int)Math.Round(ultSeguimiento.NivelDolor.Value);
+            else if (evalInicial?.DolorInicial.HasValue == true)
+                vm.NivelDolor = (int)Math.Round(evalInicial.DolorInicial.Value);
+
+            vm.SesionesTexto = $"{vm.SesionesLista.Count}/12";
+
+            var proximaCita = vm.CitasLista.FirstOrDefault(c => c.Fecha >= DateTime.Today && c.Estado != CitaEstados.Cancelada);
+            if (proximaCita != null)
+                vm.ProximaCitaTexto = $"{proximaCita.Fecha:dd/MM/yyyy} {proximaCita.HoraInicio:hh\\:mm}";
+
+            return vm;
         }
 
         public async Task<(bool Success, string Error)> CreateAsync(PacienteFormViewModel model)
@@ -331,6 +398,156 @@ namespace FisioSalud_Proyecto.Services
             string n = string.IsNullOrWhiteSpace(nombres) ? "" : nombres.Trim()[0].ToString();
             string a = string.IsNullOrWhiteSpace(apellidos) ? "" : apellidos.Trim()[0].ToString();
             return (n + a).ToUpper();
+        }
+
+        public async Task<(bool Success, string Error)> IniciarAtencionAsync(int citaId, int fisioterapeutaId)
+        {
+            var cita = await _context.Citas.FindAsync(citaId);
+            if (cita == null) return (false, "Cita no encontrada.");
+            cita.Estado = CitaEstados.EnAtencion;
+            cita.FechaActualizacion = DateTime.Now;
+            await _context.SaveChangesAsync();
+            return (true, null);
+        }
+
+        public async Task<(bool Success, string Error)> GuardarEvaluacionInicialAsync(EvaluacionInicialFormModel model, int fisioterapeutaId)
+        {
+            if (model == null || model.PacienteId <= 0) return (false, "Datos de evaluación no válidos.");
+
+            var eval = new EvaluacionInicial
+            {
+                PacienteId = model.PacienteId,
+                FisioterapeutaId = fisioterapeutaId,
+                CitaId = model.CitaId,
+                MotivoConsulta = string.IsNullOrWhiteSpace(model.MotivoConsulta) ? "Evaluación Inicial" : model.MotivoConsulta,
+                Antecedentes = model.Antecedentes,
+                DolorInicial = model.DolorInicial,
+                EvaluacionFisica = model.EvaluacionFisica,
+                Observaciones = model.Observaciones,
+                FechaEvaluacion = DateTime.Now,
+                FechaRegistro = DateTime.Now
+            };
+
+            _context.EvaluacionesIniciales.Add(eval);
+            await _context.SaveChangesAsync();
+            return (true, null);
+        }
+
+        public async Task<(bool Success, string Error)> GuardarDiagnosticoAsync(DiagnosticoFormModel model, int fisioterapeutaId)
+        {
+            if (model == null || model.PacienteId <= 0 || string.IsNullOrWhiteSpace(model.DiagnosticoTexto))
+                return (false, "Diagnóstico no válido.");
+
+            var diag = new Diagnostico
+            {
+                PacienteId = model.PacienteId,
+                PatologiaId = model.PatologiaId,
+                FisioterapeutaId = fisioterapeutaId,
+                DiagnosticoTexto = model.DiagnosticoTexto,
+                Observaciones = model.Observaciones,
+                EvaluacionFuncional = model.EvaluacionFuncional,
+                FechaDiagnostico = DateTime.Today,
+                Estado = true,
+                FechaRegistro = DateTime.Now
+            };
+
+            _context.Diagnosticos.Add(diag);
+            await _context.SaveChangesAsync();
+            return (true, null);
+        }
+
+        public async Task<(bool Success, string Error)> CrearPlanTratamientoAsync(PlanTratamientoFormModel model, int fisioterapeutaId)
+        {
+            if (model == null || model.PacienteId <= 0 || model.DiagnosticoId <= 0)
+                return (false, "Plan de tratamiento no válido.");
+
+            var plan = new PlanTratamiento
+            {
+                PacienteId = model.PacienteId,
+                DiagnosticoId = model.DiagnosticoId,
+                FisioterapeutaId = fisioterapeutaId,
+                Nombre = string.IsNullOrWhiteSpace(model.Nombre) ? "Plan de Fisioterapia" : model.Nombre,
+                Objetivos = string.IsNullOrWhiteSpace(model.Objetivos) ? "Recuperación funcional" : model.Objetivos,
+                DuracionEstimada = model.DuracionEstimada,
+                FechaInicio = model.FechaInicio != default ? model.FechaInicio : DateTime.Today,
+                Estado = "ACTIVO",
+                Observaciones = model.Observaciones,
+                FechaCreacion = DateTime.Now
+            };
+
+            _context.PlanesTratamiento.Add(plan);
+            await _context.SaveChangesAsync();
+            return (true, null);
+        }
+
+        public async Task<(bool Success, string Error)> AsignarEjercicioAsync(AsignarEjercicioFormModel model, int fisioterapeutaId)
+        {
+            if (model == null || model.PlanTratamientoId <= 0 || model.EjercicioId <= 0)
+                return (false, "Asignación de ejercicio no válida.");
+
+            var asignacion = new TratamientoEjercicio
+            {
+                PlanTratamientoId = model.PlanTratamientoId,
+                EjercicioId = model.EjercicioId,
+                Frecuencia = string.IsNullOrWhiteSpace(model.Frecuencia) ? "Diaria" : model.Frecuencia,
+                Series = model.Series ?? 3,
+                Repeticiones = model.Repeticiones ?? 12,
+                Observaciones = model.Observaciones,
+                Estado = true,
+                FechaAsignacion = DateTime.Now
+            };
+
+            _context.TratamientoEjercicios.Add(asignacion);
+            await _context.SaveChangesAsync();
+            return (true, null);
+        }
+
+        public async Task<(bool Success, string Error)> FinalizarSesionAsync(FinalizarSesionFormModel model, int fisioterapeutaId)
+        {
+            if (model == null || model.CitaId <= 0 || model.PlanTratamientoId <= 0)
+                return (false, "Sesión no válida.");
+
+            var numSesiones = await _context.SesionesRehabilitacion.CountAsync(s => s.PlanTratamientoId == model.PlanTratamientoId);
+
+            var sesion = new SesionRehabilitacion
+            {
+                PlanTratamientoId = model.PlanTratamientoId,
+                CitaId = model.CitaId,
+                FisioterapeutaId = fisioterapeutaId,
+                NumeroSesion = numSesiones + 1,
+                FechaSesion = DateTime.Today,
+                ActividadesRealizadas = string.IsNullOrWhiteSpace(model.ActividadesRealizadas) ? "Sesión de terapia aplicada" : model.ActividadesRealizadas,
+                Observaciones = model.Observaciones,
+                Resultados = model.Resultados,
+                Estado = "REALIZADA",
+                FechaRegistro = DateTime.Now
+            };
+
+            _context.SesionesRehabilitacion.Add(sesion);
+            await _context.SaveChangesAsync();
+
+            var seguimiento = new Seguimiento
+            {
+                SesionId = sesion.SesionId,
+                NivelDolor = model.NivelDolor,
+                MovilidadArticular = model.MovilidadArticular,
+                FuerzaMuscular = model.FuerzaMuscular,
+                GradoRecuperacion = model.GradoRecuperacion,
+                Observaciones = model.Observaciones,
+                FechaRegistro = DateTime.Now
+            };
+
+            _context.Seguimientos.Add(seguimiento);
+
+            var cita = await _context.Citas.FindAsync(model.CitaId);
+            if (cita != null)
+            {
+                cita.Estado = CitaEstados.Atendida;
+                cita.FechaActualizacion = DateTime.Now;
+            }
+
+            await _context.SaveChangesAsync();
+            return (true, null);
         }
 
         private static string MapEstadoChip(string estado)

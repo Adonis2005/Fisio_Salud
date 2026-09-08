@@ -1,8 +1,8 @@
-﻿-- ==========================================================
+-- ==========================================================
 -- FISIOSALUD - SCRIPT COMPLETO DE BASE DE DATOS SQL SERVER
 -- Fecha de generaciÃ³n: 2026-09-06 21:41:38
 -- ==========================================================
-USE [master];
+USE [FisioSalud];
 GO
 
 
@@ -490,6 +490,7 @@ BEGIN
 END;
 GO
 IF COL_LENGTH('dbo.DetallesFactura', 'ServicioId') IS NULL ALTER TABLE dbo.[DetallesFactura] ADD [ServicioId] int NULL;
+IF COL_LENGTH('dbo.Citas', 'ServicioId') IS NULL ALTER TABLE dbo.[Citas] ADD [ServicioId] int NULL;
 GO
 IF NOT EXISTS (SELECT 1 FROM sys.foreign_keys WHERE name = 'FK_EvaluacionesIniciales_Pacientes') ALTER TABLE dbo.[EvaluacionesIniciales] ADD CONSTRAINT [FK_EvaluacionesIniciales_Pacientes] FOREIGN KEY ([PacienteId]) REFERENCES dbo.[Pacientes]([PacienteId]);
 IF NOT EXISTS (SELECT 1 FROM sys.foreign_keys WHERE name = 'FK_EvaluacionesIniciales_Fisioterapeutas') ALTER TABLE dbo.[EvaluacionesIniciales] ADD CONSTRAINT [FK_EvaluacionesIniciales_Fisioterapeutas] FOREIGN KEY ([FisioterapeutaId]) REFERENCES dbo.[Usuarios]([UsuarioId]);
@@ -502,4 +503,6 @@ IF NOT EXISTS (SELECT 1 FROM sys.foreign_keys WHERE name = 'FK_EjerciciosRealiza
 IF NOT EXISTS (SELECT 1 FROM sys.foreign_keys WHERE name = 'FK_EjerciciosRealizados_Pacientes') ALTER TABLE dbo.[EjerciciosRealizados] ADD CONSTRAINT [FK_EjerciciosRealizados_Pacientes] FOREIGN KEY ([PacienteId]) REFERENCES dbo.[Pacientes]([PacienteId]);
 IF NOT EXISTS (SELECT 1 FROM sys.foreign_keys WHERE name = 'FK_Disponibilidades_Fisioterapeutas') ALTER TABLE dbo.[DisponibilidadesFisioterapeuta] ADD CONSTRAINT [FK_Disponibilidades_Fisioterapeutas] FOREIGN KEY ([FisioterapeutaId]) REFERENCES dbo.[Usuarios]([UsuarioId]);
 IF NOT EXISTS (SELECT 1 FROM sys.foreign_keys WHERE name = 'FK_DetallesFactura_Servicios') ALTER TABLE dbo.[DetallesFactura] ADD CONSTRAINT [FK_DetallesFactura_Servicios] FOREIGN KEY ([ServicioId]) REFERENCES dbo.[Servicios]([ServicioId]);
+IF NOT EXISTS (SELECT 1 FROM sys.foreign_keys WHERE name = 'FK_Citas_Servicios') ALTER TABLE dbo.[Citas] ADD CONSTRAINT [FK_Citas_Servicios] FOREIGN KEY ([ServicioId]) REFERENCES dbo.[Servicios]([ServicioId]);
 GO
+

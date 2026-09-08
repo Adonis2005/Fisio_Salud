@@ -10,6 +10,8 @@ using FisioSalud_Proyecto.Models.Administrador;
 using FisioSalud_Proyecto.Models.Entities;
 using Microsoft.EntityFrameworkCore;
 
+using FisioSalud_Proyecto.Models.Clinical;
+
 namespace FisioSalud_Proyecto.Services
 {
     public interface IAdminPanelService
@@ -25,6 +27,14 @@ namespace FisioSalud_Proyecto.Services
         Task<AdminAnaliticaPageViewModel> GetAnaliticaAsync(string periodo);
         Task<AdminConfiguracionPageViewModel> GetConfiguracionAsync(int usuarioId, string seccion, string busqueda, int? rolId, bool? estado);
         Task<AdminBusquedaPageViewModel> BuscarAsync(string q);
+        Task<List<Servicio>> GetServiciosAsync();
+        Task<(bool Success, string Error)> SaveServicioAsync(ServicioFormViewModel model);
+        Task<List<DisponibilidadFisioterapeuta>> GetDisponibilidadesAsync();
+        Task<(bool Success, string Error)> SaveDisponibilidadAsync(DisponibilidadFormViewModel model);
+        Task<List<Ejercicio>> GetEjerciciosCatalogoAsync();
+        Task<(bool Success, string Error)> SaveEjercicioCatalogoAsync(Ejercicio model);
+        Task<List<Patologia>> GetPatologiasAsync();
+        Task<(bool Success, string Error)> SavePatologiaAsync(Patologia model);
     }
 
     public class AdminPanelService : IAdminPanelService
@@ -913,6 +923,152 @@ namespace FisioSalud_Proyecto.Services
             return d >= 0 ? $"+{d}" : d.ToString();
         }
 
+        public async Task<List<Servicio>> GetServiciosAsync()
+        {
+            return await _context.Servicios.AsNoTracking().OrderBy(s => s.Nombre).ToListAsync();
+        }
+
+        public async Task<(bool Success, string Error)> SaveServicioAsync(ServicioFormViewModel model)
+        {
+            if (model == null || string.IsNullOrWhiteSpace(model.Nombre) || model.Precio <= 0)
+                return (false, "Nombre y precio válido son requeridos.");
+
+            if (model.ServicioId.HasValue && model.ServicioId.Value > 0)
+            {
+                var s = await _context.Servicios.FindAsync(model.ServicioId.Value);
+                if (s == null) return (false, "Servicio no encontrado.");
+                s.Nombre = model.Nombre.Trim();
+                s.Descripcion = model.Descripcion?.Trim();
+                s.Precio = model.Precio;
+                s.Tipo = string.IsNullOrWhiteSpace(model.Tipo) ? "TERAPIA" : model.Tipo.Trim();
+                s.Estado = model.Estado;
+            }
+            else
+            {
+                var s = new Servicio
+                {
+                    Nombre = model.Nombre.Trim(),
+                    Descripcion = model.Descripcion?.Trim(),
+                    Precio = model.Precio,
+                    Tipo = string.IsNullOrWhiteSpace(model.Tipo) ? "TERAPIA" : model.Tipo.Trim(),
+                    Estado = model.Estado,
+                    FechaRegistro = DateTime.Now
+                };
+                _context.Servicios.Add(s);
+            }
+
+            await _context.SaveChangesAsync();
+            return (true, null);
+        }
+
+        public async Task<List<DisponibilidadFisioterapeuta>> GetDisponibilidadesAsync()
+        {
+            return await _context.DisponibilidadesFisioterapeuta
+                .Include(d => d.Fisioterapeuta)
+                .AsNoTracking()
+                .OrderBy(d => d.FisioterapeutaId)
+                .ThenBy(d => d.DiaSemana)
+                .ToListAsync();
+        }
+
+        public async Task<(bool Success, string Error)> SaveDisponibilidadAsync(DisponibilidadFormViewModel model)
+        {
+            if (model == null || model.FisioterapeutaId <= 0 || model.DiaSemana < 1 || model.DiaSemana > 7)
+                return (false, "Fisioterapeuta y día de la semana (1-7) son requeridos.");
+
+            if (model.HoraFin <= model.HoraInicio)
+                return (false, "La hora de fin debe ser posterior a la hora de inicio.");
+
+            if (model.DisponibilidadId.HasValue && model.DisponibilidadId.Value > 0)
+            {
+                var d = await _context.DisponibilidadesFisioterapeuta.FindAsync(model.DisponibilidadId.Value);
+                if (d == null) return (false, "Disponibilidad no encontrada.");
+                d.FisioterapeutaId = model.FisioterapeutaId;
+                d.DiaSemana = model.DiaSemana;
+                d.HoraInicio = model.HoraInicio;
+                d.HoraFin = model.HoraFin;
+                d.Estado = model.Estado;
+            }
+            else
+            {
+                var d = new DisponibilidadFisioterapeuta
+                {
+                    FisioterapeutaId = model.FisioterapeutaId,
+                    DiaSemana = model.DiaSemana,
+                    HoraInicio = model.HoraInicio,
+                    HoraFin = model.HoraFin,
+                    Estado = model.Estado
+                };
+                _context.DisponibilidadesFisioterapeuta.Add(d);
+            }
+
+            await _context.SaveChangesAsync();
+            return (true, null);
+        }
+
+        public async Task<List<Ejercicio>> GetEjerciciosCatalogoAsync()
+        {
+            return await _context.Ejercicios.AsNoTracking().OrderBy(e => e.Nombre).ToListAsync();
+        }
+
+        public async Task<(bool Success, string Error)> SaveEjercicioCatalogoAsync(Ejercicio model)
+        {
+            if (model == null || string.IsNullOrWhiteSpace(model.Nombre))
+                return (false, "El nombre del ejercicio es obligatorio.");
+
+            if (model.EjercicioId > 0)
+            {
+                var ej = await _context.Ejercicios.FindAsync(model.EjercicioId);
+                if (ej == null) return (false, "Ejercicio no encontrado.");
+                ej.Nombre = model.Nombre.Trim();
+                ej.Descripcion = model.Descripcion?.Trim();
+                ej.DuracionMinutos = model.DuracionMinutos;
+                ej.Recomendaciones = model.Recomendaciones?.Trim();
+                ej.Estado = model.Estado;
+            }
+            else
+            {
+                model.Nombre = model.Nombre.Trim();
+                model.Descripcion = model.Descripcion?.Trim();
+                model.Recomendaciones = model.Recomendaciones?.Trim();
+                model.FechaRegistro = DateTime.Now;
+                _context.Ejercicios.Add(model);
+            }
+
+            await _context.SaveChangesAsync();
+            return (true, null);
+        }
+
+        public async Task<List<Patologia>> GetPatologiasAsync()
+        {
+            return await _context.Patologias.AsNoTracking().OrderBy(p => p.Nombre).ToListAsync();
+        }
+
+        public async Task<(bool Success, string Error)> SavePatologiaAsync(Patologia model)
+        {
+            if (model == null || string.IsNullOrWhiteSpace(model.Nombre))
+                return (false, "El nombre de la patología es obligatorio.");
+
+            if (model.PatologiaId > 0)
+            {
+                var pat = await _context.Patologias.FindAsync(model.PatologiaId);
+                if (pat == null) return (false, "Patología no encontrada.");
+                pat.Nombre = model.Nombre.Trim();
+                pat.Descripcion = model.Descripcion?.Trim();
+                pat.Estado = model.Estado;
+            }
+            else
+            {
+                model.Nombre = model.Nombre.Trim();
+                model.Descripcion = model.Descripcion?.Trim();
+                model.FechaRegistro = DateTime.Now;
+                _context.Patologias.Add(model);
+            }
+
+            await _context.SaveChangesAsync();
+            return (true, null);
+        }
+
         private static string Csv(string value)
         {
             if (string.IsNullOrEmpty(value)) return "";
@@ -922,3 +1078,4 @@ namespace FisioSalud_Proyecto.Services
         }
     }
 }
+

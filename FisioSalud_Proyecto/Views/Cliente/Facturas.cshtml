@@ -42,6 +42,7 @@
                         <th class="pb-3">Especialista / Emisor</th>
                         <th class="pb-3 text-right">Monto</th>
                         <th class="pb-3 text-center">Estado</th>
+                        <th class="pb-3 text-center">Acción</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -51,9 +52,64 @@
                             <td class="py-3 font-semibold">@f.NumeroFactura</td>
                             <td>@f.Fecha.ToString("dd/MM/yyyy")</td>
                             <td>@f.Fisioterapeuta</td>
-                            <td class="text-right font-bold">@f.Monto.ToString("C0")</td>
+                            <td class="text-right font-bold">@f.Monto.ToString("C2")</td>
                             <td class="text-center">
                                 <span class="badge-soft @f.EstadoClass">@f.Estado</span>
+                            </td>
+                            <td class="text-center">
+                                @if (string.Equals(f.Estado, "PENDIENTE", StringComparison.OrdinalIgnoreCase))
+                                {
+                                    <button type="button" class="btn btn-sm btn-success rounded-pill px-3 py-1 text-xs" data-bs-toggle="modal" data-bs-target="#modalPago_@f.FacturaId">
+                                        <i class="bi bi-credit-card me-1"></i> Pagar
+                                    </button>
+
+                                    <!-- Modal Pago -->
+                                    <div class="modal fade" id="modalPago_@f.FacturaId" tabindex="-1">
+                                        <div class="modal-dialog modal-dialog-centered text-start">
+                                            <div class="modal-content">
+                                                <form asp-action="RegistrarPago" method="post">
+                                                    <input type="hidden" name="FacturaId" value="@f.FacturaId" />
+                                                    <input type="hidden" name="NumeroFactura" value="@f.NumeroFactura" />
+                                                    <input type="hidden" name="Monto" value="@f.Monto" />
+                                                    <div class="modal-header">
+                                                        <h5 class="modal-title font-bold">Registrar Pago de Factura</h5>
+                                                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                                                    </div>
+                                                    <div class="modal-body">
+                                                        <div class="mb-3">
+                                                            <label class="form-label text-xs font-bold">Factura Nº</label>
+                                                            <input type="text" class="form-control form-control-sm" value="@f.NumeroFactura" readonly />
+                                                        </div>
+                                                        <div class="mb-3">
+                                                            <label class="form-label text-xs font-bold">Monto a Pagar</label>
+                                                            <input type="text" class="form-control form-control-sm" value="@f.Monto.ToString("C2")" readonly />
+                                                        </div>
+                                                        <div class="mb-3">
+                                                            <label class="form-label text-xs font-bold">Método de Pago</label>
+                                                            <select name="MetodoPago" class="form-select form-select-sm" required>
+                                                                <option value="Transferencia">Transferencia Bancaria</option>
+                                                                <option value="Tarjeta">Tarjeta de Crédito/Débito</option>
+                                                                <option value="Efectivo">Efectivo en Ventanilla</option>
+                                                            </select>
+                                                        </div>
+                                                        <div class="mb-3">
+                                                            <label class="form-label text-xs font-bold">Número de Referencia / Depósito</label>
+                                                            <input type="text" name="Referencia" class="form-control form-control-sm" placeholder="ej. TR-982173" required />
+                                                        </div>
+                                                    </div>
+                                                    <div class="modal-footer">
+                                                        <button type="button" class="btn btn-sm btn-light" data-bs-dismiss="modal">Cancelar</button>
+                                                        <button type="submit" class="btn btn-sm btn-success">Confirmar Pago</button>
+                                                    </div>
+                                                </form>
+                                            </div>
+                                        </div>
+                                    </div>
+                                }
+                                else
+                                {
+                                    <span class="text-xs text-muted"><i class="bi bi-check-circle-fill text-success me-1"></i> Pagado</span>
+                                }
                             </td>
                         </tr>
                     }

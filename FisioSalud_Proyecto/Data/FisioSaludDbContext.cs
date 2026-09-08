@@ -50,6 +50,7 @@ namespace FisioSalud_Proyecto.Data
             modelBuilder.Entity<Cita>(entity =>
             {
                 entity.Property(e => e.FechaRegistro).HasDefaultValueSql("SYSDATETIME()");
+                entity.HasOne(e => e.Servicio).WithMany().HasForeignKey(e => e.ServicioId).OnDelete(DeleteBehavior.Restrict);
             });
 
             modelBuilder.Entity<Diagnostico>(entity =>

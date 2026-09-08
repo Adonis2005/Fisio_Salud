@@ -19,6 +19,7 @@ namespace FisioSalud_Proyecto.Services
         Task<(bool Success, string Error)> ToggleEstadoAsync(int id);
         Task<(bool Success, string Error, bool SoftDelete)> DeleteAsync(int id);
         Task<List<RolSelectItem>> GetRolesAsync();
+        Task<List<Usuario>> GetUsuariosPorRolAsync(string rolNombre);
     }
 
     public class UsuarioService : IUsuarioService
@@ -237,6 +238,16 @@ namespace FisioSalud_Proyecto.Services
                 return (false, "La identificación ya está registrada.");
 
             return (true, null);
+        }
+
+        public async Task<List<Usuario>> GetUsuariosPorRolAsync(string rolNombre)
+        {
+            return await _context.Usuarios
+                .Include(u => u.Rol)
+                .Where(u => u.Estado && u.Rol.Nombre == rolNombre)
+                .OrderBy(u => u.Nombres)
+                .AsNoTracking()
+                .ToListAsync();
         }
 
         private static UsuarioListViewModel MapToList(Usuario u)

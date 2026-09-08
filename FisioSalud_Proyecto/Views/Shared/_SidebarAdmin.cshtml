@@ -58,6 +58,34 @@
         </li>
     </ul>
 
+    <div class="sidebar-section-header mt-2">Configuración Clínica</div>
+    <ul class="fisio-nav">
+        <li class="fisio-nav-item">
+            <a asp-controller="Administrador" asp-action="Servicios" class="fisio-nav-link @(IsActive("Servicios", "GuardarServicio") ? "active" : "")">
+                <i class="bi bi-currency-dollar"></i>
+                <span>Servicios y Precios</span>
+            </a>
+        </li>
+        <li class="fisio-nav-item">
+            <a asp-controller="Administrador" asp-action="Disponibilidad" class="fisio-nav-link @(IsActive("Disponibilidad", "GuardarDisponibilidad") ? "active" : "")">
+                <i class="bi bi-clock-fill"></i>
+                <span>Disponibilidad</span>
+            </a>
+        </li>
+        <li class="fisio-nav-item">
+            <a asp-controller="Administrador" asp-action="Citas" class="fisio-nav-link @(IsActive("Citas") ? "active" : "")">
+                <i class="bi bi-calendar-check-fill"></i>
+                <span>Gestión de Citas</span>
+            </a>
+        </li>
+        <li class="fisio-nav-item">
+            <a asp-controller="Administrador" asp-action="Facturas" class="fisio-nav-link @(IsActive("Facturas") ? "active" : "")">
+                <i class="bi bi-receipt-cutoff"></i>
+                <span>Facturación</span>
+            </a>
+        </li>
+    </ul>
+
     <div class="sidebar-section-header mt-2">Datos y sistema</div>
     <ul class="fisio-nav">
         <li class="fisio-nav-item">

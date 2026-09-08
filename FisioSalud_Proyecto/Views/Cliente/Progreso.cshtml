@@ -63,10 +63,22 @@
 </div>
 
 <section class="fs-card mt-4">
+    <div class="flex justify-between items-center mb-3">
+        <div>
+            <h3 class="mb-0">Mi Rutina de Ejercicios</h3>
+            <p class="text-xs text-terracotta mb-0">Registra tu cumplimiento diario y nivel de dolor al realizar tus ejercicios.</p>
+        </div>
+        <button type="button" class="btn btn-sm btn-primary rounded-pill px-3" data-bs-toggle="modal" data-bs-target="#modalMarcarCumplimiento">
+            <i class="bi bi-check-circle me-1"></i> Marcar Cumplimiento
+        </button>
+    </div>
+</section>
+
+<section class="fs-card mt-4">
     <h3>Sesiones recientes</h3>
     @if (!Model.CitasRecientes.Any())
     {
-        <p class="text-sm text-terracotta mb-0">Cuando tu fisioterapeuta registre citas, aparecerán aquí. Las rutinas de ejercicio del diseño se agregarán cuando exista esa entidad.</p>
+        <p class="text-sm text-terracotta mb-0">Cuando tu fisioterapeuta registre citas, aparecerán aquí con sus recomendaciones.</p>
     }
     else
     {
@@ -82,3 +94,47 @@
         }
     }
 </section>
+
+<!-- Modal Marcar Cumplimiento -->
+<div class="modal fade" id="modalMarcarCumplimiento" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered text-start">
+        <div class="modal-content">
+            <form asp-action="MarcarCumplimiento" method="post">
+                <input type="hidden" name="TratamientoEjercicioId" value="1" />
+                <div class="modal-header">
+                    <h5 class="modal-title font-bold">Registrar Cumplimiento de Ejercicio</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label text-xs font-bold">ID / Ejercicio Asignado</label>
+                        <input type="number" name="TratamientoEjercicioId" class="form-control form-control-sm" value="1" required />
+                    </div>
+                    <div class="row g-2 mb-3">
+                        <div class="col-6">
+                            <label class="form-label text-xs font-bold">Series Realizadas</label>
+                            <input type="number" name="SeriesRealizadas" class="form-control form-control-sm" value="3" />
+                        </div>
+                        <div class="col-6">
+                            <label class="form-label text-xs font-bold">Repeticiones Realizadas</label>
+                            <input type="number" name="RepeticionesRealizadas" class="form-control form-control-sm" value="12" />
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label text-xs font-bold">Nivel de Dolor sentido (0 - 10)</label>
+                        <input type="number" name="Dolor" min="0" max="10" class="form-control form-control-sm" value="2" />
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label text-xs font-bold">Comentarios o dificultad experimentada</label>
+                        <textarea name="Comentarios" class="form-control form-control-sm" rows="2" placeholder="ej. Sentí ligera molestia al final de la tercera serie..."></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-sm btn-light" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-sm btn-primary">Guardar Registro</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+

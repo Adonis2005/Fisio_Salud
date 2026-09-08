@@ -1,0 +1,185 @@
+@model List<FisioSalud_Proyecto.Models.Entities.DisponibilidadFisioterapeuta>
+@{
+    Layout = "_LayoutAdmin";
+    ViewData["Title"] = "Gestión de Horarios y Disponibilidad";
+    var terapeutas = ViewBag.Terapeutas as List<FisioSalud_Proyecto.Models.Entities.Usuario> ?? new List<FisioSalud_Proyecto.Models.Entities.Usuario>();
+}
+
+<div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
+    <div>
+        <h2 class="fw-bold fs-4 text-dark m-0">Horarios y Disponibilidad de Fisioterapeutas</h2>
+        <p class="text-muted small m-0">Define los días y rangos de atención semanal para evitar citas traslapadas o fuera de horario.</p>
+    </div>
+    <button type="button" class="btn btn-primary rounded-pill px-4" data-bs-toggle="modal" data-bs-target="#modalNuevaDisponibilidad">
+        <i class="bi bi-clock-history me-1"></i> Asignar Horario
+    </button>
+</div>
+
+<div class="card border-0 shadow-sm rounded-4 overflow-hidden">
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+                <thead class="bg-light text-muted small text-uppercase">
+                    <tr>
+                        <th class="ps-4">Fisioterapeuta</th>
+                        <th>Día de la semana</th>
+                        <th>Hora Inicio</th>
+                        <th>Hora Fin</th>
+                        <th>Estado</th>
+                        <th class="text-end pe-4">Acciones</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @if (Model == null || !Model.Any())
+                    {
+                        <tr>
+                            <td colspan="6" class="text-center py-4 text-muted">No hay disponibilidades registradas.</td>
+                        </tr>
+                    }
+                    else
+                    {
+                        string[] dias = { "", "Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado", "Domingo" };
+                        foreach (var d in Model)
+                        {
+                            string nombreDia = d.DiaSemana >= 1 && d.DiaSemana <= 7 ? dias[d.DiaSemana] : $"Día {d.DiaSemana}";
+                            <tr>
+                                <td class="ps-4">
+                                    <div class="fw-bold text-dark">@(d.Fisioterapeuta != null ? d.Fisioterapeuta.NombreCompleto : $"Fisioterapeuta #{d.FisioterapeutaId}")</div>
+                                </td>
+                                <td><span class="badge bg-primary-subtle text-primary border px-3 py-1 rounded-pill">@nombreDia</span></td>
+                                <td class="font-mono fw-bold">@d.HoraInicio.ToString(@"hh\:mm")</td>
+                                <td class="font-mono fw-bold">@d.HoraFin.ToString(@"hh\:mm")</td>
+                                <td>
+                                    @if (d.Estado)
+                                    {
+                                        <span class="badge bg-success-subtle text-success px-2 py-1 rounded-pill">Activo</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="badge bg-secondary-subtle text-secondary px-2 py-1 rounded-pill">Inactivo</span>
+                                    }
+                                </td>
+                                <td class="text-end pe-4">
+                                    <button type="button" class="btn btn-sm btn-outline-secondary rounded-circle" data-bs-toggle="modal" data-bs-target="#modalEditDisp_@d.DisponibilidadId">
+                                        <i class="bi bi-pencil"></i>
+                                    </button>
+
+                                    <!-- Modal Editar -->
+                                    <div class="modal fade text-start" id="modalEditDisp_@d.DisponibilidadId" tabindex="-1">
+                                        <div class="modal-dialog modal-dialog-centered">
+                                            <div class="modal-content">
+                                                <form asp-action="GuardarDisponibilidad" method="post">
+                                                    <input type="hidden" name="DisponibilidadId" value="@d.DisponibilidadId" />
+                                                    <div class="modal-header">
+                                                        <h5 class="modal-title fw-bold">Editar Horario</h5>
+                                                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                                                    </div>
+                                                    <div class="modal-body">
+                                                        <div class="mb-3">
+                                                            <label class="form-label small fw-bold">Fisioterapeuta</label>
+                                                            <select name="FisioterapeutaId" class="form-select" required>
+                                                                @foreach (var t in terapeutas)
+                                                                {
+                                                                    <option value="@t.UsuarioId" selected="@(t.UsuarioId == d.FisioterapeutaId)">@t.NombreCompleto</option>
+                                                                }
+                                                            </select>
+                                                        </div>
+                                                        <div class="mb-3">
+                                                            <label class="form-label small fw-bold">Día de la Semana</label>
+                                                            <select name="DiaSemana" class="form-select" required>
+                                                                <option value="1" selected="@(d.DiaSemana == 1)">Lunes</option>
+                                                                <option value="2" selected="@(d.DiaSemana == 2)">Martes</option>
+                                                                <option value="3" selected="@(d.DiaSemana == 3)">Miércoles</option>
+                                                                <option value="4" selected="@(d.DiaSemana == 4)">Jueves</option>
+                                                                <option value="5" selected="@(d.DiaSemana == 5)">Viernes</option>
+                                                                <option value="6" selected="@(d.DiaSemana == 6)">Sábado</option>
+                                                                <option value="7" selected="@(d.DiaSemana == 7)">Domingo</option>
+                                                            </select>
+                                                        </div>
+                                                        <div class="row g-2 mb-3">
+                                                            <div class="col-6">
+                                                                <label class="form-label small fw-bold">Hora Inicio</label>
+                                                                <input type="time" name="HoraInicio" class="form-control" value="@d.HoraInicio.ToString(@"hh\:mm")" required />
+                                                            </div>
+                                                            <div class="col-6">
+                                                                <label class="form-label small fw-bold">Hora Fin</label>
+                                                                <input type="time" name="HoraFin" class="form-control" value="@d.HoraFin.ToString(@"hh\:mm")" required />
+                                                            </div>
+                                                        </div>
+                                                        <div class="form-check form-switch">
+                                                            <input class="form-check-input" type="checkbox" name="Estado" value="true" id="disp_@d.DisponibilidadId" @(d.Estado ? "checked" : "") />
+                                                            <label class="form-check-label small fw-bold" for="disp_@d.DisponibilidadId">Horario Activo</label>
+                                                        </div>
+                                                    </div>
+                                                    <div class="modal-footer">
+                                                        <button type="button" class="btn btn-sm btn-light" data-bs-dismiss="modal">Cancelar</button>
+                                                        <button type="submit" class="btn btn-sm btn-primary">Guardar Cambios</button>
+                                                    </div>
+                                                </form>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </td>
+                            </tr>
+                        }
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Nueva Disponibilidad -->
+<div class="modal fade" id="modalNuevaDisponibilidad" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <form asp-action="GuardarDisponibilidad" method="post">
+                <div class="modal-header">
+                    <h5 class="modal-title fw-bold">Asignar Horario de Atención</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label small fw-bold">Fisioterapeuta</label>
+                        <select name="FisioterapeutaId" class="form-select" required>
+                            @foreach (var t in terapeutas)
+                            {
+                                <option value="@t.UsuarioId">@t.NombreCompleto</option>
+                            }
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label small fw-bold">Día de la Semana</label>
+                        <select name="DiaSemana" class="form-select" required>
+                            <option value="1">Lunes</option>
+                            <option value="2">Martes</option>
+                            <option value="3">Miércoles</option>
+                            <option value="4">Jueves</option>
+                            <option value="5">Viernes</option>
+                            <option value="6">Sábado</option>
+                            <option value="7">Domingo</option>
+                        </select>
+                    </div>
+                    <div class="row g-2 mb-3">
+                        <div class="col-6">
+                            <label class="form-label small fw-bold">Hora Inicio</label>
+                            <input type="time" name="HoraInicio" class="form-control" value="08:00" required />
+                        </div>
+                        <div class="col-6">
+                            <label class="form-label small fw-bold">Hora Fin</label>
+                            <input type="time" name="HoraFin" class="form-control" value="17:00" required />
+                        </div>
+                    </div>
+                    <div class="form-check form-switch">
+                        <input class="form-check-input" type="checkbox" name="Estado" value="true" id="disp_new" checked />
+                        <label class="form-check-label small fw-bold" for="disp_new">Horario Activo</label>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-sm btn-light" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-sm btn-primary">Asignar Horario</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>

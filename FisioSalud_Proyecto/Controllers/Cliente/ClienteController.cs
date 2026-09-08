@@ -4,6 +4,7 @@ using System.Threading.Tasks;
 using FisioSalud_Proyecto.Helpers;
 using FisioSalud_Proyecto.Data;
 using FisioSalud_Proyecto.Models.Cliente;
+using FisioSalud_Proyecto.Models.Clinical;
 using FisioSalud_Proyecto.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -200,6 +201,62 @@ namespace FisioSalud_Proyecto.Controllers.Cliente
             var model = await _citaService.GetFacturasClienteAsync(GetIdentificacion(), GetCorreo(), User.Identity.Name);
             ViewData["Title"] = "Mis Facturas";
             return View(model);
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> RegistrarPago(RegistrarPagoFormModel model)
+        {
+            var result = await _citaService.RegistrarPagoAsync(model);
+            if (!result.Success)
+            {
+                TempData["Error"] = result.Error;
+            }
+            else
+            {
+                TempData["Success"] = "Pago registrado correctamente. La cita ha sido confirmada.";
+            }
+            return RedirectToAction(nameof(Facturas));
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> MarcarCumplimiento(CumplimientoEjercicioFormModel model)
+        {
+            var usuarioId = ObtenerUsuarioAutenticado();
+            if (usuarioId.HasValue)
+            {
+                var paciente = _context.Pacientes.FirstOrDefault(p => p.UsuarioId == usuarioId.Value);
+                if (paciente != null) model.PacienteId = paciente.PacienteId;
+            }
+
+            var result = await _citaService.MarcarCumplimientoEjercicioAsync(model);
+            if (!result.Success)
+            {
+                TempData["Error"] = result.Error;
+            }
+            else
+            {
+                TempData["Success"] = "Ejercicio marcado como realizado.";
+            }
+            return RedirectToAction(nameof(Progreso));
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> CancelarCita(int citaId)
+        {
+            var result = await _citaService.CancelarCitaAsync(citaId, GetIdentificacion(), GetCorreo());
+            TempData[result.Success ? "Success" : "Error"] = result.Success
+                ? "La cita ha sido cancelada."
+                : result.Error;
+            return RedirectToAction(nameof(Citas));
+        }
+
+        private int? ObtenerUsuarioAutenticado()
+        {
+            var idClaim = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            return int.TryParse(idClaim, out var id) ? id : (int?)null;
         }
 
         private string GetIdentificacion() => User.FindFirstValue("Identificacion");
