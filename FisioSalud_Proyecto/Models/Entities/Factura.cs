@@ -1,6 +1,7 @@
 using System;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+using System.Collections.Generic;
 
 namespace FisioSalud_Proyecto.Models.Entities
 {
@@ -38,5 +39,7 @@ namespace FisioSalud_Proyecto.Models.Entities
 
         [ForeignKey(nameof(UsuarioId))]
         public Usuario Usuario { get; set; }
+        public ICollection<DetalleFactura> DetallesFactura { get; set; } = new List<DetalleFactura>();
+        public ICollection<Pago> Pagos { get; set; } = new List<Pago>();
     }
 }

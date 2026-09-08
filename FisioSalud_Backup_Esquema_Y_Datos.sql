@@ -4,13 +4,7 @@
 -- ==========================================================
 USE [master];
 GO
-IF NOT EXISTS (SELECT * FROM sys.databases WHERE name = 'FisioSalud')
-BEGIN
-    CREATE DATABASE [FisioSalud];
-END;
-GO
-USE [FisioSalud];
-GO
+
 
 -- ----------------------------------------------------------
 -- Tabla: [Roles]
@@ -455,4 +449,57 @@ IF NOT EXISTS (SELECT * FROM sys.foreign_keys WHERE name = 'FK_TratamientoEjerci
 GO
 IF NOT EXISTS (SELECT * FROM sys.foreign_keys WHERE name = 'FK_Usuarios_Roles')
     ALTER TABLE dbo.[Usuarios] ADD CONSTRAINT [FK_Usuarios_Roles] FOREIGN KEY ([RolId]) REFERENCES dbo.[Roles]([RolId]);
+GO
+
+-- ==========================================================
+-- AMPLIACIÓN DEL FLUJO CLÍNICO Y DE PAGOS
+-- ==========================================================
+IF OBJECT_ID('dbo.[EvaluacionesIniciales]', 'U') IS NULL
+BEGIN
+    CREATE TABLE dbo.[EvaluacionesIniciales] ([EvaluacionInicialId] int IDENTITY(1,1) NOT NULL CONSTRAINT [PK_EvaluacionesIniciales] PRIMARY KEY, [PacienteId] int NOT NULL, [FisioterapeutaId] int NOT NULL, [CitaId] int NULL, [MotivoConsulta] varchar(1000) NOT NULL, [Antecedentes] varchar(2000) NULL, [DolorInicial] decimal(18,2) NULL, [EvaluacionFisica] varchar(2000) NULL, [Observaciones] varchar(2000) NULL, [FechaEvaluacion] datetime2 NOT NULL DEFAULT (sysdatetime()), [FechaRegistro] datetime2 NOT NULL DEFAULT (sysdatetime()));
+END;
+GO
+IF OBJECT_ID('dbo.[Servicios]', 'U') IS NULL
+BEGIN
+    CREATE TABLE dbo.[Servicios] ([ServicioId] int IDENTITY(1,1) NOT NULL CONSTRAINT [PK_Servicios] PRIMARY KEY, [Nombre] varchar(150) NOT NULL, [Descripcion] varchar(500) NULL, [Precio] decimal(18,2) NOT NULL, [Tipo] varchar(20) NOT NULL, [Estado] bit NOT NULL DEFAULT ((1)), [FechaRegistro] datetime2 NOT NULL DEFAULT (sysdatetime()));
+END;
+GO
+IF OBJECT_ID('dbo.[Pagos]', 'U') IS NULL
+BEGIN
+    CREATE TABLE dbo.[Pagos] ([PagoId] int IDENTITY(1,1) NOT NULL CONSTRAINT [PK_Pagos] PRIMARY KEY, [FacturaId] int NOT NULL, [MetodoPago] varchar(30) NOT NULL, [Monto] decimal(18,2) NOT NULL, [Estado] varchar(20) NOT NULL DEFAULT ('PENDIENTE'), [Referencia] varchar(100) NULL, [FechaPago] datetime2 NULL, [FechaRegistro] datetime2 NOT NULL DEFAULT (sysdatetime()));
+END;
+GO
+IF OBJECT_ID('dbo.[TratamientosAplicados]', 'U') IS NULL
+BEGIN
+    CREATE TABLE dbo.[TratamientosAplicados] ([TratamientoAplicadoId] int IDENTITY(1,1) NOT NULL CONSTRAINT [PK_TratamientosAplicados] PRIMARY KEY, [Nombre] varchar(150) NOT NULL, [Descripcion] varchar(500) NULL, [Estado] bit NOT NULL DEFAULT ((1)), [FechaRegistro] datetime2 NOT NULL DEFAULT (sysdatetime()));
+END;
+GO
+IF OBJECT_ID('dbo.[SesionTratamientos]', 'U') IS NULL
+BEGIN
+    CREATE TABLE dbo.[SesionTratamientos] ([SesionTratamientoId] int IDENTITY(1,1) NOT NULL CONSTRAINT [PK_SesionTratamientos] PRIMARY KEY, [SesionId] int NOT NULL, [TratamientoAplicadoId] int NOT NULL, [DuracionMinutos] int NULL, [Observaciones] varchar(1000) NULL, [Resultado] varchar(1000) NULL);
+END;
+GO
+IF OBJECT_ID('dbo.[EjerciciosRealizados]', 'U') IS NULL
+BEGIN
+    CREATE TABLE dbo.[EjerciciosRealizados] ([EjercicioRealizadoId] int IDENTITY(1,1) NOT NULL CONSTRAINT [PK_EjerciciosRealizados] PRIMARY KEY, [TratamientoEjercicioId] int NOT NULL, [SesionId] int NULL, [PacienteId] int NOT NULL, [FechaRealizacion] datetime2 NOT NULL DEFAULT (sysdatetime()), [SeriesRealizadas] int NULL, [RepeticionesRealizadas] int NULL, [Dolor] decimal(18,2) NULL, [Estado] varchar(20) NOT NULL DEFAULT ('REALIZADO'), [Comentarios] varchar(1000) NULL);
+END;
+GO
+IF OBJECT_ID('dbo.[DisponibilidadesFisioterapeuta]', 'U') IS NULL
+BEGIN
+    CREATE TABLE dbo.[DisponibilidadesFisioterapeuta] ([DisponibilidadId] int IDENTITY(1,1) NOT NULL CONSTRAINT [PK_DisponibilidadesFisioterapeuta] PRIMARY KEY, [FisioterapeutaId] int NOT NULL, [DiaSemana] tinyint NOT NULL, [HoraInicio] time NOT NULL, [HoraFin] time NOT NULL, [Estado] bit NOT NULL DEFAULT ((1)), CONSTRAINT [CK_Disponibilidad_DiaSemana] CHECK ([DiaSemana] BETWEEN 1 AND 7), CONSTRAINT [CK_Disponibilidad_Horas] CHECK ([HoraFin] > [HoraInicio]));
+END;
+GO
+IF COL_LENGTH('dbo.DetallesFactura', 'ServicioId') IS NULL ALTER TABLE dbo.[DetallesFactura] ADD [ServicioId] int NULL;
+GO
+IF NOT EXISTS (SELECT 1 FROM sys.foreign_keys WHERE name = 'FK_EvaluacionesIniciales_Pacientes') ALTER TABLE dbo.[EvaluacionesIniciales] ADD CONSTRAINT [FK_EvaluacionesIniciales_Pacientes] FOREIGN KEY ([PacienteId]) REFERENCES dbo.[Pacientes]([PacienteId]);
+IF NOT EXISTS (SELECT 1 FROM sys.foreign_keys WHERE name = 'FK_EvaluacionesIniciales_Fisioterapeutas') ALTER TABLE dbo.[EvaluacionesIniciales] ADD CONSTRAINT [FK_EvaluacionesIniciales_Fisioterapeutas] FOREIGN KEY ([FisioterapeutaId]) REFERENCES dbo.[Usuarios]([UsuarioId]);
+IF NOT EXISTS (SELECT 1 FROM sys.foreign_keys WHERE name = 'FK_EvaluacionesIniciales_Citas') ALTER TABLE dbo.[EvaluacionesIniciales] ADD CONSTRAINT [FK_EvaluacionesIniciales_Citas] FOREIGN KEY ([CitaId]) REFERENCES dbo.[Citas]([CitaId]);
+IF NOT EXISTS (SELECT 1 FROM sys.foreign_keys WHERE name = 'FK_Pagos_Facturas') ALTER TABLE dbo.[Pagos] ADD CONSTRAINT [FK_Pagos_Facturas] FOREIGN KEY ([FacturaId]) REFERENCES dbo.[Facturas]([FacturaId]);
+IF NOT EXISTS (SELECT 1 FROM sys.foreign_keys WHERE name = 'FK_SesionTratamientos_Sesiones') ALTER TABLE dbo.[SesionTratamientos] ADD CONSTRAINT [FK_SesionTratamientos_Sesiones] FOREIGN KEY ([SesionId]) REFERENCES dbo.[SesionesRehabilitacion]([SesionId]);
+IF NOT EXISTS (SELECT 1 FROM sys.foreign_keys WHERE name = 'FK_SesionTratamientos_Tratamientos') ALTER TABLE dbo.[SesionTratamientos] ADD CONSTRAINT [FK_SesionTratamientos_Tratamientos] FOREIGN KEY ([TratamientoAplicadoId]) REFERENCES dbo.[TratamientosAplicados]([TratamientoAplicadoId]);
+IF NOT EXISTS (SELECT 1 FROM sys.foreign_keys WHERE name = 'FK_EjerciciosRealizados_Asignaciones') ALTER TABLE dbo.[EjerciciosRealizados] ADD CONSTRAINT [FK_EjerciciosRealizados_Asignaciones] FOREIGN KEY ([TratamientoEjercicioId]) REFERENCES dbo.[TratamientoEjercicios]([TratamientoEjercicioId]);
+IF NOT EXISTS (SELECT 1 FROM sys.foreign_keys WHERE name = 'FK_EjerciciosRealizados_Sesiones') ALTER TABLE dbo.[EjerciciosRealizados] ADD CONSTRAINT [FK_EjerciciosRealizados_Sesiones] FOREIGN KEY ([SesionId]) REFERENCES dbo.[SesionesRehabilitacion]([SesionId]);
+IF NOT EXISTS (SELECT 1 FROM sys.foreign_keys WHERE name = 'FK_EjerciciosRealizados_Pacientes') ALTER TABLE dbo.[EjerciciosRealizados] ADD CONSTRAINT [FK_EjerciciosRealizados_Pacientes] FOREIGN KEY ([PacienteId]) REFERENCES dbo.[Pacientes]([PacienteId]);
+IF NOT EXISTS (SELECT 1 FROM sys.foreign_keys WHERE name = 'FK_Disponibilidades_Fisioterapeutas') ALTER TABLE dbo.[DisponibilidadesFisioterapeuta] ADD CONSTRAINT [FK_Disponibilidades_Fisioterapeutas] FOREIGN KEY ([FisioterapeutaId]) REFERENCES dbo.[Usuarios]([UsuarioId]);
+IF NOT EXISTS (SELECT 1 FROM sys.foreign_keys WHERE name = 'FK_DetallesFactura_Servicios') ALTER TABLE dbo.[DetallesFactura] ADD CONSTRAINT [FK_DetallesFactura_Servicios] FOREIGN KEY ([ServicioId]) REFERENCES dbo.[Servicios]([ServicioId]);
 GO

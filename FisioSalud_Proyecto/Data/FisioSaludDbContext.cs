@@ -25,6 +25,13 @@ namespace FisioSalud_Proyecto.Data
         public DbSet<SesionRehabilitacion> SesionesRehabilitacion { get; set; }
         public DbSet<Seguimiento> Seguimientos { get; set; }
         public DbSet<Mensaje> Mensajes { get; set; }
+        public DbSet<EvaluacionInicial> EvaluacionesIniciales { get; set; }
+        public DbSet<Servicio> Servicios { get; set; }
+        public DbSet<Pago> Pagos { get; set; }
+        public DbSet<TratamientoAplicado> TratamientosAplicados { get; set; }
+        public DbSet<SesionTratamiento> SesionTratamientos { get; set; }
+        public DbSet<EjercicioRealizado> EjerciciosRealizados { get; set; }
+        public DbSet<DisponibilidadFisioterapeuta> DisponibilidadesFisioterapeuta { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -82,6 +89,45 @@ namespace FisioSalud_Proyecto.Data
                 entity.HasOne(e => e.Destinatario).WithMany().HasForeignKey(e => e.DestinatarioId).OnDelete(DeleteBehavior.Restrict);
                 entity.Property(e => e.FechaEnvio).HasDefaultValueSql("SYSDATETIME()");
             });
+
+            modelBuilder.Entity<DetalleFactura>(entity =>
+            {
+                entity.HasOne(e => e.Factura).WithMany(f => f.DetallesFactura).HasForeignKey(e => e.FacturaId).OnDelete(DeleteBehavior.Cascade);
+                entity.HasOne(e => e.Cita).WithMany().HasForeignKey(e => e.CitaId).OnDelete(DeleteBehavior.Restrict);
+                entity.HasOne(e => e.Servicio).WithMany(s => s.DetallesFactura).HasForeignKey(e => e.ServicioId).OnDelete(DeleteBehavior.Restrict);
+            });
+
+            modelBuilder.Entity<Factura>(entity =>
+            {
+                entity.HasOne(e => e.Paciente).WithMany().HasForeignKey(e => e.PacienteId).OnDelete(DeleteBehavior.Restrict);
+                entity.HasMany(e => e.Pagos).WithOne(p => p.Factura).HasForeignKey(p => p.FacturaId).OnDelete(DeleteBehavior.Cascade);
+            });
+
+            modelBuilder.Entity<Pago>(entity => entity.Property(e => e.Monto).HasColumnType("decimal(18,2)"));
+            modelBuilder.Entity<EvaluacionInicial>(entity =>
+            {
+                entity.Property(e => e.DolorInicial).HasColumnType("decimal(18,2)");
+                entity.HasOne(e => e.Paciente).WithMany().HasForeignKey(e => e.PacienteId).OnDelete(DeleteBehavior.Restrict);
+                entity.HasOne(e => e.Fisioterapeuta).WithMany().HasForeignKey(e => e.FisioterapeutaId).OnDelete(DeleteBehavior.Restrict);
+                entity.HasOne(e => e.Cita).WithMany().HasForeignKey(e => e.CitaId).OnDelete(DeleteBehavior.Restrict);
+            });
+
+            modelBuilder.Entity<SesionTratamiento>(entity =>
+            {
+                entity.HasOne(e => e.Sesion).WithMany().HasForeignKey(e => e.SesionId).OnDelete(DeleteBehavior.Cascade);
+                entity.HasOne(e => e.TratamientoAplicado).WithMany(t => t.Sesiones).HasForeignKey(e => e.TratamientoAplicadoId).OnDelete(DeleteBehavior.Restrict);
+            });
+
+            modelBuilder.Entity<EjercicioRealizado>(entity =>
+            {
+                entity.Property(e => e.Dolor).HasColumnType("decimal(18,2)");
+                entity.HasOne(e => e.TratamientoEjercicio).WithMany().HasForeignKey(e => e.TratamientoEjercicioId).OnDelete(DeleteBehavior.Restrict);
+                entity.HasOne(e => e.Sesion).WithMany().HasForeignKey(e => e.SesionId).OnDelete(DeleteBehavior.Restrict);
+                entity.HasOne(e => e.Paciente).WithMany().HasForeignKey(e => e.PacienteId).OnDelete(DeleteBehavior.Restrict);
+            });
+
+            modelBuilder.Entity<DisponibilidadFisioterapeuta>(entity =>
+                entity.HasOne(e => e.Fisioterapeuta).WithMany().HasForeignKey(e => e.FisioterapeutaId).OnDelete(DeleteBehavior.Restrict));
         }
     }
 }

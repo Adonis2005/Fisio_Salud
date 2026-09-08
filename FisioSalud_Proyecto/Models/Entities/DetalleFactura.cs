@@ -13,6 +13,7 @@ namespace FisioSalud_Proyecto.Models.Entities
         public int FacturaId { get; set; }
 
         public int? CitaId { get; set; }
+        public int? ServicioId { get; set; }
 
         [Required, MaxLength(250)]
         public string Concepto { get; set; }
@@ -32,5 +33,8 @@ namespace FisioSalud_Proyecto.Models.Entities
 
         [ForeignKey(nameof(CitaId))]
         public Cita Cita { get; set; }
+
+        [ForeignKey(nameof(ServicioId))]
+        public Servicio Servicio { get; set; }
     }
 }
